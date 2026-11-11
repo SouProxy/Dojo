@@ -16,6 +16,7 @@ done
 adb logcat -d -s Dojo:* | tee "$OUT/logcat-dojo.txt"
 adb exec-out screencap -p > "$OUT/screenshot.png" || true
 grep -q "DOJO_READY bridge=true days=5" "$OUT/logcat-dojo.txt" || { echo "UI não carregou ou ponte nativa ausente"; exit 1; }
+grep -q "h264=true" "$OUT/logcat-dojo.txt" || { echo "WebView sem H.264: vídeos não tocariam"; exit 1; }
 if grep -q "DOJO_ERROR" "$OUT/logcat-dojo.txt"; then echo "Erro de JS no app"; exit 1; fi
 # Botão voltar na tela inicial deve fechar o app sem crash
 adb shell input keyevent KEYCODE_BACK

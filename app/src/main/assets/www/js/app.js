@@ -1437,5 +1437,6 @@
   if (state.active && state.settings.keepAwake) setKeepAwake(true);
   render();
   // Sinal para o teste no emulador (só aparece no logcat em builds de debug).
-  console.info(`DOJO_READY bridge=${Native.available} days=${state.plan.days.length}`);
+  const h264 = document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"') !== '';
+  console.info(`DOJO_READY bridge=${Native.available} days=${state.plan.days.length} h264=${h264} videos=${Object.keys(MEDIA).length}`);
 })();
