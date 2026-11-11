@@ -142,11 +142,18 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   assert(imgsOk.every(Boolean), 'GIFs da biblioteca carregam');
   await page.click('main .card.tap >> text=Rosca Scott');
   await page.waitForSelector('.modal >> text=Bíceps');
-  await page.waitForSelector('.modal video');
-  await page.waitForTimeout(1200);
-  const vid = await page.$eval('.modal video', (v) => ({ t: v.currentTime, w: v.videoWidth, paused: v.paused }));
-  assert(vid.w === 400 && vid.t > 0.3 && !vid.paused, `vídeo do exercício toca em loop (${JSON.stringify(vid)})`);
-  assert((await page.textContent('.modal .credit')).includes('CC-BY-SA-4.0'), 'crédito e licença do vídeo exibidos');
+  // Chromium open-source (CI) não decodifica H.264; o app deve cair no GIF. Android WebView decodifica.
+  const h264 = await page.evaluate(() => document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"') !== '');
+  if (h264) {
+    await page.waitForSelector('.modal video');
+    await page.waitForTimeout(1200);
+    const vid = await page.$eval('.modal video', (v) => ({ t: v.currentTime, w: v.videoWidth, paused: v.paused }));
+    assert(vid.w === 400 && vid.t > 0.3 && !vid.paused, `vídeo do exercício toca em loop (${JSON.stringify(vid)})`);
+    assert((await page.textContent('.modal .credit')).includes('CC-BY-SA-4.0'), 'crédito e licença do vídeo exibidos');
+  } else {
+    await page.waitForSelector('.modal .media-box img.big');
+    assert(true, 'navegador sem H.264: cai no GIF de reserva');
+  }
   const sugIdx = await page.$eval('.modal', (m) => {
     const kids = [...m.children];
     return [kids.findIndex((k) => k.classList && k.classList.contains('suggest-line')), kids.findIndex((k) => k.classList && k.classList.contains('media-box'))];
