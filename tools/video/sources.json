@@ -1,4 +1,212 @@
 {
-  "_comment": "id do GIF -> vídeo de origem. Use apenas vídeos próprios ou com licença compatível (ex.: CC0, CC-BY, CC-BY-SA) e preencha credit/license.",
-  "items": {}
+ "_comment": "Vídeos com licença aberta. Créditos exibidos no app e em CREDITS.md.",
+ "items": {
+  "afundo": {
+   "url": "https://wger.de/media/exercise-video/206/47a65c45-6fd1-4181-b71a-3a6c882e516b.MOV",
+   "start": 2.9,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/206/view/"
+  },
+  "barra_fixa": {
+   "url": "https://wger.de/media/exercise-video/475/83067ffe-ccb9-4e22-8507-5131b211ce74.MOV",
+   "start": 3.8,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/475/view/"
+  },
+  "cadeira_flexora": {
+   "url": "https://wger.de/media/exercise-video/366/43df4b79-d4c3-4fbf-bcb5-e0d825b84120.MOV",
+   "start": 5.0,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/366/view/"
+  },
+  "desenvolvimento_halteres": {
+   "url": "https://wger.de/media/exercise-video/567/64f33c19-1d96-4b7c-af17-6c6a4941c614.MOV",
+   "start": 4.6,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/567/view/"
+  },
+  "elevacao_lateral": {
+   "url": "https://wger.de/media/exercise-video/348/de69928a-8a35-4096-821c-1f46de5e0e03.MOV",
+   "start": 3.7,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/348/view/"
+  },
+  "elevacao_pelvica": {
+   "url": "https://wger.de/media/exercise-video/294/45bacf4b-1bb6-4d47-8bd1-9f00eddd4019.MOV",
+   "start": 6.0,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/294/view/"
+  },
+  "encolhimento": {
+   "url": "https://wger.de/media/exercise-video/570/bd1f14a3-9d2b-4ec0-b6b9-e82d739f7e60.MOV",
+   "start": 2.1,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/570/view/"
+  },
+  "face_pull": {
+   "url": "https://wger.de/media/exercise-video/222/245a824b-cd39-45f2-b251-2c0b7efead0d.MOV",
+   "start": 1.7,
+   "duration": 6,
+   "fit": "pad",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/222/view/"
+  },
+  "leg_press": {
+   "url": "https://wger.de/media/exercise-video/371/6aae16b4-01b9-4eb4-935c-3250f84d2c59.MOV",
+   "start": 6.9,
+   "duration": 6,
+   "fit": "pad",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/371/view/"
+  },
+  "mesa_flexora": {
+   "url": "https://wger.de/media/exercise-video/365/becaf013-5044-40d0-bae9-7ed60c973737.MOV",
+   "start": 3.0,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/365/view/"
+  },
+  "panturrilha_pe": {
+   "url": "https://wger.de/media/exercise-video/622/461171e5-2b16-407d-bf27-27aeef43f105.MOV",
+   "start": 3.3,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/622/view/"
+  },
+  "panturrilha_sentado": {
+   "url": "https://wger.de/media/exercise-video/590/a325ae2e-686b-4a1f-aff2-ba37fa3fa157.MOV",
+   "start": 4.1,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/590/view/"
+  },
+  "paralelas": {
+   "url": "https://wger.de/media/exercise-video/194/d039ec90-474d-47a9-a3ad-bf0b00828c82.MP4",
+   "start": 2.6,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/194/view/"
+  },
+  "remada_cabo": {
+   "url": "https://wger.de/media/exercise-video/512/fff4c294-93f0-4926-b3a2-bf59ad4afaa5.MOV",
+   "start": 2.1,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/512/view/"
+  },
+  "rosca_alternada": {
+   "url": "https://wger.de/media/exercise-video/92/8bfb917c-3d0d-49b9-8073-5d7e01c1b894.MOV",
+   "start": 2.2,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/92/view/"
+  },
+  "rosca_direta": {
+   "url": "https://wger.de/media/exercise-video/91/483f4bff-e108-41f1-8e7b-0caf24952552.MOV",
+   "start": 2.5,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/91/view/"
+  },
+  "rosca_martelo": {
+   "url": "https://wger.de/media/exercise-video/272/df069052-2173-4f24-855f-a0eebe729f24.MOV",
+   "start": 2.1,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/272/view/"
+  },
+  "rosca_scott": {
+   "url": "https://wger.de/media/exercise-video/465/5d2339a4-815f-46ba-aa19-8a763cfdeba0.MOV",
+   "start": 2.9,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/465/view/"
+  },
+  "stiff": {
+   "url": "https://wger.de/media/exercise-video/507/307e7276-a14d-4ea0-b579-f5b0dbc6f5af.MOV",
+   "start": 2.6,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/507/view/"
+  },
+  "supino_inclinado": {
+   "url": "https://wger.de/media/exercise-video/537/b9c937e9-daeb-42a9-be8e-7a77e368478c.MOV",
+   "start": 5.5,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/537/view/"
+  },
+  "supino_reto": {
+   "url": "https://wger.de/media/exercise-video/73/cfb72002-898f-443a-a124-a0bce8a2e6ad.MP4",
+   "start": 4.2,
+   "duration": 6,
+   "fit": "pad",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/73/view/"
+  },
+  "triceps_frances": {
+   "url": "https://wger.de/media/exercise-video/211/85f6eb25-a76c-409e-9af9-497794ac0dfb.MOV",
+   "start": 6.4,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/211/view/"
+  },
+  "triceps_testa": {
+   "url": "https://wger.de/media/exercise-video/246/75eb8c88-922e-45c5-8be3-ac073f62b63f.MP4",
+   "start": 3.0,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/246/view/"
+  }
+ }
 }

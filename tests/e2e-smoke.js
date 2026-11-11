@@ -142,6 +142,16 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   assert(imgsOk.every(Boolean), 'GIFs da biblioteca carregam');
   await page.click('main .card.tap >> text=Rosca Scott');
   await page.waitForSelector('.modal >> text=Bíceps');
+  await page.waitForSelector('.modal video');
+  await page.waitForTimeout(1200);
+  const vid = await page.$eval('.modal video', (v) => ({ t: v.currentTime, w: v.videoWidth, paused: v.paused }));
+  assert(vid.w === 400 && vid.t > 0.3 && !vid.paused, `vídeo do exercício toca em loop (${JSON.stringify(vid)})`);
+  assert((await page.textContent('.modal .credit')).includes('CC-BY-SA-4.0'), 'crédito e licença do vídeo exibidos');
+  const sugIdx = await page.$eval('.modal', (m) => {
+    const kids = [...m.children];
+    return [kids.findIndex((k) => k.classList && k.classList.contains('suggest-line')), kids.findIndex((k) => k.classList && k.classList.contains('media-box'))];
+  });
+  assert(sugIdx[0] >= 0 && sugIdx[0] < sugIdx[1], 'sugestão aparece logo abaixo dos músculos, antes do vídeo');
   await shot('10-exercicio-novo');
   await page.click('.modal button:text-is("+ Adicionar ao treino")');
   await page.click('.modal button:has-text("Dia 2")');
@@ -222,6 +232,10 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   await page.click('.modal button:text-is("Importar")');
   await page.waitForSelector('#toast:has-text("Backup importado")');
   assert(true, 'backup v2 importado');
+
+  await page.click('text=Créditos e licenças');
+  assert(await page.locator('.modal tr').count() >= 20, 'tela de créditos lista os vídeos');
+  await page.evaluate(() => window.dojoBack());
 
   // Layout: sem rolagem horizontal
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);

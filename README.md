@@ -18,6 +18,7 @@ App Android de treino, offline, para qualquer nível — do primeiro dia na acad
 Um **questionário** (dias por semana, experiência, local e objetivo) recomenda o programa no primeiro uso.
 
 ### Recursos
+- **23 vídeos reais em loop** (banco aberto wger, CC BY-SA 4.0, créditos no app e em [CREDITS.md](CREDITS.md)); demais exercícios com animação
 - **Biblioteca com 65 exercícios** e **64 GIFs animados** com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo muscular (13) e equipamento (13)
 - **Monte seu treino**: edite qualquer programa ou crie do zero — adicione, remova e reordene exercícios, dias e formato (séries ou circuito)
 - **Volume semanal por músculo**: o app soma as séries do seu plano e compara com a faixa de 10–20 séries/semana
@@ -90,6 +91,7 @@ tests/                                    testes unitários, E2E (Playwright) e 
 npm test                                  # lógica (node --test)
 npm run test:e2e                          # UI no Chromium
 python3 tools/gifgen/generate.py          # regenera os GIFs
+python3 tools/video/build.py              # baixa e converte os vídeos de tools/video/sources.json
 ./gradlew assembleDebug                   # APK (precisa do Android SDK)
 ```
 

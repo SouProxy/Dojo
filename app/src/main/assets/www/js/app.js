@@ -6,7 +6,7 @@
   const Lg = window.DojoLogic;
   const MEDIA = window.DojoMedia || {};
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.1.0';
+  const APP_VERSION = '1.2.0';
 
   // ================================================================ estado
 
@@ -1126,6 +1126,7 @@
             h('div', { class: 'muted small', text: ex.muscles }),
             h('div', { class: 'chips mt-s' },
               h('span', { class: 'badge accent', text: GROUPS[ex.group] }),
+              ex.gifs.some((g) => MEDIA[g]) ? h('span', { class: 'badge ok', text: '▶ Vídeo' }) : null,
               (ex.equip || []).slice(0, 2).map((e) => h('span', { class: 'badge gold', text: EQUIP[e] })))),
           picking ? h('span', { class: 'icon-btn center', 'aria-hidden': 'true', text: '+' }) : null))));
     }
@@ -1286,9 +1287,24 @@
         state = defaultState(); save(); ui.sessionOpen = false; ui.page = 'programs'; setKeepAwake(false); render(); toast('Dados apagados.');
       }) }, 'Apagar todos os dados')));
 
+    wrap.appendChild(h('button', { class: 'btn ghost block mt', onclick: openCreditsModal }, 'Créditos e licenças'));
     wrap.appendChild(h('p', { class: 'muted tiny', style: null, text: `Dojo v${APP_VERSION} · GIFs gerados pelo próprio projeto · Plano baseado em “Anime Physique Files #005 – Toji Fushiguro”. Consulte um profissional antes de iniciar treinos intensos.` }));
     wrap.lastChild.classList.add('mt');
     return wrap;
+  }
+
+  function openCreditsModal() {
+    const LIC = { 'CC-BY-SA-4.0': 'creativecommons.org/licenses/by-sa/4.0', 'CC-BY-4.0': 'creativecommons.org/licenses/by/4.0', CC0: 'creativecommons.org/publicdomain/zero/1.0' };
+    openModal((box, close) => {
+      box.append(h('h2', { text: 'Créditos e licenças' }),
+        h('p', { class: 'small muted', text: 'Animações (GIFs) feitas pelo próprio projeto. Vídeos de terceiros com licença aberta, recortados, reenquadrados e sem áudio; os clipes derivados seguem a mesma licença.' }));
+      const rows = Object.entries(MEDIA).map(([id, m]) => {
+        const ex = Object.values(EXERCISES).find((e) => e.gifs.includes(id));
+        return h('tr', null, h('td', { text: ex ? ex.name : id }), h('td', { class: 'tiny muted', text: `${m.credit} · ${m.license}${LIC[m.license] ? ` (${LIC[m.license]})` : ''}${m.source ? ` · ${m.source.replace('https://', '')}` : ''}` }));
+      });
+      if (rows.length) box.append(h('table', { class: 'tbl' }, h('tbody', null, rows)));
+      box.append(h('button', { class: 'btn block mt', onclick: close }, 'Fechar'));
+    });
   }
 
   function openEditItem(day, it) {
