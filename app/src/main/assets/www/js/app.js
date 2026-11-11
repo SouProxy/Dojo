@@ -6,7 +6,7 @@
   const Lg = window.DojoLogic;
   const MEDIA = window.DojoMedia || {};
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '1.3.0';
 
   // ================================================================ estado
 
@@ -177,16 +177,21 @@
     const ov = document.getElementById('session');
     const ovScroll = ov ? ov.scrollTop : 0;
     const winScroll = window.scrollY;
+    const dEl = document.getElementById('detail');
+    const dScroll = dEl ? dEl.scrollTop : 0;
     root.textContent = '';
     const screens = { home: viewHome, library: viewLibrary, timer: viewTimer, progress: viewProgress, settings: viewSettings };
-    const pages = { programs: viewPrograms, editor: viewEditor, guide: viewGuide };
+    const pages = { programs: viewPrograms, editor: viewEditor, guide: viewGuide, body: viewBody };
     root.appendChild(ui.page ? pages[ui.page]() : screens[ui.tab]());
     root.appendChild(viewNav());
     if (ui.sessionOpen && state.active) root.appendChild(viewSession());
+    if (ui.detail) root.appendChild(viewExerciseDetail());
     ui.modals.forEach((m) => root.appendChild(m.el));
     if (ui.runner) root.appendChild(ui.runner.el);
     const ov2 = document.getElementById('session');
     if (ov2) ov2.scrollTop = ovScroll;
+    const dt2 = document.getElementById('detail');
+    if (dt2) dt2.scrollTop = dScroll;
     window.scrollTo(0, winScroll);
     tick();
   }
@@ -608,54 +613,6 @@
     });
   }
 
-  function openExerciseModal(exId) {
-    const ex = EXERCISES[exId];
-    let gi = 0;
-    openModal((box, close) => {
-      const holder = h('div', { class: 'media-box' });
-      const showMedia = (name) => {
-        holder.textContent = '';
-        const m = MEDIA[name];
-        if (m) {
-          const v = h('video', { class: 'big', src: m.src, autoplay: true, loop: true, muted: true, playsinline: true, preload: 'auto',
-            'aria-label': ex.name, poster: gifSrc(name) });
-          v.muted = true;
-          v.addEventListener('error', () => { holder.textContent = ''; holder.appendChild(h('img', { class: 'big', src: gifSrc(name), alt: ex.name })); });
-          holder.append(v, h('p', { class: 'tiny muted credit', text: `Vídeo: ${m.credit} · ${m.license}` }));
-          const p = v.play && v.play();
-          if (p && p.catch) p.catch(() => {});
-        } else {
-          holder.appendChild(h('img', { class: 'big', src: gifSrc(name), alt: ex.name }));
-        }
-      };
-      showMedia(ex.gifs[0]);
-      const img = holder;
-      box.append(h('h2', { text: ex.name }), h('p', { class: 'muted small', text: ex.muscles }));
-      if (ex.def) {
-        box.append(h('p', { class: 'small suggest-line' }, h('b', { text: 'Sugestão: ' }), `${Lg.prescription(ex.def, ex)} · descanso ${Lg.fmtRest(ex.def.rest)}`));
-      }
-      box.append(img);
-      if (ex.gifs.length > 1) {
-        const labels = ex.gifs.map((g) => (g === 'flexao' ? 'Flexão' : g === 'burpee' ? 'Burpee' : g === 'salto_caixote' ? 'Caixote' : 'Grupado'));
-        const chips = h('div', { class: 'chips' });
-        const paint = () => {
-          chips.textContent = '';
-          labels.forEach((l, k) => chips.appendChild(h('button', { class: `chip${k === gi ? ' on' : ''}`, onclick: () => { gi = k; showMedia(ex.gifs[k]); paint(); } }, l)));
-        };
-        paint();
-        box.append(chips);
-      }
-      box.append(exerciseBadges(ex));
-      box.append(h('h3', { class: 'mt', text: 'Execução' }), h('ol', null, ex.cues.map((c) => h('li', { text: c }))));
-      if (ex.safety) box.append(h('p', { class: 'small' }, h('b', { text: 'Segurança: ' }), ex.safety));
-      const pts = Lg.series(state.history, exId, ex, state.settings);
-      if (pts.points.length) box.append(h('h3', { text: pts.label }), chart(pts.points));
-      box.append(h('div', { class: 'row mt' },
-        h('button', { class: 'btn grow', onclick: close }, 'Fechar'),
-        h('button', { class: 'btn primary grow', onclick: () => { close(); addToPlanFlow(exId); } }, '+ Adicionar ao treino')));
-    });
-  }
-
   function openSummaryModal(session, records) {
     const st = Lg.sessionStats(session);
     const day = findDay(session.dayId);
@@ -858,9 +815,10 @@
 
   // ================================================================ progresso
 
-  function chart(points) {
+  function chart(points, opts) {
+    const o = opts || {};
     const NS = 'http://www.w3.org/2000/svg';
-    const W = 320; const H = 150; const P = { l: 34, r: 10, t: 10, b: 22 };
+    const W = 320; const H = 160; const P = { l: 36, r: 12, t: 12, b: 22 };
     const svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     svg.setAttribute('class', 'chart');
@@ -875,17 +833,24 @@
     const vs = points.map((p) => p.v);
     let lo = Math.min(...vs); let hi = Math.max(...vs);
     if (lo === hi) { lo -= 1; hi += 1; }
-    const pad = (hi - lo) * 0.1; lo -= pad; hi += pad;
-    const x = (k) => P.l + (points.length === 1 ? (W - P.l - P.r) / 2 : (k * (W - P.l - P.r)) / (points.length - 1));
+    const pad = (hi - lo) * 0.12; lo -= pad; hi += pad;
+    const t0 = points[0].t; const t1 = points[points.length - 1].t;
+    const x = (p, k) => (points.length === 1 ? (P.l + W - P.r) / 2
+      : P.l + ((t1 > t0 ? (p.t - t0) / (t1 - t0) : k / (points.length - 1)) * (W - P.l - P.r)));
     const y = (v) => P.t + (1 - (v - lo) / (hi - lo)) * (H - P.t - P.b);
-    mk('line', { x1: P.l, y1: H - P.b, x2: W - P.r, y2: H - P.b, class: 'axis' });
-    mk('line', { x1: P.l, y1: P.t, x2: P.l, y2: H - P.b, class: 'axis' });
-    mk('text', { x: 2, y: P.t + 8, class: 'lbl' }, Lg.fmtNum(hi));
-    mk('text', { x: 2, y: H - P.b, class: 'lbl' }, Lg.fmtNum(lo));
-    mk('text', { x: P.l, y: H - 6, class: 'lbl' }, fmtDate(points[0].t));
-    if (points.length > 1) mk('text', { x: W - P.r - 40, y: H - 6, class: 'lbl' }, fmtDate(points[points.length - 1].t));
-    mk('polyline', { points: points.map((p, k) => `${x(k)},${y(p.v)}`).join(' '), class: 'line' });
-    points.forEach((p, k) => mk('circle', { cx: x(k), cy: y(p.v), r: 3.5, class: 'pt' }));
+    for (let g = 0; g <= 3; g++) {
+      const gv = lo + ((hi - lo) * g) / 3;
+      mk('line', { x1: P.l, y1: y(gv), x2: W - P.r, y2: y(gv), class: 'grid' });
+      mk('text', { x: 2, y: y(gv) + 3, class: 'lbl' }, Lg.fmtNum(gv, hi - lo < 12 ? 1 : 0));
+    }
+    mk('text', { x: P.l, y: H - 6, class: 'lbl' }, fmtDate(t0));
+    if (points.length > 1) mk('text', { x: W - P.r, y: H - 6, class: 'lbl', 'text-anchor': 'end' }, fmtDate(t1));
+    const line = points.map((p, k) => `${x(p, k).toFixed(1)},${y(p.v).toFixed(1)}`);
+    if (points.length > 1) {
+      mk('polygon', { points: `${x(points[0], 0)},${H - P.b} ${line.join(' ')} ${x(points[points.length - 1], points.length - 1)},${H - P.b}`, class: 'area' });
+    }
+    mk('polyline', { points: line.join(' '), class: 'line' });
+    points.forEach((p, k) => mk('circle', { cx: x(p, k), cy: y(p.v), r: o.prs && p.pr ? 4.5 : 3.2, class: o.prs && p.pr ? 'pt pr-pt' : 'pt' }));
     const best = Math.max(...vs);
     svg.setAttribute('aria-label', `Gráfico com ${points.length} pontos, melhor ${Lg.fmtNum(best)}`);
     return svg;
@@ -902,6 +867,10 @@
       h('div', { class: 'stat' }, h('b', { text: String(hist.filter((s) => s.startedAt >= weekAgo).length) }), h('span', { text: 'últimos 7 dias' })),
       h('div', { class: 'stat' }, h('b', { text: vol >= 1000 ? `${Lg.fmtNum(vol / 1000)} t` : `${vol}` }), h('span', { text: 'volume total' }))));
 
+    wrap.appendChild(h('div', { class: 'card tap mt', onclick: () => openPage('body') },
+      h('div', { class: 'row between' },
+        h('div', null, h('h3', { text: '🫀 Distribuição muscular' }), h('p', { class: 'muted small', text: 'Quais músculos você treinou em cada semana, no mapa do corpo.' })),
+        h('span', { class: 'muted', text: '›' }))));
     const exIds = [];
     state.plan.days.forEach((d) => d.items.forEach((it) => { if (!exIds.includes(it.ex)) exIds.push(it.ex); }));
     hist.forEach((se) => se.entries.forEach((e) => { if (EXERCISES[e.ex] && !exIds.includes(e.ex)) exIds.push(e.ex); }));
@@ -921,6 +890,7 @@
       h('img', { src: gifSrc(ex.gifs[0]), alt: ex.name, onclick: () => openExerciseModal(ui.progressEx) }),
       h('div', { class: 'grow' }, h('div', { class: 'ex-name', text: ex.name }), h('div', { class: 'muted small', text: ser.label }),
         ser.points.length ? h('span', { class: 'badge gold', text: `Melhor: ${Lg.fmtNum(Math.max(...ser.points.map((p) => p.v)))}` }) : null)));
+    card.append(h('button', { class: 'btn ghost block sm mt', onclick: () => openExerciseModal(ui.progressEx) }, 'Ver detalhes, recordes e histórico'));
     if (!ser.points.length) card.append(h('p', { class: 'empty', text: 'Sem registros ainda.' }));
     else {
       card.append(chart(ser.points));
@@ -939,6 +909,243 @@
     return wrap;
   }
 
+
+
+  // ================================================================ tela do exercício
+
+  function mediaBox(ex, name) {
+    const holder = h('div', { class: 'media-box' });
+    const m = MEDIA[name];
+    const fallback = () => { holder.textContent = ''; holder.appendChild(h('img', { class: 'big', src: gifSrc(name), alt: ex.name })); };
+    if (!m) { fallback(); return holder; }
+    const v = h('video', { class: 'big', src: m.src, autoplay: true, loop: true, muted: true, playsinline: true, preload: 'auto', 'aria-label': ex.name, poster: gifSrc(name) });
+    v.muted = true;
+    v.addEventListener('error', fallback);
+    holder.append(v, h('p', { class: 'tiny muted credit', text: `Vídeo: ${m.credit} · ${m.license}` }));
+    const pl = v.play && v.play();
+    if (pl && pl.catch) pl.catch(() => {});
+    return holder;
+  }
+
+  const RANGES = [['1m', '1 mês', 30], ['3m', '3 meses', 91], ['1a', '1 ano', 365], ['all', 'Tudo', 0]];
+
+  function openExerciseModal(exId) {
+    if (!EXERCISES[exId]) return;
+    ui.detail = { exId, tab: 'summary', metric: null, range: 'all', gif: 0 };
+    render();
+    const el = document.getElementById('detail');
+    if (el) el.scrollTop = 0;
+  }
+
+  function fmtMetric(v, unit) {
+    if (unit === 'kg') return Lg.fmtKg(v);
+    if (unit === 's') return Lg.fmtClock(v);
+    if (unit === 'kg×reps') return `${Lg.fmtNum(v, 0)} kg·rep`;
+    return `${Lg.fmtNum(v)}${unit ? ` ${unit}` : ''}`;
+  }
+
+  function viewExerciseDetail() {
+    const d = ui.detail;
+    const ex = EXERCISES[d.exId];
+    const ov = h('section', { class: 'overlay detail', id: 'detail', 'aria-label': ex.name });
+    ov.appendChild(h('div', { class: 'session-top' },
+      h('button', { class: 'icon-btn', 'aria-label': 'Voltar', onclick: () => { ui.detail = null; render(); } }, '←'),
+      h('div', { class: 'grow ex-name', text: ex.name })));
+    const tabs = [['summary', 'Resumo'], ['history', 'Histórico'], ['howto', 'Como fazer']];
+    const body = h('div', { class: 'session-body' },
+      h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([id, l]) => h('button', {
+        class: d.tab === id ? 'on' : '', role: 'tab', 'aria-selected': d.tab === id ? 'true' : 'false',
+        onclick: () => { d.tab = id; render(); },
+      }, l))));
+    ov.appendChild(body);
+    if (d.tab === 'summary') body.appendChild(detailSummary(ex, d));
+    else if (d.tab === 'history') body.appendChild(detailHistory(ex, d));
+    else body.appendChild(detailHowTo(ex, d));
+    return ov;
+  }
+
+  function detailSummary(ex, d) {
+    const wrap = h('div', { class: 'stack mt' });
+    wrap.appendChild(mediaBox(ex, ex.gifs[d.gif] || ex.gifs[0]));
+    wrap.appendChild(h('div', null,
+      h('h2', { text: ex.name }),
+      h('p', { class: 'small muted' }, h('b', { text: 'Principal: ' }), GROUPS[ex.group] || '—',
+        (ex.secondary || []).length ? ` · Secundários: ${ex.secondary.map((g) => GROUPS[g]).join(', ')}` : ''),
+      ex.def ? h('p', { class: 'small suggest-line' }, h('b', { text: 'Sugestão: ' }), `${Lg.prescription(ex.def, ex)} · descanso ${Lg.fmtRest(ex.def.rest)}`) : null));
+    const opts = Lg.metricOptions(ex);
+    if (!d.metric || !opts.some((m) => m[0] === d.metric)) d.metric = opts[0][0];
+    const [mkey, mlabel, munit] = opts.find((m) => m[0] === d.metric);
+    const range = RANGES.find((r) => r[0] === d.range) || RANGES[3];
+    const since = range[2] ? Date.now() - range[2] * Lg.DAY_MS : 0;
+    const pts = Lg.metricSeries(state.history, d.exId, mkey, since);
+    const card = h('div', { class: 'card' });
+    if (!pts.length) {
+      card.append(h('p', { class: 'empty', text: since ? 'Sem registros neste período.' : 'Registre um treino com este exercício para ver sua evolução aqui.' }));
+    } else {
+      const last = pts[pts.length - 1];
+      const isPR = last.pr && Lg.metricSeries(state.history, d.exId, mkey, 0).length > 1;
+      card.append(h('div', { class: 'row between' },
+        h('div', null, h('div', { class: 'big-num', text: fmtMetric(last.v, munit) }), h('div', { class: 'tiny muted', text: `${mlabel} · ${fmtDate(last.t, { day: '2-digit', month: 'short', year: 'numeric' })}` })),
+        isPR ? h('span', { class: 'pr-badge', title: 'Recorde pessoal', text: 'PR' }) : null));
+      card.append(chart(pts, { prs: true }));
+      card.append(h('p', { class: 'tiny muted', text: 'Pontos dourados = recorde pessoal na época.' }));
+    }
+    card.append(h('div', { class: 'chips scroll-x mt' }, opts.map(([k, l]) => h('button', { class: `chip${k === d.metric ? ' on' : ''}`, onclick: () => { d.metric = k; render(); } }, l))));
+    card.append(h('div', { class: 'seg compact mt' }, RANGES.map(([k, l]) => h('button', { class: k === d.range ? 'on' : '', onclick: () => { d.range = k; render(); } }, l))));
+    wrap.appendChild(card);
+    const recs = Lg.personalRecords(state.history, d.exId, ex);
+    if (recs.length) {
+      wrap.appendChild(h('div', { class: 'section-title', text: 'Recordes pessoais' }));
+      wrap.appendChild(h('div', { class: 'card' }, h('table', { class: 'tbl' }, h('tbody', null, recs.map((r) => h('tr', null,
+        h('td', null, h('span', { class: 'pr', text: '★ ' }), r.label),
+        h('td', { class: 'muted', text: fmtDate(r.t, { day: '2-digit', month: 'short', year: '2-digit' }) }),
+        h('td', null, h('b', { text: r.set ? `${numStr(r.set.w)} kg × ${r.set.r}` : fmtMetric(r.value, r.unit) }))))))));
+    }
+    wrap.appendChild(h('button', { class: 'btn primary block', onclick: () => addToPlanFlow(d.exId) }, '+ Adicionar ao treino'));
+    return wrap;
+  }
+
+  function setLine(s, ex) {
+    const t = Lg.typeOf(ex);
+    if (t === 'time') return `${s.sec || 0} s`;
+    if (t === 'distance') return `${numStr(s.w)} kg × ${s.m || 0} m`;
+    if (t === 'interval') return 'Concluído';
+    const w = s.w !== null && s.w !== undefined && (ex.load !== 'bw' || s.w !== 0) ? `${numStr(s.w)} kg × ` : '';
+    const e = e1rmText(s);
+    return `${w}${s.r} reps${e}`;
+  }
+  function e1rmText(s) { const v = Lg.e1rm(s.w, s.r); return v && s.r > 1 ? `  (1RM ≈ ${Lg.fmtNum(v)})` : ''; }
+
+  function detailHistory(ex, d) {
+    const wrap = h('div', { class: 'stack mt' });
+    const list = Lg.exerciseSessions(state.history, d.exId).reverse();
+    if (!list.length) { wrap.appendChild(h('div', { class: 'card empty', text: 'Nenhum treino com este exercício ainda.' })); return wrap; }
+    const opts = Lg.metricOptions(ex);
+    const prKeys = {};
+    for (const [k] of opts) for (const p of Lg.metricSeries(state.history, d.exId, k, 0)) if (p.pr) (prKeys[p.t] = prKeys[p.t] || []).push(k);
+    list.forEach((x) => {
+      const day = findDay(x.session.dayId);
+      const prs = (prKeys[x.t] || []).map((k) => opts.find((o) => o[0] === k)[1]);
+      wrap.appendChild(h('div', { class: 'card' },
+        h('div', { class: 'row between' },
+          h('div', null, h('div', { class: 'ex-name', text: fmtDate(x.t, { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) }),
+            h('div', { class: 'tiny muted', text: day ? `${day.name} – ${day.title}` : '' })),
+          prs.length ? h('span', { class: 'pr-badge sm', text: 'PR' }) : null),
+        h('ol', { class: 'sets-list' }, x.sets.map((s) => h('li', { text: setLine(s, ex) }))),
+        prs.length ? h('p', { class: 'tiny pr', text: `Recorde: ${prs.join(', ')}` }) : null));
+    });
+    return wrap;
+  }
+
+  function detailHowTo(ex, d) {
+    const wrap = h('div', { class: 'stack mt' });
+    if (ex.gifs.length > 1) {
+      const labels = ex.gifs.map((g) => (g === 'flexao' ? 'Flexão' : g === 'burpee' ? 'Burpee' : g === 'salto_caixote' ? 'Caixote' : 'Grupado'));
+      wrap.appendChild(h('div', { class: 'chips' }, labels.map((l, k) => h('button', { class: `chip${k === d.gif ? ' on' : ''}`, onclick: () => { d.gif = k; render(); } }, l))));
+    }
+    wrap.appendChild(mediaBox(ex, ex.gifs[d.gif] || ex.gifs[0]));
+    wrap.appendChild(h('div', { class: 'card' },
+      h('p', { class: 'small muted', text: ex.muscles }),
+      exerciseBadges(ex),
+      h('h3', { class: 'mt', text: 'Execução' }), h('ol', null, ex.cues.map((c) => h('li', { text: c }))),
+      ex.safety ? h('p', { class: 'small' }, h('b', { text: 'Segurança: ' }), ex.safety) : null,
+      ex.def ? h('p', { class: 'small suggest-line' }, h('b', { text: 'Sugestão: ' }), `${Lg.prescription(ex.def, ex)} · descanso ${Lg.fmtRest(ex.def.rest)}`) : null));
+    wrap.appendChild(h('button', { class: 'btn primary block', onclick: () => addToPlanFlow(d.exId) }, '+ Adicionar ao treino'));
+    return wrap;
+  }
+
+  // ================================================================ distribuição muscular
+
+  const BODY_FRONT = [
+    ['ombros', 'ellipse', { cx: 62, cy: 82, rx: 15, ry: 12 }], ['ombros', 'ellipse', { cx: 138, cy: 82, rx: 15, ry: 12 }],
+    ['peito', 'path', { d: 'M100 78 C88 74 74 78 72 92 C72 104 86 110 100 106 Z' }], ['peito', 'path', { d: 'M100 78 C112 74 126 78 128 92 C128 104 114 110 100 106 Z' }],
+    ['biceps', 'ellipse', { cx: 54, cy: 116, rx: 9, ry: 20 }], ['biceps', 'ellipse', { cx: 146, cy: 116, rx: 9, ry: 20 }],
+    ['antebraco', 'ellipse', { cx: 47, cy: 158, rx: 8, ry: 22 }], ['antebraco', 'ellipse', { cx: 153, cy: 158, rx: 8, ry: 22 }],
+    ['core', 'rect', { x: 86, y: 110, width: 28, height: 64, rx: 10 }],
+    ['core', 'ellipse', { cx: 78, cy: 142, rx: 6, ry: 22 }], ['core', 'ellipse', { cx: 122, cy: 142, rx: 6, ry: 22 }],
+    ['quadriceps', 'ellipse', { cx: 84, cy: 232, rx: 15, ry: 42 }], ['quadriceps', 'ellipse', { cx: 116, cy: 232, rx: 15, ry: 42 }],
+    ['panturrilha', 'ellipse', { cx: 84, cy: 318, rx: 8, ry: 24 }], ['panturrilha', 'ellipse', { cx: 116, cy: 318, rx: 8, ry: 24 }],
+  ];
+  const BODY_BACK = [
+    ['costas', 'path', { d: 'M100 66 L76 76 L86 92 L100 98 L114 92 L124 76 Z' }],
+    ['ombros', 'ellipse', { cx: 62, cy: 82, rx: 15, ry: 12 }], ['ombros', 'ellipse', { cx: 138, cy: 82, rx: 15, ry: 12 }],
+    ['costas', 'path', { d: 'M78 94 C74 116 80 140 96 150 L100 104 Z' }], ['costas', 'path', { d: 'M122 94 C126 116 120 140 104 150 L100 104 Z' }],
+    ['costas', 'rect', { x: 90, y: 150, width: 20, height: 24, rx: 6 }],
+    ['triceps', 'ellipse', { cx: 54, cy: 116, rx: 9, ry: 20 }], ['triceps', 'ellipse', { cx: 146, cy: 116, rx: 9, ry: 20 }],
+    ['antebraco', 'ellipse', { cx: 47, cy: 158, rx: 8, ry: 22 }], ['antebraco', 'ellipse', { cx: 153, cy: 158, rx: 8, ry: 22 }],
+    ['gluteos', 'ellipse', { cx: 86, cy: 194, rx: 16, ry: 15 }], ['gluteos', 'ellipse', { cx: 114, cy: 194, rx: 16, ry: 15 }],
+    ['posterior', 'ellipse', { cx: 85, cy: 246, rx: 14, ry: 34 }], ['posterior', 'ellipse', { cx: 115, cy: 246, rx: 14, ry: 34 }],
+    ['panturrilha', 'ellipse', { cx: 84, cy: 314, rx: 10, ry: 26 }], ['panturrilha', 'ellipse', { cx: 116, cy: 314, rx: 10, ry: 26 }],
+  ];
+
+  function heat(v) {
+    if (!(v > 0)) return 'var(--body-0)';
+    const k = Math.min(1, v / 16);
+    const a = [74, 50, 56]; const b = [226, 69, 79];
+    const c = a.map((x, i) => Math.round(x + (b[i] - x) * k));
+    return `rgb(${c[0]},${c[1]},${c[2]})`;
+  }
+
+  function bodySvg(parts, groups, label) {
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 200 360');
+    svg.setAttribute('class', 'body-map');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', label);
+    const mk = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v)); svg.appendChild(e); return e; };
+    const base = { fill: 'var(--body-base)' };
+    mk('circle', { cx: 100, cy: 34, r: 20, ...base });
+    mk('rect', { x: 92, y: 50, width: 16, height: 16, rx: 4, ...base });
+    mk('path', { d: 'M62 70 L138 70 L132 178 L68 178 Z', ...base });
+    mk('rect', { x: 68, y: 174, width: 64, height: 30, rx: 12, ...base });
+    for (const s of [-1, 1]) {
+      const cx = 100 + s * 46;
+      mk('rect', { x: cx - 11, y: 90, width: 22, height: 120, rx: 11, ...base, transform: `rotate(${s * -6} ${cx} 90)` });
+      mk('rect', { x: 100 + s * 16 - 15, y: 186, width: 30, height: 158, rx: 14, ...base });
+      mk('ellipse', { cx: 100 + s * 18, cy: 350, rx: 12, ry: 6, ...base });
+    }
+    for (const [g, tag, attrs] of parts) {
+      const e = mk(tag, { ...attrs, fill: heat(groups[g]), class: 'm', 'data-g': g });
+      const t = document.createElementNS(NS, 'title');
+      t.textContent = `${GROUPS[g]}: ${Lg.fmtNum(groups[g] || 0)} séries`;
+      e.appendChild(t);
+    }
+    return svg;
+  }
+
+  function viewBody() {
+    const wrap = h('main', { class: 'screen' }, pageTop('Distribuição muscular'));
+    const { start, end } = Lg.weekBounds(Date.now(), ui.week || 0);
+    const data = Lg.muscleSets(state.history, EXERCISES, start, end);
+    const endDay = new Date(end - 1);
+    const label = `${fmtDate(start, { day: '2-digit', month: 'short' })} – ${fmtDate(endDay.getTime(), { day: '2-digit', month: 'short', year: 'numeric' })}`;
+    wrap.appendChild(h('div', { class: 'card' },
+      h('div', { class: 'row between' },
+        h('button', { class: 'icon-btn', 'aria-label': 'Semana anterior', onclick: () => { ui.week = (ui.week || 0) - 1; render(); } }, '‹'),
+        h('div', { class: 'ex-name', text: label }),
+        h('button', { class: 'icon-btn', 'aria-label': 'Próxima semana', disabled: (ui.week || 0) >= 0, onclick: () => { ui.week = Math.min(0, (ui.week || 0) + 1); render(); } }, '›')),
+      h('div', { class: 'week-strip mt' }, ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map((l, i) => {
+        const dt = new Date(start); dt.setDate(dt.getDate() + i);
+        return h('div', { class: `wd${data.days.includes(i) ? ' on' : ''}` }, h('span', { class: 'tiny muted', text: l }), h('b', { text: String(dt.getDate()) }));
+      }))));
+    wrap.appendChild(h('div', { class: 'card mt body-wrap' },
+      h('div', { class: 'body-col' }, bodySvg(BODY_FRONT, data.groups, 'Corpo de frente'), h('span', { class: 'tiny muted', text: 'Frente' })),
+      h('div', { class: 'body-col' }, bodySvg(BODY_BACK, data.groups, 'Corpo de costas'), h('span', { class: 'tiny muted', text: 'Costas' }))));
+    wrap.appendChild(h('div', { class: 'legend tiny muted mt' }, h('span', { text: '0' }), h('i', { class: 'legend-bar' }), h('span', { text: '16+ séries' })));
+    const order = Object.keys(GROUPS).filter((g) => g !== 'cardio' && g !== 'potencia');
+    const rows = order.map((g) => {
+      const v = data.groups[g] || 0;
+      const cls = v === 0 ? 'zero' : v < 10 ? 'mid' : v <= 20 ? 'ok' : 'high';
+      return h('tr', null, h('td', null, h('i', { class: 'dot', 'aria-hidden': 'true' })), h('td', { text: GROUPS[g] }), h('td', null, h('b', { class: `vol-n ${cls}`, text: Lg.fmtNum(v) })));
+    });
+    rows.forEach((r, i) => { r.firstChild.firstChild.style.background = heat(data.groups[order[i]]); });
+    wrap.appendChild(h('div', { class: 'card mt' },
+      h('table', { class: 'tbl' }, h('tbody', null,
+        h('tr', null, h('td', null), h('td', null, h('b', { text: 'Total de séries' })), h('td', null, h('b', { text: String(data.total) }))), rows)),
+      h('p', { class: 'tiny muted mt', text: 'Séries concluídas na semana. Músculo principal conta 1 série; secundário, meia. Meta para hipertrofia: ~10–20 por músculo.' })));
+    return wrap;
+  }
 
   // ================================================================ programas, biblioteca, editor, guia
 
@@ -1427,6 +1634,7 @@
   window.dojoBack = function () {
     if (ui.modals.length) { closeModal(); return true; }
     if (ui.runner) { confirmModal('Parar o timer?', '', 'Parar', () => ui.runner && ui.runner.stop()); return true; }
+    if (ui.detail) { ui.detail = null; render(); return true; }
     if (ui.sessionOpen) { ui.sessionOpen = false; render(); return true; }
     if (ui.page) { closePage(); return true; }
     if (ui.tab !== 'home') { ui.tab = 'home'; render(); return true; }

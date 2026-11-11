@@ -127,3 +127,36 @@ test('vídeos do manifesto existem e têm crédito e licença', () => {
     assert.ok(m.credit && m.license, `${id}: crédito/licença`);
   }
 });
+
+test('métricas, recordes e distribuição muscular', () => {
+  const S = (w, r) => ({ w, r, sec: null, m: null, done: true });
+  const day = new Date(2026, 10, 11, 10).getTime(); // quarta
+  const hist = [
+    { id: 'a', dayId: 'd1', startedAt: day - 7 * L.DAY_MS, finishedAt: day - 7 * L.DAY_MS + 1, entries: [{ uid: 'u', ex: 'agachamento', sets: [S(90, 8), S(90, 6)] }] },
+    { id: 'b', dayId: 'd1', startedAt: day, finishedAt: day + 1, entries: [
+      { uid: 'u', ex: 'agachamento', sets: [S(100, 6), S(100, 5), { ...S(120, 1), done: false }] },
+      { uid: 'v', ex: 'supino_reto', sets: [S(60, 10)] }] },
+  ];
+  assert.equal(L.metricValue('heaviest', [S(100, 6), S(90, 8)]), 100);
+  assert.equal(L.metricValue('volume', [S(100, 6), S(90, 8)]), 1320);
+  assert.equal(L.metricValue('best_set', [S(100, 6), S(90, 8)]), 720);
+  const pts = L.metricSeries(hist, 'agachamento', 'heaviest', 0);
+  assert.deepEqual(pts.map((p) => [p.v, p.pr]), [[90, true], [100, true]]);
+  assert.equal(L.metricSeries(hist, 'agachamento', 'heaviest', day - 1).length, 1, 'filtro de período');
+  const recs = L.personalRecords(hist, 'agachamento', D.EXERCISES.agachamento);
+  const bs = recs.find((r) => r.key === 'best_set');
+  assert.deepEqual(bs.set, { w: 90, r: 8 }, '90×8 = 720 supera 100×6 = 600');
+  assert.equal(recs.find((r) => r.key === 'heaviest').value, 100, 'série não concluída não conta');
+  const wk = L.weekBounds(day, 0);
+  assert.equal(new Date(wk.start).getDay(), 1, 'semana começa na segunda');
+  assert.ok(day >= wk.start && day < wk.end);
+  const m = L.muscleSets(hist, D.EXERCISES, wk.start, wk.end);
+  assert.equal(m.total, 3);
+  assert.equal(m.groups.quadriceps, 2);
+  assert.equal(m.groups.peito, 1);
+  assert.equal(m.groups.triceps, 0.5);
+  assert.deepEqual(m.days, [2]);
+  const prev = L.weekBounds(day, -1);
+  assert.equal(L.muscleSets(hist, D.EXERCISES, prev.start, prev.end).total, 2);
+  assert.deepEqual(L.metricOptions(D.EXERCISES.prancha).map((o) => o[0]), ['best_time', 'total_time']);
+});

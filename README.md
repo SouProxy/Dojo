@@ -25,7 +25,8 @@ Um **questionário** (dias por semana, experiência, local e objetivo) recomenda
 - **Guia de treino** baseado em evidências: volume, frequência, divisões, reps/descanso, progressão, deload, aquecimento e segurança, com fontes
 - **Timer de descanso automático** (bipe + vibração, −15 s / +15 s / pular), **cronômetro, regressivo e intervalos**
 - **Progressão dupla automática**: fechou todas as séries no topo da faixa → sugere +2,5–5% de carga e já preenche
-- **Progresso**: gráfico por exercício (1RM estimado, reps, tempo), recordes e histórico
+- **Tela de cada exercício** com abas Resumo / Histórico / Como fazer: gráfico por métrica (maior carga, 1RM estimado, melhor série, volume, reps, tempo), período (1 mês a tudo), selo de recorde e recordes pessoais
+- **Distribuição muscular semanal**: mapa do corpo (frente e costas) pintado pelas séries de cada músculo, dias treinados e tabela por grupo
 - **Desafio do personagem**: barra fixa com carga, reteste a cada 4 semanas
 - Backup em arquivo (exportar/importar), dados só no aparelho
 

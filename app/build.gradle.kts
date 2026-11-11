@@ -16,7 +16,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = (System.getenv("DOJO_VERSION_CODE") ?: "1").toInt()
-        versionName = "1.2.0"
+        versionName = "1.3.0"
     }
 
     signingConfigs {

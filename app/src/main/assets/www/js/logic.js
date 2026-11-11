@@ -232,6 +232,119 @@
     return Math.ceil((startOfDay(ts) - startOfDay(nowTs)) / DAY_MS);
   }
 
+
+  // ------------------------------------------------------------ métricas por exercício
+
+  /** Métricas disponíveis para um exercício (chave, rótulo, unidade). */
+  function metricOptions(ex) {
+    const t = typeOf(ex);
+    if (t === 'time') return [['best_time', 'Melhor tempo', 's'], ['total_time', 'Tempo total', 's']];
+    if (t === 'interval') return [['rounds', 'Tiros completos', '']];
+    if (t === 'distance') return [['heaviest', 'Maior carga', 'kg'], ['best_distance', 'Maior distância', 'm']];
+    if (ex.load === 'none') return [['best_reps', 'Mais reps (série)', 'reps'], ['total_reps', 'Total de reps', 'reps']];
+    const out = [['heaviest', 'Maior carga', 'kg'], ['e1rm', '1RM estimado', 'kg'], ['best_set', 'Melhor série', 'kg×reps'], ['volume', 'Volume da sessão', 'kg']];
+    if (ex.load === 'bw' || t === 'max') out.push(['best_reps', 'Mais reps (série)', 'reps'], ['total_reps', 'Total de reps', 'reps']);
+    return out;
+  }
+
+  /** Valor de uma métrica para as séries concluídas de uma sessão. */
+  function metricValue(key, sets) {
+    const w = (s) => (typeof s.w === 'number' ? s.w : 0);
+    switch (key) {
+      case 'heaviest': return maxOf(sets.filter((s) => s.r > 0 || s.m > 0), (s) => s.w);
+      case 'e1rm': return maxOf(sets, (s) => e1rm(s.w, s.r));
+      case 'best_set': return maxOf(sets, (s) => (w(s) > 0 && s.r > 0 ? w(s) * s.r : null));
+      case 'volume': { const v = sets.reduce((a, s) => a + (w(s) > 0 && s.r > 0 ? w(s) * s.r : 0), 0); return v || null; }
+      case 'best_reps': return maxOf(sets, (s) => s.r);
+      case 'total_reps': { const v = sets.reduce((a, s) => a + (s.r || 0), 0); return v || null; }
+      case 'best_time': return maxOf(sets, (s) => s.sec);
+      case 'total_time': { const v = sets.reduce((a, s) => a + (s.sec || 0), 0); return v || null; }
+      case 'best_distance': return maxOf(sets, (s) => s.m);
+      case 'rounds': return sets.length;
+      default: return null;
+    }
+  }
+
+  /** Sessões de um exercício (mais antigas primeiro) com suas séries concluídas. */
+  function exerciseSessions(history, exId) {
+    const out = [];
+    for (const s of (history || []).slice().sort((a, b) => a.startedAt - b.startedAt)) {
+      const sets = [];
+      for (const e of s.entries || []) if (e.ex === exId) sets.push(...doneSets(e));
+      if (sets.length) out.push({ session: s, t: s.startedAt, sets });
+    }
+    return out;
+  }
+
+  /** Série temporal de uma métrica; marca os pontos que bateram recorde. */
+  function metricSeries(history, exId, key, sinceTs) {
+    let best = -Infinity;
+    const pts = [];
+    for (const x of exerciseSessions(history, exId)) {
+      const v = metricValue(key, x.sets);
+      if (v === null || v === undefined) continue;
+      const pr = v > best;
+      if (pr) best = v;
+      if (!sinceTs || x.t >= sinceTs) pts.push({ t: x.t, v: Math.round(v * 10) / 10, pr });
+    }
+    return pts;
+  }
+
+  /** Recordes pessoais de um exercício: [{key, label, unit, value, t}]. */
+  function personalRecords(history, exId, ex) {
+    return metricOptions(ex).map(([key, label, unit]) => {
+      let best = null;
+      for (const x of exerciseSessions(history, exId)) {
+        const v = metricValue(key, x.sets);
+        if (v !== null && v !== undefined && (best === null || v > best.value)) best = { value: Math.round(v * 10) / 10, t: x.t };
+      }
+      if (best && key === 'best_set') {
+        for (const x of exerciseSessions(history, exId)) {
+          if (x.t !== best.t) continue;
+          const top = x.sets.reduce((a, s) => ((s.w || 0) * (s.r || 0) > (a ? (a.w || 0) * (a.r || 0) : -1) ? s : a), null);
+          if (top) best.set = { w: top.w, r: top.r };
+        }
+      }
+      return best ? { key, label, unit, value: best.value, t: best.t, set: best.set } : null;
+    }).filter(Boolean);
+  }
+
+  // ------------------------------------------------------------ semana e distribuição muscular
+
+  /** Início (segunda 00:00) e fim da semana que contém ts, deslocada em `offset` semanas. */
+  function weekBounds(ts, offset) {
+    const d = new Date(ts);
+    d.setHours(0, 0, 0, 0);
+    const dow = (d.getDay() + 6) % 7; // 0 = segunda
+    d.setDate(d.getDate() - dow + 7 * (offset || 0));
+    const start = d.getTime();
+    const e = new Date(start);
+    e.setDate(e.getDate() + 7);
+    return { start, end: e.getTime() };
+  }
+
+  /** Séries concluídas por grupo muscular entre [start, end). Principal = 1, secundário = 0,5. */
+  function muscleSets(history, exercises, start, end) {
+    const groups = {};
+    const days = new Set();
+    let total = 0;
+    for (const s of history || []) {
+      if (s.startedAt < start || s.startedAt >= end) continue;
+      let any = false;
+      for (const e of s.entries || []) {
+        const ex = exercises[e.ex];
+        const n = doneSets(e).length;
+        if (!ex || !n) continue;
+        any = true;
+        total += n;
+        if (ex.group) groups[ex.group] = (groups[ex.group] || 0) + n;
+        for (const g of ex.secondary || []) groups[g] = (groups[g] || 0) + n / 2;
+      }
+      if (any) days.add((new Date(s.startedAt).getDay() + 6) % 7);
+    }
+    return { groups, total, days: [...days].sort() };
+  }
+
   // ------------------------------------------------------------ backup
 
   const MAX_SESSIONS = 5000;
@@ -329,6 +442,7 @@
   const api = {
     typeOf, fmtClock, fmtRest, fmtKg, fmtNum, prescription, roundUp, doneSets, lastEntry, suggest, e1rm,
     sessionStats, metric, series, prs, weekNumber, nextDayIndex, daysUntil, validateBackup, upgradeBackup, validPlan, weeklyVolume, newItem, DAY_MS,
+    metricOptions, metricValue, exerciseSessions, metricSeries, personalRecords, weekBounds, muscleSets,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.DojoLogic = api;
