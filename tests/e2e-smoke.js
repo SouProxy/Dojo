@@ -35,6 +35,14 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   const shot = async (name) => { if (OUT) await page.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: false }); };
 
   await page.goto(base);
+  // Primeiro uso: questionário de programa
+  await page.waitForSelector('text=Bem-vindo ao Dojo');
+  assert(await page.locator('.card.hero >> text=Full Body 3x – Iniciante').count() === 1, 'questionário recomenda Full Body para iniciante 3x');
+  await page.click('button.chip:text-is("4")');
+  await page.click('button.chip:text-is("Ganhar força")');
+  assert(await page.locator('.card.hero >> text=Upper/Lower 4x').count() === 1, 'recomendação muda com as respostas (4 dias, força → Upper/Lower)');
+  await shot('00-questionario');
+  await page.click('text=Continuar com Toji');
   await page.waitForSelector('text=Força pesada');
   assert(await page.locator('.card.hero >> text=Próximo · Dia 1').count() === 1, 'Dia 1 sugerido como próximo treino');
   const gifsOk = await page.$$eval('img', (imgs) => imgs.every((i) => i.complete && i.naturalWidth > 0));
@@ -117,6 +125,103 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   await page.click('.modal button:text-is("Importar")');
   await page.waitForSelector('#toast:not(.hidden)');
   assert((await page.locator('#toast').textContent()).includes('inválido'), 'backup malformado rejeitado');
+
+  // Biblioteca: busca e filtros
+  await page.click('nav >> text=Exercícios');
+  await page.waitForSelector('input[type=search]');
+  const total = await page.locator('main .card.tap').count();
+  assert(total >= 60, `biblioteca com ${total} exercícios`);
+  await page.click('button.chip:text-is("Posterior de coxa")');
+  const post = await page.locator('main .card.tap .ex-name').allTextContents();
+  assert(post.includes('Cadeira flexora (sentado)') && !post.includes('Supino reto com barra'), 'filtro por grupo muscular');
+  await page.click('button.chip:text-is("Todos") >> nth=0');
+  await page.fill('input[type=search]', 'rosca');
+  assert(await page.locator('main .card.tap').count() >= 5, 'busca por texto (rosca)');
+  await shot('09-biblioteca');
+  const imgsOk = await page.$$eval('main img', (imgs) => Promise.all(imgs.map((i) => (i.decode ? i.decode().then(() => i.naturalWidth > 0, () => false) : true))));
+  assert(imgsOk.every(Boolean), 'GIFs da biblioteca carregam');
+  await page.click('main .card.tap >> text=Rosca Scott');
+  await page.waitForSelector('.modal >> text=Bíceps');
+  await shot('10-exercicio-novo');
+  await page.click('.modal button:text-is("+ Adicionar ao treino")');
+  await page.click('.modal button:has-text("Dia 2")');
+  await page.waitForSelector('#toast:has-text("Rosca Scott adicionado")');
+  const d2 = await page.evaluate(() => JSON.parse(localStorage.getItem('dojo.v1')).plan.days[1].items.map((i) => i.ex));
+  assert(d2.includes('rosca_scott'), 'exercício adicionado ao Dia 2');
+
+  // Editor
+  await page.click('nav >> text=Treinos');
+  await page.click('main button:text-is("Editar")');
+  await page.waitForSelector('text=Volume semanal por músculo');
+  await shot('11-editor');
+  await page.click('main .card:has(input[value="Dia 2"]) button[aria-label="Remover Rosca Scott"]');
+  const d2b = await page.evaluate(() => JSON.parse(localStorage.getItem('dojo.v1')).plan.days[1].items.map((i) => i.ex));
+  assert(!d2b.includes('rosca_scott'), 'exercício removido no editor');
+  await page.click('main .card:has(input[value="Dia 1"]) button:text-is("+ Exercício")');
+  await page.waitForSelector('text=Adicionar em Dia 1');
+  await page.fill('input[type=search]', 'panturrilha sentado');
+  await page.click('main .card.tap >> text=Panturrilha sentado');
+  await page.waitForSelector('text=Editar treino');
+  const d1 = await page.evaluate(() => JSON.parse(localStorage.getItem('dojo.v1')).plan.days[0].items.map((i) => i.ex));
+  assert(d1[d1.length - 1] === 'panturrilha_sentado', 'seletor da biblioteca adiciona e volta ao editor');
+
+  // Guia
+  await page.evaluate(() => window.dojoBack());
+  await page.click('text=📘 Guia de treino');
+  await page.waitForSelector('text=Quantas séries por semana?');
+  assert(await page.locator('.vol-row').count() >= 10, 'guia mostra volume semanal por músculo');
+  await shot('12-guia');
+  await page.evaluate(() => window.dojoBack());
+
+  // Trocar programa com treino em andamento é bloqueado
+  await page.click('main button:text-is("Trocar")');
+  await page.click('.card:has-text("Upper/Lower 4x") button:text-is("Usar este")');
+  await page.click('.modal button:text-is("Usar")');
+  await page.waitForSelector('#toast:has-text("Finalize ou descarte")');
+  assert(true, 'troca de programa bloqueada com treino em andamento');
+  await page.evaluate(() => window.dojoBack());
+  await page.click('text=Toque para continuar.');
+  await page.click('#session >> text=Descartar');
+  await page.click('.modal button:text-is("Descartar")');
+
+  // Trocar programa e voltar: edições preservadas
+  await page.click('main button:text-is("Trocar")');
+  await page.click('.card:has-text("Upper/Lower 4x") button:text-is("Usar este")');
+  await page.click('.modal button:text-is("Usar")');
+  await page.waitForSelector('text=Superior A');
+  await shot('13-upper-lower');
+  await page.click('main button:text-is("Trocar")');
+  await page.click('.card:has-text("Toji") button:text-is("Usar este")');
+  await page.click('.modal button:text-is("Usar")');
+  await page.waitForSelector('text=Força pesada');
+  const back = await page.evaluate(() => JSON.parse(localStorage.getItem('dojo.v1')).plan.days[0].items.map((i) => i.ex));
+  assert(back.includes('panturrilha_sentado'), 'edições do programa preservadas ao trocar e voltar');
+
+  // Treino próprio do zero
+  await page.click('main button:text-is("Trocar")');
+  await page.click('text=+ Montar meu próprio treino do zero');
+  await page.waitForSelector('text=Nenhum exercício. Adicione abaixo.');
+  await page.click('main button:text-is("+ Exercício")');
+  await page.click('main .card.tap >> text=Supino reto com barra');
+  await page.click('main button:text-is("+ Adicionar treino (dia)")');
+  assert(await page.locator('main input[value="Treino B"]').count() === 1, 'novo dia criado');
+  await page.evaluate(() => window.dojoBack());
+  assert(await page.locator('.card.hero >> text=Supino reto com barra').count() === 1, 'treino próprio aparece como próximo');
+
+  // Backup v2 exportado é aceito na importação
+  const bk = await page.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem('dojo.v1'));
+    return JSON.stringify({ app: 'dojo', version: 2, plans: Object.assign({}, st.plans, { [st.plan.id]: st.plan }), programId: st.plan.id, history: st.history, challenge: st.challenge, settings: st.settings });
+  });
+  await page.click('nav >> text=Ajustes');
+  await page.click('text=⇧ Importar backup');
+  await page.fill('.modal textarea', bk);
+  await page.click('.modal button:text-is("Importar")');
+  const confirmShown = await page.locator('.modal h2:text-is("Importar backup?")').count();
+  if (!confirmShown) throw new Error(`import recusado: ${await page.locator("#toast").textContent()}`);
+  await page.click('.modal button:text-is("Importar")');
+  await page.waitForSelector('#toast:has-text("Backup importado")');
+  assert(true, 'backup v2 importado');
 
   // Layout: sem rolagem horizontal
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);

@@ -221,7 +221,8 @@
   }
 
   function nextDayIndex(plan, history) {
-    const done = (history || []).filter((s) => s.finishedAt).sort((a, b) => b.startedAt - a.startedAt);
+    const ids = new Set(plan.days.map((d) => d.id));
+    const done = (history || []).filter((s) => s.finishedAt && ids.has(s.dayId)).sort((a, b) => b.startedAt - a.startedAt);
     if (!done.length) return 0;
     const idx = plan.days.findIndex((d) => d.id === done[0].dayId);
     return idx < 0 ? 0 : (idx + 1) % plan.days.length;
@@ -246,7 +247,7 @@
 
   function validSession(s) {
     return s && typeof s === 'object' && isStr(s.id, 64) && isStr(s.dayId, 32) && isNum(s.startedAt) &&
-      isNumOrNull(s.finishedAt) && Array.isArray(s.entries) && s.entries.length <= 100 &&
+      (s.finishedAt === null || s.finishedAt === undefined || isNum(s.finishedAt)) && Array.isArray(s.entries) && s.entries.length <= 100 &&
       s.entries.every((e) => e && isStr(e.uid, 64) && isStr(e.ex, 64) && Array.isArray(e.sets) && e.sets.length <= 50 && e.sets.every(validSet));
   }
 
@@ -256,33 +257,78 @@
   }
 
   function validPlan(p) {
-    return p && Array.isArray(p.days) && p.days.length >= 1 && p.days.length <= 7 &&
+    return p && typeof p === 'object' && (p.id === undefined || isStr(p.id, 40)) && (p.name === undefined || isStr(p.name, 80)) &&
+      Array.isArray(p.days) && p.days.length >= 1 && p.days.length <= 7 &&
       p.days.every((d) => d && isStr(d.id, 32) && isStr(d.name, 60) && isStr(d.title, 80) &&
-        (d.mode === 'normal' || d.mode === 'circuit') && Array.isArray(d.items) && d.items.length <= 30 && d.items.every(validItem));
+        (d.mode === 'normal' || d.mode === 'circuit') && (d.rounds === undefined || (isNum(d.rounds) && d.rounds >= 1 && d.rounds <= 8)) &&
+        Array.isArray(d.items) && d.items.length <= 30 && d.items.every(validItem));
+  }
+
+  /** Converte backup v1 (um plano só) para v2 (vários planos salvos). */
+  function upgradeBackup(obj) {
+    if (obj && obj.version === 1 && obj.plan) {
+      const id = (obj.plan && typeof obj.plan.id === 'string') ? obj.plan.id : 'toji';
+      return Object.assign({}, obj, { version: 2, plans: { [id]: Object.assign({ id }, obj.plan) }, programId: id, plan: undefined });
+    }
+    return obj;
   }
 
   /** Valida um backup importado. Nunca confia no conteúdo do arquivo. */
-  function validateBackup(obj, exercises) {
-    if (!obj || typeof obj !== 'object' || obj.app !== 'dojo') return { ok: false, error: 'Arquivo não é um backup do Dojo.' };
-    if (obj.version !== 1) return { ok: false, error: 'Versão de backup não suportada.' };
+  function validateBackup(raw, exercises) {
+    if (!raw || typeof raw !== 'object' || raw.app !== 'dojo') return { ok: false, error: 'Arquivo não é um backup do Dojo.' };
+    if (raw.version !== 1 && raw.version !== 2) return { ok: false, error: 'Versão de backup não suportada.' };
+    if (raw.version === 1 && !validPlan(raw.plan)) return { ok: false, error: 'Plano inválido no backup.' };
+    const obj = upgradeBackup(raw);
+    if (!obj.plans || typeof obj.plans !== 'object' || Array.isArray(obj.plans)) return { ok: false, error: 'Planos inválidos no backup.' };
+    const entries = Object.entries(obj.plans);
+    if (!entries.length || entries.length > 30) return { ok: false, error: 'Planos inválidos no backup.' };
+    for (const [k, p] of entries) {
+      if (!isStr(k, 40) || !/^[a-z0-9_-]+$/i.test(k) || !validPlan(p) || p.id !== k) return { ok: false, error: 'Plano inválido no backup.' };
+      if (exercises && !p.days.every((d) => d.items.every((i) => Object.prototype.hasOwnProperty.call(exercises, i.ex)))) {
+        return { ok: false, error: 'Backup contém exercícios desconhecidos.' };
+      }
+    }
+    if (!isStr(obj.programId, 40) || !Object.prototype.hasOwnProperty.call(obj.plans, obj.programId)) return { ok: false, error: 'Programa ativo inválido.' };
     if (!Array.isArray(obj.history) || obj.history.length > MAX_SESSIONS || !obj.history.every(validSession)) {
       return { ok: false, error: 'Histórico inválido no backup.' };
-    }
-    if (!validPlan(obj.plan)) return { ok: false, error: 'Plano inválido no backup.' };
-    if (exercises && !obj.plan.days.every((d) => d.items.every((i) => Object.prototype.hasOwnProperty.call(exercises, i.ex)))) {
-      return { ok: false, error: 'Backup contém exercícios desconhecidos.' };
     }
     if (!Array.isArray(obj.challenge) || !obj.challenge.every((c) => c && isNum(c.t) && isNumOrNull(c.w) && isNumOrNull(c.r))) {
       return { ok: false, error: 'Registros do desafio inválidos.' };
     }
     const st = obj.settings || {};
     if (typeof st !== 'object' || !isNumOrNull(st.bodyweight) || !isNumOrNull(st.step)) return { ok: false, error: 'Configurações inválidas.' };
-    return { ok: true };
+    return { ok: true, data: obj };
+  }
+
+  /** Séries semanais por grupo muscular (principal = 1, secundário = 0,5). */
+  function weeklyVolume(plan, exercises) {
+    const out = {};
+    for (const d of plan.days) {
+      for (const it of d.items) {
+        const ex = exercises[it.ex];
+        if (!ex || !ex.group) continue;
+        const sets = d.mode === 'circuit' ? (d.rounds || 1) : it.sets;
+        out[ex.group] = (out[ex.group] || 0) + sets;
+        for (const g of ex.secondary || []) out[g] = (out[g] || 0) + sets / 2;
+      }
+    }
+    return out;
+  }
+
+  /** Novo item de plano com a recomendação padrão do exercício. */
+  function newItem(exId, ex, dayId, existing) {
+    const def = ex.def || { sets: 3, min: 8, max: 12, rest: 90 };
+    let n = 1;
+    const taken = new Set((existing || []).map((i) => i.uid));
+    while (taken.has(`${dayId}-u${n}-${exId}`)) n += 1;
+    const item = { uid: `${dayId}-u${n}-${exId}`, ex: exId, sets: def.sets, min: def.min, max: def.max, rest: def.rest };
+    if (typeOf(ex) === 'interval') item.interval = { work: 20, rest: 40, reps: 6 };
+    return item;
   }
 
   const api = {
     typeOf, fmtClock, fmtRest, fmtKg, fmtNum, prescription, roundUp, doneSets, lastEntry, suggest, e1rm,
-    sessionStats, metric, series, prs, weekNumber, nextDayIndex, daysUntil, validateBackup, validPlan, DAY_MS,
+    sessionStats, metric, series, prs, weekNumber, nextDayIndex, daysUntil, validateBackup, upgradeBackup, validPlan, weeklyVolume, newItem, DAY_MS,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.DojoLogic = api;

@@ -14,6 +14,8 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).parent))
 
 from exercises import G, SIDE  # noqa: E402
+from exercises2 import SIDE2  # noqa: E402
+import front  # noqa: E402
 from rig import (ACCENT, FAR, NEAR, STEEL, STEEL_DARK, THICK, Canvas, add, draw_figure,  # noqa: E402
                  ease, save_gif, solve, timeline, vdown)
 
@@ -30,7 +32,7 @@ def render_side(spec):
         j = solve(pose)
         if spec.get("back"):
             spec["back"](cv, j, k)
-        draw_figure(cv, j, hl=spec.get("hl", ()), far_offset=spec.get("far_offset", (-6, -3)))
+        draw_figure(cv, j, hl=spec.get("hl", ()), far_offset=spec.get("far_offset", (-6, -3)), ground=spec.get("ground", G))
         if spec.get("front"):
             spec["front"](cv, j, k)
         frames.append(cv.frame())
@@ -90,17 +92,21 @@ def render_lateral_raise():
 
 def build(names=None):
     OUT.mkdir(parents=True, exist_ok=True)
-    jobs = dict(SIDE)
-    jobs["elevacao_lateral"] = None
+    jobs = {}
+    for k, v in {**SIDE, **SIDE2}.items():
+        jobs[k] = ("side", v)
+    for k, v in front.FRONT.items():
+        jobs[k] = ("front", v)
     out = {}
     for name in sorted(jobs):
         if names and name not in names:
             continue
-        frames, dur = render_lateral_raise() if name == "elevacao_lateral" else render_side(jobs[name])
+        kind, spec = jobs[name]
+        frames, dur = render_side(spec) if kind == "side" else front.render(spec)
         path = OUT / f"{name}.gif"
         save_gif(frames, path, duration=dur)
         out[name] = frames
-        print(f"{name:18s} {len(frames):3d} quadros  {path.stat().st_size / 1024:6.1f} KB")
+        print(f"{name:26s} {len(frames):3d} quadros  {path.stat().st_size / 1024:6.1f} KB")
     return out
 
 

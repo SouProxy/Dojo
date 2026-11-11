@@ -252,31 +252,155 @@ class Canvas:
         return self.img.resize((W // SS, H // SS), Image.LANCZOS)
 
 
-def draw_figure(cv: Canvas, j: Joints, hl=(), far_offset=(0, 0)):
-    """Desenha a figura. ``hl`` = segmentos destacados: torso, ua, fa, th, sh."""
-    def col(seg, near=True):
-        if seg in hl:
-            return ACCENT if near else ACCENT_FAR
-        return NEAR if near else FAR
+SKIN = NEAR
+SKIN_FAR = FAR
+SHOE = (60, 64, 76)
+SHOE_FAR = (44, 47, 56)
+SHADOW = (14, 15, 19)
 
+# Raios (início, fim) de cada segmento: dá volume à figura.
+RADII = dict(torso=(17, 23), th=(16, 11), sh=(12, 7), ua=(12, 9), fa=(9.5, 7))
+
+# Músculos destacáveis: segmento, lado ('front'/'back'), trecho [a, b] e escala do raio.
+MUSCLES = {
+    "chest": ("torso", "front", 0.55, 0.92, 0.62),
+    "abs": ("torso", "front", 0.10, 0.55, 0.55),
+    "back": ("torso", "back", 0.35, 0.92, 0.66),
+    "lowback": ("torso", "back", 0.05, 0.40, 0.5),
+    "trap": ("torso", "back", 0.82, 1.04, 0.5),
+    "quad": ("th", "front", 0.12, 0.86, 0.66),
+    "ham": ("th", "back", 0.14, 0.86, 0.62),
+    "calf": ("sh", "back", 0.10, 0.55, 0.78),
+    "shin": ("sh", "front", 0.10, 0.70, 0.55),
+    "bi": ("ua", "front", 0.18, 0.88, 0.66),
+    "tri": ("ua", "back", 0.15, 0.88, 0.66),
+    "fa": ("fa", "front", 0.05, 0.70, 0.66),
+}
+LEGACY = {"th": ("quad",), "sh": ("calf",), "ua": ("bi",), "fa": ("fa",), "torso": ("chest", "abs")}
+
+
+def _unit(v):
+    n = math.hypot(v[0], v[1]) or 1.0
+    return (v[0] / n, v[1] / n)
+
+
+def tapered(cv, a, b, ra, rb, color):
+    """Membro com espessura variável (cone com pontas arredondadas)."""
+    d = _unit(sub(b, a))
+    nrm = (-d[1], d[0])
+    pts = [add(a, (nrm[0] * ra, nrm[1] * ra)), add(b, (nrm[0] * rb, nrm[1] * rb)),
+           add(b, (-nrm[0] * rb, -nrm[1] * rb)), add(a, (-nrm[0] * ra, -nrm[1] * ra))]
+    cv.poly(pts, color)
+    cv.circle(a, ra, color)
+    cv.circle(b, rb, color)
+
+
+def _segment_points(j, seg, near):
+    sfx = "n" if near else "f"
+    return {
+        "torso": (j.hip, j.neck),
+        "th": (j.hip, getattr(j, "knee_" + sfx)),
+        "sh": (getattr(j, "knee_" + sfx), getattr(j, "ankle_" + sfx)),
+        "ua": (j.neck, getattr(j, "elbow_" + sfx)),
+        "fa": (getattr(j, "elbow_" + sfx), getattr(j, "hand_" + sfx)),
+    }[seg]
+
+
+def _muscle(cv, j, name, near, offset):
+    seg, side, ka, kb, sc = MUSCLES[name]
+    a, b = _segment_points(j, seg, near)
+    a, b = add(a, offset), add(b, offset)
+    d = _unit(sub(b, a))
+    # "frente" do segmento: tronco usa (-dy, dx); membros (dy, -dx)
+    front = (-d[1], d[0]) if seg == "torso" else (d[1], -d[0])
+    sign = 1 if side == "front" else -1
+    ra, rb = RADII[seg]
+    pa = (a[0] + (b[0] - a[0]) * ka, a[1] + (b[1] - a[1]) * ka)
+    pb = (a[0] + (b[0] - a[0]) * kb, a[1] + (b[1] - a[1]) * kb)
+    r1 = (ra + (rb - ra) * ka) * sc
+    r2 = (ra + (rb - ra) * kb) * sc
+    shift = lambda p, r: add(p, (front[0] * sign * r * 0.32, front[1] * sign * r * 0.32))  # noqa: E731
+    tapered(cv, shift(pa, r1), shift(pb, r2), r1, r2, ACCENT if near else ACCENT_FAR)
+
+
+def _special(cv, j, name, near, offset):
+    if name == "delt":
+        c = add(j.neck, offset)
+        cv.circle(add(c, (0, 4)), 13, ACCENT if near else ACCENT_FAR)
+    elif name == "glute":
+        d = _unit(sub(j.neck, j.hip))
+        back = (d[1], -d[0])  # oposto da frente do tronco
+        c = add(add(j.hip, offset), (back[0] * 11 + d[0] * 4, back[1] * 11 + d[1] * 4))
+        cv.circle(c, 14, ACCENT if near else ACCENT_FAR)
+
+
+def shadow(cv, j, ground):
+    xs = [j.ankle_n[0], j.ankle_f[0], j.toe_n[0], j.toe_f[0], j.hip[0]]
+    low = max(j.ankle_n[1], j.ankle_f[1], j.toe_n[1], j.toe_f[1], j.hip[1], j.hand_n[1])
+    lift = max(0.0, ground - low - 10)
+    k = max(0.35, 1 - lift / 260)
+    cx = (min(xs) + max(xs)) / 2
+    half = ((max(xs) - min(xs)) / 2 + 40) * k
+    cv.d.ellipse([cx - half, ground - 7 * k, cx + half, ground + 9 * k], fill=SHADOW)
+
+
+def draw_figure(cv: Canvas, j: Joints, hl=(), far_offset=(0, 0), ground=None):
+    """Desenha a figura com volume e destaca os músculos em ``hl``.
+
+    Nomes: chest, abs, back, lowback, trap, quad, ham, calf, shin, bi, tri, fa, delt, glute.
+    """
+    names = []
+    for h in hl:
+        names.extend(LEGACY.get(h, (h,)))
     o = far_offset
     fo = lambda p: add(p, o)  # noqa: E731
-    # membros de trás
-    cv.line(fo(j.hip), fo(j.knee_f), THICK["th"], col("th", False))
-    cv.line(fo(j.knee_f), fo(j.ankle_f), THICK["sh"], col("sh", False))
-    cv.line(fo(j.ankle_f), fo(j.toe_f), THICK["ft"], FAR)
-    cv.line(fo(j.neck), fo(j.elbow_f), THICK["ua"], col("ua", False))
-    cv.line(fo(j.elbow_f), fo(j.hand_f), THICK["fa"], col("fa", False))
-    # tronco e cabeça
-    cv.line(j.hip, j.neck, THICK["torso"], col("torso"))
-    cv.circle(j.head, L["head"], NEAR)
-    # membros da frente
-    cv.line(j.hip, j.knee_n, THICK["th"], col("th"))
-    cv.line(j.knee_n, j.ankle_n, THICK["sh"], col("sh"))
-    cv.line(j.ankle_n, j.toe_n, THICK["ft"], NEAR)
-    cv.line(j.neck, j.elbow_n, THICK["ua"], col("ua"))
-    cv.line(j.elbow_n, j.hand_n, THICK["fa"], col("fa"))
-    cv.circle(j.hand_n, 11, NEAR)
+    if ground is not None:
+        shadow(cv, j, ground)
+
+    def leg(near):
+        sfx = "n" if near else "f"
+        off = (0, 0) if near else o
+        knee, ankle, toe = (add(getattr(j, k + sfx), off) for k in ("knee_", "ankle_", "toe_"))
+        hip = add(j.hip, off)
+        skin = SKIN if near else SKIN_FAR
+        tapered(cv, hip, knee, *RADII["th"], skin)
+        tapered(cv, knee, ankle, *RADII["sh"], skin)
+        cv.line(ankle, toe, 14, SHOE if near else SHOE_FAR)
+        cv.circle(add(ankle, _scale(_unit(sub(ankle, toe)), 3)), 8, SHOE if near else SHOE_FAR)
+
+    def arm(near):
+        sfx = "n" if near else "f"
+        off = (0, 0) if near else o
+        sh = add(j.neck, off)
+        el, hd = add(getattr(j, "elbow_" + sfx), off), add(getattr(j, "hand_" + sfx), off)
+        skin = SKIN if near else SKIN_FAR
+        tapered(cv, sh, el, *RADII["ua"], skin)
+        tapered(cv, el, hd, *RADII["fa"], skin)
+        cv.circle(hd, 10, skin)
+
+    def muscles(near, segs):
+        off = (0, 0) if near else o
+        for n in names:
+            if n in MUSCLES and MUSCLES[n][0] in segs:
+                _muscle(cv, j, n, near, off)
+            elif n == "glute" and "torso" in segs:
+                _special(cv, j, n, near, off)
+            elif n == "delt" and "ua" in segs:
+                _special(cv, j, n, near, off)
+
+    leg(False); muscles(False, ("th", "sh"))  # noqa: E702
+    arm(False); muscles(False, ("ua", "fa"))  # noqa: E702
+    tapered(cv, j.hip, j.neck, *RADII["torso"], SKIN)
+    muscles(True, ("torso",))
+    # pescoço + cabeça
+    cv.line(j.neck, add(j.neck, _scale(_unit(sub(j.head, j.neck)), 16)), 16, SKIN)
+    cv.circle(j.head, L["head"], SKIN)
+    leg(True); muscles(True, ("th", "sh"))  # noqa: E702
+    arm(True); muscles(True, ("ua", "fa"))  # noqa: E702
+
+
+def _scale(v, k):
+    return (v[0] * k, v[1] * k)
 
 
 def save_gif(frames, path, duration=60):

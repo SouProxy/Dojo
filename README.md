@@ -1,16 +1,32 @@
 # Dojo 🥋
 
-App Android de treino, offline, com o plano **“Anime Physique Files #005 – Toji Fushiguro”**.
+App Android de treino, offline, para qualquer nível — do primeiro dia na academia ao avançado, em casa ou com halteres.
 
-- **Treinos do Dia 1 ao Dia 5** com séries, repetições, carga e descanso de cada exercício
-- **Timer de descanso automático**: começa quando você marca a série, com bipe e vibração no fim (−15 s / +15 s / pular)
-- **Cronômetro, regressivo e intervalos** (ex.: tiro na esteira 20 s forte / 40 s leve × 6), prancha com contagem
-- **Progressão automática**: fechou todas as séries no topo da faixa? O app sugere +2,5–5% de carga e já preenche
-- **Circuito** (Dia 5) organizado por voltas
-- **GIF animado de cada exercício** + dicas de execução e segurança
+### Programas prontos (9)
+| Programa | Dias | Nível | Onde |
+| --- | --- | --- | --- |
+| Full Body 3x | 3 | Iniciante | Academia |
+| ABC | 3 (ou 6) | Iniciante/intermediário | Academia |
+| Upper/Lower | 4 | Intermediário | Academia |
+| ABCD | 4 | Intermediário | Academia |
+| Push/Pull/Legs | 6 | Avançado | Academia |
+| Toji Fushiguro (Anime Physique Files #005) | 5 | Intermediário | Academia |
+| Em casa – peso corporal | 3 | Iniciante | Casa |
+| Só halteres | 3 | Iniciante | Casa/academia |
+| Condicionamento em circuito | 3 | Iniciante | Casa |
+
+Um **questionário** (dias por semana, experiência, local e objetivo) recomenda o programa no primeiro uso.
+
+### Recursos
+- **Biblioteca com 65 exercícios** e **64 GIFs animados** com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo muscular (13) e equipamento (13)
+- **Monte seu treino**: edite qualquer programa ou crie do zero — adicione, remova e reordene exercícios, dias e formato (séries ou circuito)
+- **Volume semanal por músculo**: o app soma as séries do seu plano e compara com a faixa de 10–20 séries/semana
+- **Guia de treino** baseado em evidências: volume, frequência, divisões, reps/descanso, progressão, deload, aquecimento e segurança, com fontes
+- **Timer de descanso automático** (bipe + vibração, −15 s / +15 s / pular), **cronômetro, regressivo e intervalos**
+- **Progressão dupla automática**: fechou todas as séries no topo da faixa → sugere +2,5–5% de carga e já preenche
 - **Progresso**: gráfico por exercício (1RM estimado, reps, tempo), recordes e histórico
-- **Desafio do personagem**: barra fixa com carga, com lembrete de reteste a cada 4 semanas
-- Plano editável, backup em arquivo (exportar/importar)
+- **Desafio do personagem**: barra fixa com carga, reteste a cada 4 semanas
+- Backup em arquivo (exportar/importar), dados só no aparelho
 
 ## Instalar o APK
 
@@ -63,7 +79,8 @@ app/src/main/assets/www/                  app (HTML/CSS/JS puro) + gifs/
   js/data.js                              plano e biblioteca de exercícios
   js/logic.js                             progressão, estatísticas, validação (testado)
   js/app.js                               interface
-tools/gifgen/                             gerador dos GIFs (Python + Pillow)
+  js/library.js                           biblioteca expandida, programas, guia e recomendação
+tools/gifgen/                             gerador dos GIFs (Python + Pillow): rig lateral + frontal
 tests/                                    testes unitários, E2E (Playwright) e smoke no emulador
 ```
 

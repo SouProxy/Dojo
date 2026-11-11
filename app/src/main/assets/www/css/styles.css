@@ -207,3 +207,33 @@ textarea.text-input { min-height: 140px; font-family: ui-monospace, monospace; f
 }
 .empty { text-align: center; padding: 24px 8px; color: var(--muted); }
 .pr { color: var(--gold); font-weight: 700; }
+
+/* ---------- v1.1: biblioteca, editor, guia ---------- */
+.mt-s { margin-top: 6px; }
+.scroll-x { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.scroll-x::-webkit-scrollbar { display: none; }
+.scroll-x .chip { flex: none; }
+.linkish { background: none; border: 0; padding: 0; color: var(--text); text-align: left; text-decoration: underline dotted var(--muted); cursor: pointer; }
+.edit-row { display: flex; align-items: center; gap: 6px; background: var(--bg-2); border-radius: 10px; padding: 6px; }
+.edit-row img { width: 44px; height: 44px; border-radius: 8px; background: var(--bg); flex: none; }
+.icon-btn.sm { width: 34px; height: 34px; font-size: 15px; }
+.icon-btn[disabled] { opacity: .3; pointer-events: none; }
+.icon-btn.center { display: inline-flex; align-items: center; justify-content: center; }
+.seg.compact { padding: 3px; }
+.seg.compact button { padding: 6px 12px; font-size: 13px; }
+.guide { padding-left: 18px; margin: 8px 0 0; }
+.guide li { margin: 6px 0; color: #d6d5d0; font-size: 14px; }
+.vol { display: grid; gap: 6px; }
+.vol-row { display: grid; grid-template-columns: 110px 1fr 34px; align-items: center; gap: 8px; }
+.vol-bar { position: relative; height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+.vol-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--muted); }
+.vol-bar i.low { background: #6b6e78; }
+.vol-bar i.mid { background: var(--warn); }
+.vol-bar i.ok { background: var(--ok); }
+.vol-bar i.high { background: var(--accent); }
+.vol-target { position: absolute; left: 40%; width: 40%; top: 0; bottom: 0; border-left: 1px dashed #ffffff55; border-right: 1px dashed #ffffff55; }
+.vol-n { text-align: right; font-variant-numeric: tabular-nums; }
+.vol-n.ok { color: var(--ok); }
+.vol-n.mid { color: var(--warn); }
+.vol-n.high { color: var(--accent-2); }
+.nav button { font-size: 11px; }

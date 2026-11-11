@@ -49,7 +49,7 @@ AGACHAMENTO = dict(
         (dict(anchor=("ankle_n", (300, AY)), t=4, **STAND_LEGS, **BAR_ON_BACK), 6, 16),
         (dict(anchor=("ankle_n", (300, AY)), t=42, leg_n=(82, -38), leg_f=(82, -38), **BAR_ON_BACK), 3, 14),
     ],
-    back=squat_back, front=squat_front, hl=("th",),
+    back=squat_back, front=squat_front, hl=("quad", "glute"),
 )
 
 
@@ -92,7 +92,7 @@ LEG_PRESS = dict(
         (dict(_lp, leg_n=ik(*lp_point(192)), leg_f=ik(*lp_point(192))), 4, 14),
         (dict(_lp, leg_n=ik(*lp_point(108)), leg_f=ik(*lp_point(108))), 3, 14),
     ],
-    back=legpress_back, front=legpress_front, hl=("th",),
+    back=legpress_back, front=legpress_front, hl=("quad", "glute"),
 )
 
 
@@ -123,7 +123,7 @@ REMADA_CABO = dict(
         (dict(_row, t=20, arm_n=ik(398, 425, 1), arm_f=ik(398, 425, 1)), 4, 14),
         (dict(_row, t=-8, arm_n=ik(285, 430, 1), arm_f=ik(285, 430, 1)), 4, 14),
     ],
-    back=row_back, front=row_front, hl=("ua", "torso"),
+    back=row_back, front=row_front, hl=("back", "bi"),
 )
 
 
@@ -141,7 +141,7 @@ AFUNDO = dict(
         (dict(hip=(300, 440), t=6, leg_n=ik(395, AY), leg_f=ik(205, 524), ft_f=50, **_lunge_arms), 4, 12),
         (dict(hip=(300, 348), t=3, leg_n=ik(365, 505), leg_f=ik(284, AY), **_lunge_arms), 0, 8),
     ],
-    back=floor, front=dumbbells_front, hl=("th",),
+    back=floor, front=dumbbells_front, hl=("quad", "glute"),
 )
 
 
@@ -174,8 +174,8 @@ _pull_keys = [
     (dict(_hang, t=-4, arm_n=(178, 178), arm_f=(178, 178)), 4, 14),
     (dict(_hang, t=-6, arm_n=(15, 170), arm_f=(15, 170)), 3, 14),
 ]
-BARRA_FIXA = dict(keys=_pull_keys, back=pullup_back, front=pullup_front, hl=("ua", "torso"))
-BARRA_CARGA = dict(keys=_pull_keys, back=pullup_back, front=pullup_weighted_front, hl=("ua", "torso"))
+BARRA_FIXA = dict(keys=_pull_keys, back=pullup_back, front=pullup_front, hl=("back", "bi"))
+BARRA_CARGA = dict(keys=_pull_keys, back=pullup_back, front=pullup_weighted_front, hl=("back", "bi"))
 
 
 # ----------------------------------------------------------------- puxada alta
@@ -205,7 +205,7 @@ PUXADA_ALTA = dict(
         (dict(_pd, t=-12, arm_n=ik(304, 172, 1), arm_f=ik(304, 172, 1)), 4, 14),
         (dict(_pd, t=-22, arm_n=ik(286, 322, 1), arm_f=ik(286, 322, 1)), 3, 14),
     ],
-    back=pulldown_back, front=pulldown_front, hl=("ua", "torso"),
+    back=pulldown_back, front=pulldown_front, hl=("back", "bi"),
 )
 
 
@@ -231,7 +231,7 @@ PARALELAS = dict(
         (dict(_dip, t=6, arm_n=(0, 0), arm_f=(0, 0)), 4, 14),
         (dict(_dip, t=24, arm_n=(-75, 40), arm_f=(-75, 40)), 3, 14),
     ],
-    back=dips_back, front=dips_front, hl=("ua",),
+    back=dips_back, front=dips_front, hl=("tri", "chest"),
 )
 
 
@@ -246,7 +246,7 @@ ROSCA_DIRETA = dict(
         (dict(anchor=("ankle_n", (300, AY)), t=0, **STAND_LEGS, arm_n=(6, 8), arm_f=(6, 8)), 4, 13),
         (dict(anchor=("ankle_n", (300, AY)), t=-2, **STAND_LEGS, arm_n=(12, 152), arm_f=(12, 152)), 3, 13),
     ],
-    back=floor, front=curl_front, hl=("ua",),
+    back=floor, front=curl_front, hl=("bi",),
 )
 
 
@@ -273,7 +273,7 @@ TRICEPS_CORDA = dict(
         (dict(_tri, arm_n=(14, 128), arm_f=(14, 128)), 3, 12),
         (dict(_tri, arm_n=(10, 6), arm_f=(10, 6)), 4, 12),
     ],
-    back=triceps_back, front=triceps_front, hl=("ua",),
+    back=triceps_back, front=triceps_front, hl=("tri",),
 )
 
 
@@ -290,7 +290,7 @@ TERRA_TRAP = dict(
         (dict(anchor=("ankle_n", (300, AY)), t=46, leg_n=(70, -25), leg_f=(70, -25), arm_n=(0, 0), arm_f=(0, 0)), 3, 15),
         (dict(anchor=("ankle_n", (300, AY)), t=0, **STAND_LEGS, arm_n=(0, 0), arm_f=(0, 0)), 4, 15),
     ],
-    back=floor, front=trap_front, hl=("th", "torso"),
+    back=floor, front=trap_front, hl=("glute", "ham", "quad", "lowback"),
 )
 
 
@@ -309,7 +309,7 @@ BULGARO = dict(
         (dict(_bulg, hip=(292, 372), t=10), 5, 14),
         (dict(_bulg, hip=(286, 452), t=18), 3, 14),
     ],
-    back=bulgarian_back, front=squat_front, hl=("th",),
+    back=bulgarian_back, front=squat_front, hl=("quad", "glute"),
 )
 
 
@@ -330,7 +330,7 @@ def jump_keys(x0=300, air=(300, 228), land=None, land_ground=G, tuck=True):
 _s, _d, _a, _l = jump_keys()
 SALTO_GRUPADO = dict(
     keys=[(_s, 4, 9), (_d, 1, 5), (_a, 2, 6), (_l, 1, 9)],
-    back=floor, front=None, hl=("th", "sh"),
+    back=floor, front=None, hl=("quad", "glute", "calf"),
 )
 
 BOX = (392, 430, 536)   # x0, topo, x1
@@ -348,7 +348,7 @@ _s2, _d2, _a2, _l2 = jump_keys(x0=250, air=(370, 236), land=455, land_ground=BOX
 _top = dict(hip=(462, 0), anchor=("ground", BOX[1]), t=0, **STAND_LEGS, arm_n=(5, 5), arm_f=(0, 0))
 SALTO_CAIXOTE = dict(
     keys=[(_s2, 4, 9), (_d2, 1, 5), (_a2, 1, 6), (_l2, 1, 8), (_top, 4, 9)],
-    back=box_back, front=None, hl=("th", "sh"),
+    back=box_back, front=None, hl=("quad", "glute", "calf"),
 )
 
 
@@ -377,7 +377,7 @@ DESENVOLVIMENTO = dict(
         (dict(_press, arm_n=ik(292, 306, 1), arm_f=ik(292, 306, 1)), 3, 14),
         (dict(_press, arm_n=ik(274, 170, 1), arm_f=ik(274, 170, 1)), 3, 14),
     ],
-    back=press_back_plate, front=press_front, hl=("ua",),
+    back=press_back_plate, front=press_front, hl=("delt", "tri"),
 )
 
 
@@ -396,7 +396,7 @@ SUPINO_PONTE = dict(
         (dict(_fp, arm_n=(70, 180), arm_f=(70, 180)), 3, 14),
         (dict(_fp, arm_n=(176, 178), arm_f=(176, 178)), 3, 14),
     ],
-    back=floor, front=floorpress_front, hl=("ua", "torso"),
+    back=floor, front=floorpress_front, hl=("chest", "tri", "glute"),
 )
 
 
@@ -414,7 +414,7 @@ def plank_front(cv, j, k):
 _pl = dict(t=80, leg_n=(-79, -79), leg_f=(-79, -79), ft_n=10, ft_f=10, arm_n=(0, 90), arm_f=(0, 90))
 PRANCHA = dict(
     keys=[(dict(_pl, hip=(300, 480)), 10, 16), (dict(_pl, hip=(300, 476)), 10, 16)],
-    back=floor, front=plank_front, hl=("torso",),
+    back=floor, front=plank_front, hl=("abs",),
 )
 
 
@@ -426,7 +426,7 @@ ABDOMINAL_INFRA = dict(
         (dict(_ab, hip=(340, 525), t=-90, leg_n=(98, 98), leg_f=(98, 98)), 3, 14),
         (dict(_ab, hip=(336, 514), t=-84, leg_n=(186, 150), leg_f=(186, 150)), 3, 14),
     ],
-    back=floor, front=None, hl=("torso",),
+    back=floor, front=None, hl=("abs",),
 )
 
 
@@ -464,7 +464,7 @@ def walk_keys(t, arms_n, arms_f, ground=G, x=300, hold=1, trans=6, big=False):
 
 FARMER = dict(
     keys=walk_keys(3, (2, 2), (-2, -2)),
-    back=farmer_back, front=farmer_front, hl=("fa",), far_offset=(-10, -4),
+    back=farmer_back, front=farmer_front, hl=("fa", "trap"), far_offset=(-10, -4),
 )
 
 
@@ -491,7 +491,7 @@ def tread_back(cv, j, k):
 ESTEIRA = dict(
     keys=walk_keys(12, [(-45, 40), (0, 80), (45, 140), (0, 80)], [(45, 140), (0, 80), (-45, 40), (0, 80)],
                    ground=DECK, x=320, hold=0, trans=5, big=True),
-    back=tread_back, front=None, hl=("th", "sh"), duration=45, far_offset=(-10, -4),
+    back=tread_back, front=None, hl=("quad", "ham", "calf"), ground=DECK, duration=45, far_offset=(-10, -4),
 )
 
 
@@ -506,7 +506,7 @@ _b_jump = dict(hip=(300, 282), t=-3, leg_n=ik(300, 485), leg_f=ik(298, 485), ft_
                arm_n=(170, 178), arm_f=(166, 176))
 BURPEE = dict(
     keys=[(_b_stand, 3, 8), (_b_squat, 1, 6), (_b_plank, 3, 6), (_b_squat, 1, 7), (_b_jump, 2, 8)],
-    back=floor, front=None, hl=("th", "torso"),
+    back=floor, front=None, hl=("quad", "chest"),
 )
 
 
@@ -518,7 +518,7 @@ FLEXAO = dict(
         (dict(_pu, hip=(255, 440), t=75, arm_n=ik(380, AY + 2, 1), arm_f=ik(376, AY + 2, 1)), 3, 13),
         (dict(_pu, hip=(262, 490), t=85.6, arm_n=ik(380, AY + 2, 1), arm_f=ik(376, AY + 2, 1)), 2, 13),
     ],
-    back=floor, front=None, hl=("ua", "torso"),
+    back=floor, front=None, hl=("chest", "tri"),
 )
 
 

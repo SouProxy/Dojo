@@ -2,10 +2,10 @@
 (function () {
   'use strict';
 
-  const { EXERCISES, DEFAULT_PLAN, CHALLENGE } = window.DojoData;
+  const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, recommend } = window.DojoData;
   const Lg = window.DojoLogic;
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = '1.1.0';
 
   // ================================================================ estado
 
@@ -14,6 +14,8 @@
   function defaultState() {
     return {
       plan: clone(DEFAULT_PLAN),
+      plans: {},
+      onboarded: false,
       history: [],
       active: null,
       challenge: [],
@@ -29,6 +31,9 @@
       const st = Object.assign(defaultState(), data);
       st.settings = Object.assign(defaultState().settings, data.settings || {});
       if (!Lg.validPlan(st.plan)) st.plan = clone(DEFAULT_PLAN);
+      if (!st.plan.id) st.plan.id = 'toji';          // migração da v1.0
+      if (!st.plans || typeof st.plans !== 'object') st.plans = {};
+      if (data.onboarded === undefined) st.onboarded = true; // quem já usava não vê o questionário
       return st;
     } catch (e) {
       console.error('Falha ao ler dados', e);
@@ -37,7 +42,8 @@
   }
 
   let state = load();
-  const ui = { tab: 'home', sessionOpen: !!state.active, modals: [], timerMode: 'stopwatch', progressEx: null, runner: null };
+  const ui = { tab: 'home', page: state.onboarded ? null : 'programs', sessionOpen: !!state.active, modals: [], timerMode: 'stopwatch',
+    progressEx: null, runner: null, lib: { q: '', group: null, equip: null }, pickDay: null, quiz: { days: 3, level: 'iniciante', place: 'academia', goal: 'hipertrofia' } };
 
   function save() {
     try {
@@ -63,7 +69,7 @@
         if (k === 'class') el.className = v;
         else if (k === 'text') el.textContent = v;
         else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-        else if (k === 'value') el.value = v;
+        else if (k === 'value') { el.value = v; if (tag === 'input') el.setAttribute('value', v); }
         else el.setAttribute(k, v === true ? '' : String(v));
       }
     }
@@ -171,8 +177,9 @@
     const ovScroll = ov ? ov.scrollTop : 0;
     const winScroll = window.scrollY;
     root.textContent = '';
-    const screens = { home: viewHome, timer: viewTimer, progress: viewProgress, settings: viewSettings };
-    root.appendChild(screens[ui.tab]());
+    const screens = { home: viewHome, library: viewLibrary, timer: viewTimer, progress: viewProgress, settings: viewSettings };
+    const pages = { programs: viewPrograms, editor: viewEditor, guide: viewGuide };
+    root.appendChild(ui.page ? pages[ui.page]() : screens[ui.tab]());
     root.appendChild(viewNav());
     if (ui.sessionOpen && state.active) root.appendChild(viewSession());
     ui.modals.forEach((m) => root.appendChild(m.el));
@@ -184,11 +191,11 @@
   }
 
   function viewNav() {
-    const tabs = [['home', '◆', 'Treinos'], ['timer', '◷', 'Timer'], ['progress', '▲', 'Progresso'], ['settings', '⚙', 'Ajustes']];
+    const tabs = [['home', '◆', 'Treinos'], ['library', '☰', 'Exercícios'], ['timer', '◷', 'Timer'], ['progress', '▲', 'Progresso'], ['settings', '⚙', 'Ajustes']];
     return h('nav', { class: 'nav', 'aria-label': 'Navegação' },
       tabs.map(([id, ico, label]) => h('button', {
-        class: ui.tab === id ? 'active' : '', 'aria-current': ui.tab === id ? 'page' : null,
-        onclick: () => { ui.tab = id; render(); window.scrollTo(0, 0); },
+        class: ui.tab === id && !ui.page ? 'active' : '', 'aria-current': ui.tab === id && !ui.page ? 'page' : null,
+        onclick: () => { ui.tab = id; ui.page = null; ui.pickDay = null; render(); window.scrollTo(0, 0); },
       }, h('span', { class: 'ico', 'aria-hidden': 'true', text: ico }), label)));
   }
 
@@ -204,7 +211,11 @@
     const plan = state.plan;
     const nextIdx = Lg.nextDayIndex(plan, state.history);
     const next = plan.days[nextIdx];
-    const wrap = h('main', { class: 'screen' }, topbar('Toji Fushiguro'));
+    const wrap = h('main', { class: 'screen' }, topbar(plan.short || plan.name || 'Meu treino'));
+    wrap.appendChild(h('div', { class: 'card row between' },
+      h('div', { class: 'grow' }, h('div', { class: 'day-num', text: 'Programa' }), h('div', { class: 'ex-name', text: plan.name || 'Meu treino' })),
+      h('button', { class: 'btn sm', onclick: () => openPage('programs') }, 'Trocar'),
+      h('button', { class: 'btn sm ghost', onclick: () => openPage('editor') }, 'Editar')));
 
     if (state.active) {
       wrap.appendChild(h('div', { class: 'card hero tap', onclick: () => { ui.sessionOpen = true; render(); } },
@@ -212,18 +223,25 @@
           h('div', null, h('div', { class: 'day-num', text: 'Treino em andamento' }), h('h2', { text: `${state.active.dayName} – ${state.active.title}` })),
           h('span', { class: 'badge accent', 'data-clock': 'session' }, '')),
         h('p', { class: 'muted small', text: 'Toque para continuar.' })));
-    } else {
+    } else if (next) {
       wrap.appendChild(dayCard(next, nextIdx, true));
     }
 
     wrap.appendChild(h('div', { class: 'section-title', text: 'Semana de treino' }));
     const list = h('div', { class: 'stack' });
     plan.days.forEach((d, i) => { if (state.active || i !== nextIdx) list.appendChild(dayCard(d, i, false)); });
-    list.appendChild(h('div', { class: 'card' },
-      h('div', { class: 'day-num', text: 'Dias 6 e 7' }),
-      h('h3', { text: 'Descanso' }),
-      h('p', { class: 'muted small', text: 'Recuperação faz parte do treino: sono, comida e caminhada leve.' })));
+    const restDays = 7 - plan.days.length;
+    if (restDays > 0) {
+      list.appendChild(h('div', { class: 'card' },
+        h('div', { class: 'day-num', text: `${restDays} dia${restDays > 1 ? 's' : ''} de descanso` }),
+        h('p', { class: 'muted small', text: 'Recuperação faz parte do treino: sono, comida e caminhada leve. Evite treinar o mesmo músculo pesado dois dias seguidos.' })));
+    }
     wrap.appendChild(list);
+
+    wrap.appendChild(h('div', { class: 'card tap mt', onclick: () => openPage('guide') },
+      h('div', { class: 'row between' }, h('div', null, h('h3', { text: '📘 Guia de treino' }),
+        h('p', { class: 'muted small', text: 'Séries por semana, divisões, progressão, descanso e segurança — e o volume do seu plano por músculo.' })),
+      h('span', { class: 'muted', text: '›' }))));
 
     wrap.appendChild(h('div', { class: 'section-title', text: CHALLENGE.title }));
     wrap.appendChild(challengeCard());
@@ -251,6 +269,7 @@
           h('div', { class: 'day-num', text: featured ? `Próximo · ${day.name}` : day.name }),
           h('h2', { text: day.title })),
         day.mode === 'circuit' ? h('span', { class: 'badge accent', text: `Circuito ${day.rounds} voltas` }) : null),
+      day.items.length ? null : h('p', { class: 'muted small', text: 'Sem exercícios ainda. Toque em “Editar” para montar este treino.' }),
       h('div', { class: 'chips' }, day.items.map((it) => h('span', { class: 'chip', text: `${EXERCISES[it.ex].name} · ${Lg.prescription(it, EXERCISES[it.ex])}` }))),
       h('div', { class: 'thumbs' }, day.items.map((it) => h('img', { src: gifSrc(EXERCISES[it.ex].gifs[0]), alt: EXERCISES[it.ex].name, loading: 'lazy' }))),
       last ? h('p', { class: 'muted tiny', text: `Último: ${fmtDate(last.startedAt, { weekday: 'short', day: '2-digit', month: 'short' })}` }) : null);
@@ -262,7 +281,7 @@
   }
 
   function historyRow(s) {
-    const day = state.plan.days.find((d) => d.id === s.dayId);
+    const day = findDay(s.dayId);
     const st = Lg.sessionStats(s);
     const dur = s.finishedAt ? Lg.fmtClock((s.finishedAt - s.startedAt) / 1000) : '–';
     return h('div', { class: 'card tap', onclick: () => openHistoryModal(s) },
@@ -296,6 +315,7 @@
   // ================================================================ sessão
 
   function confirmStart(day) {
+    if (!day.items.length) { toast('Adicione exercícios a este treino primeiro.'); openPage('editor'); return; }
     if (state.active) {
       if (state.active.dayId === day.id) { ui.sessionOpen = true; render(); return; }
       confirmModal('Já existe um treino em andamento', `Descartar "${state.active.dayName}" e começar ${day.name}?`, 'Descartar e começar', () => startSession(day));
@@ -603,17 +623,24 @@
         paint();
         box.append(chips);
       }
-      box.append(h('h3', { text: 'Execução' }), h('ol', null, ex.cues.map((c) => h('li', { text: c }))));
+      box.append(exerciseBadges(ex));
+      box.append(h('h3', { class: 'mt', text: 'Execução' }), h('ol', null, ex.cues.map((c) => h('li', { text: c }))));
       if (ex.safety) box.append(h('p', { class: 'small' }, h('b', { text: 'Segurança: ' }), ex.safety));
+      if (ex.def) {
+        const d = ex.def;
+        box.append(h('p', { class: 'small muted' }, h('b', { text: 'Sugestão: ' }), `${Lg.prescription(d, ex)} · descanso ${Lg.fmtRest(d.rest)}`));
+      }
       const pts = Lg.series(state.history, exId, ex, state.settings);
       if (pts.points.length) box.append(h('h3', { text: pts.label }), chart(pts.points));
-      box.append(h('button', { class: 'btn block', onclick: close }, 'Fechar'));
+      box.append(h('div', { class: 'row mt' },
+        h('button', { class: 'btn grow', onclick: close }, 'Fechar'),
+        h('button', { class: 'btn primary grow', onclick: () => { close(); addToPlanFlow(exId); } }, '+ Adicionar ao treino')));
     });
   }
 
   function openSummaryModal(session, records) {
     const st = Lg.sessionStats(session);
-    const day = state.plan.days.find((d) => d.id === session.dayId);
+    const day = findDay(session.dayId);
     openModal((box, close) => {
       box.append(
         h('h2', { text: 'Treino concluído 💪' }),
@@ -643,7 +670,7 @@
   }
 
   function openHistoryModal(s) {
-    const day = state.plan.days.find((d) => d.id === s.dayId);
+    const day = findDay(s.dayId);
     openModal((box, close) => {
       box.append(h('h2', { text: day ? `${day.name} – ${day.title}` : s.dayId }),
         h('p', { class: 'muted small', text: new Date(s.startedAt).toLocaleString('pt-BR') }),
@@ -859,6 +886,7 @@
 
     const exIds = [];
     state.plan.days.forEach((d) => d.items.forEach((it) => { if (!exIds.includes(it.ex)) exIds.push(it.ex); }));
+    hist.forEach((se) => se.entries.forEach((e) => { if (EXERCISES[e.ex] && !exIds.includes(e.ex)) exIds.push(e.ex); }));
     if (!ui.progressEx || !exIds.includes(ui.progressEx)) {
       ui.progressEx = exIds.find((id) => hist.some((s) => s.entries.some((e) => e.ex === id))) || exIds[0];
     }
@@ -893,6 +921,313 @@
     return wrap;
   }
 
+
+  // ================================================================ programas, biblioteca, editor, guia
+
+  function programById(id) { return PROGRAMS.find((p) => p.id === id) || null; }
+
+  function findDay(dayId) {
+    const pools = [state.plan, ...Object.values(state.plans || {}), ...PROGRAMS];
+    for (const p of pools) {
+      const d = p && p.days && p.days.find((x) => x.id === dayId);
+      if (d) return d;
+    }
+    return null;
+  }
+
+  function openPage(page) { ui.page = page; render(); window.scrollTo(0, 0); }
+  function closePage() { ui.page = null; ui.pickDay = null; render(); window.scrollTo(0, 0); }
+
+  function switchProgram(id) {
+    if (state.active) { toast('Finalize ou descarte o treino em andamento antes de trocar.'); return; }
+    state.plans[state.plan.id] = state.plan;
+    const saved = state.plans[id];
+    const base = programById(id);
+    state.plan = saved ? saved : clone(base);
+    state.onboarded = true;
+    save();
+    ui.page = null;
+    render();
+    window.scrollTo(0, 0);
+    toast(`Programa ativo: ${state.plan.name}`);
+  }
+
+  function createCustom() {
+    let n = 1;
+    while (state.plans[`custom${n}`] || state.plan.id === `custom${n}`) n += 1;
+    const id = `custom${n}`;
+    state.plans[state.plan.id] = state.plan;
+    state.plan = {
+      id, name: n === 1 ? 'Meu treino' : `Meu treino ${n}`, short: 'Meu treino', custom: true,
+      days: [{ id: `${id}-a`, name: 'Treino A', title: 'Novo treino', mode: 'normal', items: [] }],
+    };
+    state.onboarded = true;
+    save();
+    openPage('editor');
+  }
+
+  function exerciseBadges(ex) {
+    return h('div', { class: 'chips' },
+      ex.group ? h('span', { class: 'badge accent', text: GROUPS[ex.group] }) : null,
+      (ex.secondary || []).map((g) => h('span', { class: 'badge', text: GROUPS[g] })),
+      (ex.equip || []).map((e) => h('span', { class: 'badge gold', text: EQUIP[e] })),
+      ex.level ? h('span', { class: 'badge', text: LEVELS[ex.level] }) : null);
+  }
+
+  function programCard(p, recommended) {
+    const isActive = state.plan.id === p.id;
+    const groups = new Set();
+    p.days.forEach((d) => d.items.forEach((i) => groups.add(EXERCISES[i.ex].group)));
+    return h('div', { class: `card ${recommended ? 'hero' : ''}` },
+      h('div', { class: 'row between' },
+        h('div', { class: 'grow' },
+          recommended ? h('div', { class: 'day-num', text: '★ Recomendado para você' }) : null,
+          h('h3', { text: p.name })),
+        isActive ? h('span', { class: 'badge ok', text: 'Ativo' }) : null),
+      h('div', { class: 'chips mt' },
+        h('span', { class: 'badge gold', text: `${p.daysPerWeek} dias/semana` }),
+        h('span', { class: 'badge', text: LEVELS[p.level] }),
+        h('span', { class: 'badge', text: PLACES[p.place] }),
+        h('span', { class: 'badge', text: p.goal })),
+      h('p', { class: 'muted small mt', text: p.description }),
+      h('div', { class: 'row mt' },
+        h('button', { class: 'btn ghost grow sm', onclick: () => openProgramModal(p) }, 'Ver treinos'),
+        isActive ? null : h('button', { class: 'btn primary grow sm', onclick: () => confirmSwitch(p) }, 'Usar este')));
+  }
+
+  function confirmSwitch(p) {
+    const saved = state.plans[p.id];
+    confirmModal(`Usar “${p.name}”?`, saved ? 'Suas edições anteriores neste programa serão mantidas. O histórico continua salvo.' : 'Seu histórico continua salvo. Você pode voltar ao programa atual quando quiser.', 'Usar', () => switchProgram(p.id));
+  }
+
+  function openProgramModal(p) {
+    openModal((box, close) => {
+      box.append(h('h2', { text: p.name }), h('p', { class: 'muted small', text: p.description }));
+      p.days.forEach((d) => {
+        box.append(h('h3', { class: 'mt', text: `${d.name} – ${d.title}${d.mode === 'circuit' ? ` (circuito ${d.rounds} voltas)` : ''}` }));
+        box.append(h('table', { class: 'tbl' }, h('tbody', null, d.items.map((it) => h('tr', null,
+          h('td', null, h('button', { class: 'linkish', onclick: () => openExerciseModal(it.ex) }, EXERCISES[it.ex].name)),
+          h('td', { class: 'muted', text: `${Lg.prescription(it, EXERCISES[it.ex])} · ${Lg.fmtRest(it.rest)}` }))))));
+      });
+      const vol = Lg.weeklyVolume(p, EXERCISES);
+      box.append(h('h3', { class: 'mt', text: 'Séries por semana (1 rodada do programa)' }), volumeBars(vol, p.daysPerWeek > p.days.length ? p.daysPerWeek / p.days.length : 1));
+      box.append(h('div', { class: 'row mt' },
+        h('button', { class: 'btn ghost grow', onclick: close }, 'Fechar'),
+        state.plan.id === p.id ? null : h('button', { class: 'btn primary grow', onclick: () => { close(); confirmSwitch(p); } }, 'Usar este')));
+    });
+  }
+
+  function viewPrograms() {
+    const wrap = h('main', { class: 'screen' }, pageTop(state.onboarded ? 'Programas' : 'Bem-vindo ao Dojo'));
+    const q = ui.quiz;
+    const rec = recommend(q);
+    if (!state.onboarded) {
+      wrap.appendChild(h('p', { class: 'muted', text: 'Responda 4 perguntas e eu sugiro o melhor programa para você. Dá para trocar ou editar depois.' }));
+    }
+    const ask = (label, key, opts) => h('div', { class: 'mt' }, h('label', { class: 'lbl', text: label }),
+      h('div', { class: 'chips' }, opts.map(([v, l]) => h('button', { class: `chip${q[key] === v ? ' on' : ''}`, onclick: () => { q[key] = v; render(); } }, l))));
+    wrap.appendChild(h('div', { class: 'card' },
+      h('h3', { text: 'Qual programa combina com você?' }),
+      ask('Quantos dias por semana você consegue treinar?', 'days', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']]),
+      ask('Experiência', 'level', [['iniciante', 'Iniciante (< 6 meses)'], ['intermediario', 'Intermediário'], ['avancado', 'Avançado (2+ anos)']]),
+      ask('Onde vai treinar?', 'place', [['academia', 'Academia'], ['halteres', 'Casa com halteres'], ['casa', 'Casa sem equipamento']]),
+      ask('Objetivo principal', 'goal', [['hipertrofia', 'Ganhar massa'], ['forca', 'Ganhar força'], ['condicionamento', 'Condicionamento / emagrecer']])));
+    const recP = programById(rec);
+    wrap.appendChild(h('div', { class: 'section-title', text: 'Sugestão' }));
+    wrap.appendChild(programCard(recP, true));
+    wrap.appendChild(h('div', { class: 'section-title', text: 'Todos os programas' }));
+    wrap.appendChild(h('div', { class: 'stack' }, PROGRAMS.filter((p) => p.id !== rec).map((p) => programCard(p, false))));
+    const customs = Object.values(state.plans).concat([state.plan]).filter((p, i, arr) => p.custom && arr.findIndex((x) => x.id === p.id) === i);
+    wrap.appendChild(h('div', { class: 'section-title', text: 'Meus treinos' }));
+    const mine = h('div', { class: 'stack' });
+    customs.forEach((p) => mine.appendChild(h('div', { class: 'card row between' },
+      h('div', { class: 'grow' }, h('div', { class: 'ex-name', text: p.name }), h('div', { class: 'muted small', text: `${p.days.length} treino(s)` })),
+      state.plan.id === p.id ? h('span', { class: 'badge ok', text: 'Ativo' }) : h('button', { class: 'btn sm primary', onclick: () => switchProgram(p.id) }, 'Usar'))));
+    mine.appendChild(h('button', { class: 'btn ghost block', onclick: createCustom }, '+ Montar meu próprio treino do zero'));
+    wrap.appendChild(mine);
+    if (!state.onboarded) {
+      wrap.appendChild(h('button', { class: 'btn block mt', onclick: () => { state.onboarded = true; save(); closePage(); } }, `Continuar com ${state.plan.name}`));
+    }
+    return wrap;
+  }
+
+  function pageTop(title) {
+    return h('div', { class: 'topbar' },
+      h('div', { class: 'row' },
+        state.onboarded || ui.page !== 'programs' ? h('button', { class: 'icon-btn', 'aria-label': 'Voltar', onclick: closePage }, '←') : null,
+        h('h1', { text: title })));
+  }
+
+  // ---------------------------------------------------------------- biblioteca
+
+  function filteredExercises() {
+    const f = ui.lib;
+    const q = f.q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return Object.entries(EXERCISES).filter(([id, ex]) => {
+      if (id === 'barra_carga') return false;
+      if (f.group && ex.group !== f.group && !(ex.secondary || []).includes(f.group)) return false;
+      if (f.equip && !(ex.equip || []).includes(f.equip)) return false;
+      if (q) {
+        const hay = `${ex.name} ${ex.muscles} ${GROUPS[ex.group] || ''}`.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    }).sort((a, b) => {
+      const pa = a[1].group === ui.lib.group ? 0 : 1;
+      const pb = b[1].group === ui.lib.group ? 0 : 1;
+      return pa - pb || a[1].name.localeCompare(b[1].name, 'pt-BR');
+    });
+  }
+
+  function viewLibrary() {
+    const picking = ui.pickDay ? state.plan.days.find((d) => d.id === ui.pickDay) : null;
+    const wrap = h('main', { class: 'screen' }, picking ? pageTop(`Adicionar em ${picking.name}`) : topbar('Exercícios'));
+    const f = ui.lib;
+    const search = h('input', { class: 'text-input', type: 'search', placeholder: 'Buscar exercício ou músculo…', value: f.q, 'aria-label': 'Buscar',
+      oninput: (e) => { f.q = e.target.value; paintList(); } });
+    wrap.appendChild(search);
+    const chipRow = (label, key, map) => h('div', { class: 'mt' }, h('label', { class: 'lbl', text: label }),
+      h('div', { class: 'chips scroll-x' },
+        h('button', { class: `chip${!f[key] ? ' on' : ''}`, onclick: () => { f[key] = null; render(); } }, 'Todos'),
+        Object.entries(map).map(([k, l]) => h('button', { class: `chip${f[key] === k ? ' on' : ''}`, onclick: () => { f[key] = f[key] === k ? null : k; render(); } }, l))));
+    wrap.appendChild(chipRow('Grupo muscular', 'group', GROUPS));
+    wrap.appendChild(chipRow('Equipamento', 'equip', EQUIP));
+    const count = h('div', { class: 'section-title' });
+    const list = h('div', { class: 'stack' });
+    wrap.append(count, list);
+    function paintList() {
+      const items = filteredExercises();
+      count.textContent = `${items.length} exercício${items.length === 1 ? '' : 's'}`;
+      list.textContent = '';
+      if (!items.length) list.appendChild(h('div', { class: 'card empty', text: 'Nada encontrado com esses filtros.' }));
+      items.forEach(([id, ex]) => list.appendChild(h('div', { class: 'card tap', onclick: () => (picking ? addItem(picking, id) : openExerciseModal(id)) },
+        h('div', { class: 'ex-head' },
+          h('img', { src: gifSrc(ex.gifs[0]), alt: ex.name, loading: 'lazy' }),
+          h('div', { class: 'grow' },
+            h('div', { class: 'ex-name', text: ex.name }),
+            h('div', { class: 'muted small', text: ex.muscles }),
+            h('div', { class: 'chips mt-s' },
+              h('span', { class: 'badge accent', text: GROUPS[ex.group] }),
+              (ex.equip || []).slice(0, 2).map((e) => h('span', { class: 'badge gold', text: EQUIP[e] })))),
+          picking ? h('span', { class: 'icon-btn center', 'aria-hidden': 'true', text: '+' }) : null))));
+    }
+    paintList();
+    return wrap;
+  }
+
+  function addToPlanFlow(exId) {
+    const days = state.plan.days;
+    if (days.length === 1) { addItem(days[0], exId); return; }
+    openModal((box, close) => {
+      box.append(h('h2', { text: 'Adicionar em qual treino?' }), h('p', { class: 'muted small', text: `${EXERCISES[exId].name} → ${state.plan.name}` }),
+        h('div', { class: 'stack' }, days.map((d) => h('button', { class: 'btn block', onclick: () => { close(); addItem(d, exId); } }, `${d.name} – ${d.title}`))),
+        h('button', { class: 'btn ghost block mt', onclick: close }, 'Cancelar'));
+    });
+  }
+
+  function addItem(day, exId) {
+    if (day.items.length >= 30) { toast('Limite de 30 exercícios por treino.'); return; }
+    day.items.push(Lg.newItem(exId, EXERCISES[exId], day.id, day.items));
+    save();
+    toast(`${EXERCISES[exId].name} adicionado em ${day.name}.`);
+    if (ui.pickDay) { ui.pickDay = null; ui.tab = 'home'; ui.page = 'editor'; render(); window.scrollTo(0, 0); }
+  }
+
+  // ---------------------------------------------------------------- editor
+
+  function viewEditor() {
+    const plan = state.plan;
+    const wrap = h('main', { class: 'screen' }, pageTop('Editar treino'));
+    wrap.appendChild(h('div', { class: 'card' },
+      h('label', { class: 'lbl', text: 'Nome do programa' }),
+      h('input', { class: 'text-input', value: plan.name || '', maxlength: 60, 'aria-label': 'Nome do programa',
+        oninput: (e) => { plan.name = e.target.value.slice(0, 60) || 'Meu treino'; plan.short = plan.name.slice(0, 24); save(); } })));
+    plan.days.forEach((d, di) => {
+      const card = h('div', { class: 'card mt' });
+      card.append(h('div', { class: 'form-grid' },
+        h('div', null, h('label', { class: 'lbl', text: 'Nome' }), h('input', { class: 'text-input', value: d.name, maxlength: 40, oninput: (e) => { d.name = e.target.value.slice(0, 40) || `Treino ${di + 1}`; save(); } })),
+        h('div', null, h('label', { class: 'lbl', text: 'Foco' }), h('input', { class: 'text-input', value: d.title, maxlength: 60, oninput: (e) => { d.title = e.target.value.slice(0, 60) || 'Treino'; save(); } }))));
+      card.append(h('div', { class: 'row mt' },
+        h('span', { class: 'small muted grow', text: 'Formato' }),
+        h('div', { class: 'seg compact' },
+          h('button', { class: d.mode === 'normal' ? 'on' : '', onclick: () => { d.mode = 'normal'; save(); render(); } }, 'Séries'),
+          h('button', { class: d.mode === 'circuit' ? 'on' : '', onclick: () => { d.mode = 'circuit'; d.rounds = d.rounds || 3; d.roundRest = d.roundRest || 90; save(); render(); } }, 'Circuito'))));
+      if (!d.items.length) card.append(h('p', { class: 'muted small mt', text: 'Nenhum exercício. Adicione abaixo.' }));
+      const tbl = h('div', { class: 'stack mt' });
+      d.items.forEach((it, ii) => {
+        const ex = EXERCISES[it.ex];
+        tbl.appendChild(h('div', { class: 'edit-row' },
+          h('img', { src: gifSrc(ex.gifs[0]), alt: '', loading: 'lazy' }),
+          h('div', { class: 'grow' }, h('div', { class: 'small', text: ex.name }), h('div', { class: 'tiny muted', text: `${Lg.prescription(it, ex)} · ${Lg.fmtRest(it.rest)}` })),
+          h('button', { class: 'icon-btn sm', 'aria-label': 'Subir', disabled: ii === 0, onclick: () => { d.items.splice(ii - 1, 0, d.items.splice(ii, 1)[0]); save(); render(); } }, '↑'),
+          h('button', { class: 'icon-btn sm', 'aria-label': 'Descer', disabled: ii === d.items.length - 1, onclick: () => { d.items.splice(ii + 1, 0, d.items.splice(ii, 1)[0]); save(); render(); } }, '↓'),
+          h('button', { class: 'icon-btn sm', 'aria-label': `Editar ${ex.name}`, onclick: () => openEditItem(d, it) }, '✎'),
+          h('button', { class: 'icon-btn sm', 'aria-label': `Remover ${ex.name}`, onclick: () => { d.items.splice(ii, 1); save(); render(); } }, '✕')));
+      });
+      card.append(tbl);
+      card.append(h('div', { class: 'row mt' },
+        h('button', { class: 'btn grow sm primary', onclick: () => { ui.pickDay = d.id; ui.lib = { q: '', group: null, equip: null }; ui.page = null; ui.tab = 'library'; render(); window.scrollTo(0, 0); } }, '+ Exercício'),
+        plan.days.length > 1 ? h('button', { class: 'btn ghost sm', onclick: () => confirmModal(`Remover ${d.name}?`, 'O histórico desse treino continua salvo.', 'Remover', () => { plan.days.splice(di, 1); save(); render(); }) }, 'Remover treino') : null));
+      wrap.appendChild(card);
+    });
+    if (plan.days.length < 7) {
+      wrap.appendChild(h('button', { class: 'btn ghost block mt', onclick: () => {
+        const letter = String.fromCharCode(65 + plan.days.length);
+        let k = plan.days.length + 1;
+        while (plan.days.some((x) => x.id === `${plan.id}-n${k}`)) k += 1;
+        plan.days.push({ id: `${plan.id}-n${k}`, name: `Treino ${letter}`, title: 'Novo treino', mode: 'normal', items: [] });
+        save(); render();
+      } }, '+ Adicionar treino (dia)'));
+    }
+    const vol = Lg.weeklyVolume(plan, EXERCISES);
+    wrap.appendChild(h('div', { class: 'section-title', text: 'Volume semanal por músculo' }));
+    wrap.appendChild(h('div', { class: 'card' }, h('p', { class: 'muted tiny', text: 'Considera fazer cada treino 1x por semana. Meta para hipertrofia: ~10–20 séries.' }), volumeBars(vol, 1)));
+    return wrap;
+  }
+
+  function volumeBars(vol, mult) {
+    const order = Object.keys(GROUPS).filter((g) => g !== 'cardio' && g !== 'potencia');
+    const box = h('div', { class: 'vol' });
+    order.forEach((g) => {
+      const v = Math.round((vol[g] || 0) * mult * 10) / 10;
+      const cls = v < 6 ? 'low' : v < 10 ? 'mid' : v <= 22 ? 'ok' : 'high';
+      const bar = h('i', { class: cls });
+      bar.style.width = `${Math.min(100, (v / 25) * 100)}%`;
+      box.appendChild(h('div', { class: 'vol-row' },
+        h('span', { class: 'small', text: GROUPS[g] }),
+        h('div', { class: 'vol-bar' }, bar, h('b', { class: 'vol-target', 'aria-hidden': 'true' })),
+        h('span', { class: `tiny vol-n ${cls}`, text: Lg.fmtNum(v) })));
+    });
+    box.appendChild(h('p', { class: 'tiny muted mt', text: 'Faixa marcada: 10–20 séries/semana. Grupos secundários contam meia série.' }));
+    return box;
+  }
+
+  // ---------------------------------------------------------------- guia
+
+  function viewGuide() {
+    const wrap = h('main', { class: 'screen' }, pageTop('Guia de treino'));
+    wrap.appendChild(h('p', { class: 'muted small', text: 'Resumo baseado em estudos e diretrizes (ACSM, meta-análises de volume e frequência). Não substitui orientação profissional.' }));
+    GUIDE.forEach((sec) => wrap.appendChild(h('div', { class: 'card mt' }, h('h3', { text: sec.title }), h('ul', { class: 'guide' }, sec.body.map((b) => h('li', { text: b }))))));
+    wrap.appendChild(h('div', { class: 'section-title', text: `Seu plano: ${state.plan.name}` }));
+    wrap.appendChild(h('div', { class: 'card' }, volumeBars(Lg.weeklyVolume(state.plan, EXERCISES), 1)));
+    wrap.appendChild(h('div', { class: 'section-title', text: 'Melhores exercícios por músculo' }));
+    const best = {
+      peito: ['supino_reto', 'supino_inclinado', 'paralelas', 'crossover'], costas: ['barra_fixa', 'remada_curvada', 'puxada_alta', 'serrote'],
+      ombros: ['desenvolvimento_halteres', 'elevacao_lateral', 'face_pull'], biceps: ['rosca_direta', 'rosca_scott', 'rosca_martelo'],
+      triceps: ['paralelas', 'triceps_frances', 'triceps_testa', 'triceps_corda'], quadriceps: ['agachamento', 'leg_press', 'bulgaro', 'cadeira_extensora'],
+      posterior: ['stiff', 'cadeira_flexora', 'terra'], gluteos: ['elevacao_pelvica', 'bulgaro', 'agachamento'],
+      panturrilha: ['panturrilha_pe', 'panturrilha_sentado'], core: ['roda_abdominal', 'elevacao_pernas', 'prancha'],
+    };
+    const tbl = h('div', { class: 'card stack' });
+    Object.entries(best).forEach(([g, ids]) => tbl.appendChild(h('div', null, h('div', { class: 'day-num', text: GROUPS[g] }),
+      h('div', { class: 'chips mt-s' }, ids.map((id) => h('button', { class: 'chip', onclick: () => openExerciseModal(id) }, EXERCISES[id].name))))));
+    tbl.appendChild(h('p', { class: 'tiny muted', text: 'Combine 1 multiarticular pesado + 1–2 exercícios que treinem o músculo alongado (ex.: inclinado, Scott, francês, flexora sentada, stiff).' }));
+    wrap.appendChild(tbl);
+    wrap.appendChild(h('div', { class: 'section-title', text: 'Fontes' }));
+    wrap.appendChild(h('div', { class: 'card' }, h('ol', { class: 'tiny muted' }, SOURCES.map((x) => h('li', { text: x })))));
+    return wrap;
+  }
+
   // ================================================================ ajustes
 
   function viewSettings() {
@@ -913,18 +1248,15 @@
       toggle('keepAwake', 'Manter tela ligada no treino', 'Evita que o timer pare com a tela apagada')));
 
     wrap.appendChild(h('div', { class: 'section-title', text: 'Plano de treino' }));
-    const planCard = h('div', { class: 'card' });
-    state.plan.days.forEach((d) => {
-      planCard.appendChild(h('h3', { class: 'mt', text: `${d.name} – ${d.title}` }));
-      planCard.appendChild(h('table', { class: 'tbl' }, h('tbody', null, d.items.map((it) => h('tr', null,
-        h('td', { text: EXERCISES[it.ex].name }),
-        h('td', { class: 'muted', text: `${Lg.prescription(it, EXERCISES[it.ex])} · ${Lg.fmtRest(it.rest)}` }),
-        h('td', null, h('button', { class: 'chip', 'aria-label': `Editar ${EXERCISES[it.ex].name}`, onclick: () => openEditItem(d, it) }, 'Editar')))))));
-    });
-    planCard.appendChild(h('button', { class: 'btn ghost block sm mt', onclick: () => confirmModal('Restaurar plano padrão?', 'Séries, repetições e descansos voltam ao original. O histórico é mantido.', 'Restaurar', () => {
-      state.plan = clone(DEFAULT_PLAN); save(); render(); toast('Plano restaurado.');
-    }) }, 'Restaurar plano padrão'));
-    wrap.appendChild(planCard);
+    wrap.appendChild(h('div', { class: 'card stack' },
+      h('div', { class: 'ex-name', text: state.plan.name || 'Meu treino' }),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn grow', onclick: () => openPage('editor') }, '✎ Editar treino'),
+        h('button', { class: 'btn grow', onclick: () => openPage('programs') }, '⇄ Trocar programa')),
+      h('button', { class: 'btn ghost block', onclick: () => openPage('guide') }, '📘 Guia de treino'),
+      programById(state.plan.id) ? h('button', { class: 'btn ghost block sm', onclick: () => confirmModal('Restaurar programa original?', 'Séries, repetições, exercícios e descansos voltam ao original. O histórico é mantido.', 'Restaurar', () => {
+        state.plan = clone(programById(state.plan.id)); save(); render(); toast('Programa restaurado.');
+      }) }, 'Restaurar programa original') : null));
 
     wrap.appendChild(h('div', { class: 'section-title', text: 'Seus dados' }));
     wrap.appendChild(h('div', { class: 'card stack' },
@@ -933,7 +1265,7 @@
         h('button', { class: 'btn grow', onclick: exportBackup }, '⇩ Exportar backup'),
         h('button', { class: 'btn grow', onclick: importBackup }, '⇧ Importar backup')),
       h('button', { class: 'btn danger block', onclick: () => confirmModal('Apagar TODOS os dados?', 'Histórico, testes e ajustes serão apagados deste aparelho.', 'Apagar tudo', () => {
-        state = defaultState(); save(); ui.sessionOpen = false; setKeepAwake(false); render(); toast('Dados apagados.');
+        state = defaultState(); save(); ui.sessionOpen = false; ui.page = 'programs'; setKeepAwake(false); render(); toast('Dados apagados.');
       }) }, 'Apagar todos os dados')));
 
     wrap.appendChild(h('p', { class: 'muted tiny', style: null, text: `Dojo v${APP_VERSION} · GIFs gerados pelo próprio projeto · Plano baseado em “Anime Physique Files #005 – Toji Fushiguro”. Consulte um profissional antes de iniciar treinos intensos.` }));
@@ -969,7 +1301,8 @@
   // ---------------------------------------------------------------- backup
 
   function backupObject() {
-    return { app: 'dojo', version: 1, exportedAt: new Date().toISOString(), plan: state.plan, history: state.history, challenge: state.challenge, settings: state.settings };
+    const plans = Object.assign({}, state.plans, { [state.plan.id]: state.plan });
+    return { app: 'dojo', version: 2, exportedAt: new Date().toISOString(), plans, programId: state.plan.id, history: state.history, challenge: state.challenge, settings: state.settings };
   }
 
   function exportBackup() {
@@ -1002,10 +1335,12 @@
     try { obj = JSON.parse(text); } catch (e) { toast('JSON inválido.'); return; }
     const v = Lg.validateBackup(obj, EXERCISES);
     if (!v.ok) { toast(v.error); return; }
-    confirmModal('Importar backup?', `${obj.history.length} treino(s) serão carregados e substituirão os dados atuais.`, 'Importar', () => {
+    const data = v.data;
+    confirmModal('Importar backup?', `${data.history.length} treino(s) serão carregados e substituirão os dados atuais.`, 'Importar', () => {
       const d = defaultState();
+      obj = data;
       state = {
-        plan: obj.plan, history: obj.history, challenge: obj.challenge, active: null,
+        plan: obj.plans[obj.programId], plans: obj.plans, onboarded: true, history: obj.history, challenge: obj.challenge, active: null,
         settings: Object.assign(d.settings, {
           bodyweight: obj.settings.bodyweight ?? null, step: obj.settings.step || 0.5,
           sound: obj.settings.sound !== false, vibrate: obj.settings.vibrate !== false, keepAwake: obj.settings.keepAwake !== false,
@@ -1059,6 +1394,7 @@
     if (ui.modals.length) { closeModal(); return true; }
     if (ui.runner) { confirmModal('Parar o timer?', '', 'Parar', () => ui.runner && ui.runner.stop()); return true; }
     if (ui.sessionOpen) { ui.sessionOpen = false; render(); return true; }
+    if (ui.page) { closePage(); return true; }
     if (ui.tab !== 'home') { ui.tab = 'home'; render(); return true; }
     return false;
   };
