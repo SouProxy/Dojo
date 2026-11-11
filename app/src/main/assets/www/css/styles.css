@@ -237,3 +237,7 @@ textarea.text-input { min-height: 140px; font-family: ui-monospace, monospace; f
 .vol-n.mid { color: var(--warn); }
 .vol-n.high { color: var(--accent-2); }
 .nav button { font-size: 11px; }
+.suggest-line { margin: 2px 0 10px; color: var(--gold); }
+.media-box { margin: 4px 0 6px; }
+.modal video.big { width: 100%; max-width: 320px; display: block; margin: 0 auto; border-radius: 16px; background: var(--bg); aspect-ratio: 1 / 1; object-fit: cover; }
+.credit { text-align: center; margin-top: 4px; }

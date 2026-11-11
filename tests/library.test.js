@@ -118,3 +118,12 @@ test('backup com histórico real (timestamps) é aceito', () => {
   bad[0].finishedAt = 'amanhã';
   assert.equal(L.validateBackup({ app: 'dojo', version: 2, plans: { toji }, programId: 'toji', history: bad, challenge: [], settings: {} }, D.EXERCISES).ok, false);
 });
+
+test('vídeos do manifesto existem e têm crédito e licença', () => {
+  const MEDIA = require('../app/src/main/assets/www/js/media.js');
+  for (const [id, m] of Object.entries(MEDIA)) {
+    assert.ok(Object.values(D.EXERCISES).some((e) => e.gifs.includes(id)), `${id}: exercício`);
+    assert.ok(fs.existsSync(path.join(__dirname, '../app/src/main/assets/www', m.src)), `${id}: arquivo`);
+    assert.ok(m.credit && m.license, `${id}: crédito/licença`);
+  }
+});

@@ -4,6 +4,7 @@
 
   const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, recommend } = window.DojoData;
   const Lg = window.DojoLogic;
+  const MEDIA = window.DojoMedia || {};
   const STORE_KEY = 'dojo.v1';
   const APP_VERSION = '1.1.0';
 
@@ -611,14 +612,35 @@
     const ex = EXERCISES[exId];
     let gi = 0;
     openModal((box, close) => {
-      const img = h('img', { class: 'big', src: gifSrc(ex.gifs[0]), alt: ex.name });
-      box.append(h('h2', { text: ex.name }), h('p', { class: 'muted small', text: ex.muscles }), img);
+      const holder = h('div', { class: 'media-box' });
+      const showMedia = (name) => {
+        holder.textContent = '';
+        const m = MEDIA[name];
+        if (m) {
+          const v = h('video', { class: 'big', src: m.src, autoplay: true, loop: true, muted: true, playsinline: true, preload: 'auto',
+            'aria-label': ex.name, poster: gifSrc(name) });
+          v.muted = true;
+          v.addEventListener('error', () => { holder.textContent = ''; holder.appendChild(h('img', { class: 'big', src: gifSrc(name), alt: ex.name })); });
+          holder.append(v, h('p', { class: 'tiny muted credit', text: `Vídeo: ${m.credit} · ${m.license}` }));
+          const p = v.play && v.play();
+          if (p && p.catch) p.catch(() => {});
+        } else {
+          holder.appendChild(h('img', { class: 'big', src: gifSrc(name), alt: ex.name }));
+        }
+      };
+      showMedia(ex.gifs[0]);
+      const img = holder;
+      box.append(h('h2', { text: ex.name }), h('p', { class: 'muted small', text: ex.muscles }));
+      if (ex.def) {
+        box.append(h('p', { class: 'small suggest-line' }, h('b', { text: 'Sugestão: ' }), `${Lg.prescription(ex.def, ex)} · descanso ${Lg.fmtRest(ex.def.rest)}`));
+      }
+      box.append(img);
       if (ex.gifs.length > 1) {
         const labels = ex.gifs.map((g) => (g === 'flexao' ? 'Flexão' : g === 'burpee' ? 'Burpee' : g === 'salto_caixote' ? 'Caixote' : 'Grupado'));
         const chips = h('div', { class: 'chips' });
         const paint = () => {
           chips.textContent = '';
-          labels.forEach((l, k) => chips.appendChild(h('button', { class: `chip${k === gi ? ' on' : ''}`, onclick: () => { gi = k; img.src = gifSrc(ex.gifs[k]); paint(); } }, l)));
+          labels.forEach((l, k) => chips.appendChild(h('button', { class: `chip${k === gi ? ' on' : ''}`, onclick: () => { gi = k; showMedia(ex.gifs[k]); paint(); } }, l)));
         };
         paint();
         box.append(chips);
@@ -626,10 +648,6 @@
       box.append(exerciseBadges(ex));
       box.append(h('h3', { class: 'mt', text: 'Execução' }), h('ol', null, ex.cues.map((c) => h('li', { text: c }))));
       if (ex.safety) box.append(h('p', { class: 'small' }, h('b', { text: 'Segurança: ' }), ex.safety));
-      if (ex.def) {
-        const d = ex.def;
-        box.append(h('p', { class: 'small muted' }, h('b', { text: 'Sugestão: ' }), `${Lg.prescription(d, ex)} · descanso ${Lg.fmtRest(d.rest)}`));
-      }
       const pts = Lg.series(state.history, exId, ex, state.settings);
       if (pts.points.length) box.append(h('h3', { text: pts.label }), chart(pts.points));
       box.append(h('div', { class: 'row mt' },
