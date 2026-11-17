@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from exercises import G, SIDE  # noqa: E402
 from exercises2 import SIDE2  # noqa: E402
+from exercises3 import SIDE3  # noqa: E402
 import front  # noqa: E402
 from rig import (ACCENT, FAR, NEAR, STEEL, STEEL_DARK, THICK, Canvas, add, draw_figure,  # noqa: E402
                  ease, save_gif, solve, timeline, vdown)
@@ -93,7 +94,7 @@ def render_lateral_raise():
 def build(names=None):
     OUT.mkdir(parents=True, exist_ok=True)
     jobs = {}
-    for k, v in {**SIDE, **SIDE2}.items():
+    for k, v in {**SIDE, **SIDE2, **SIDE3}.items():
         jobs[k] = ("side", v)
     for k, v in front.FRONT.items():
         jobs[k] = ("front", v)

@@ -190,6 +190,29 @@ def jack_back(cv, P, k):
     pass
 
 
+def topdown_bench(cv, P, k):
+    cv.rect(CX - 46, P["sh_y"] - 70, CX + 46, P["cy"] + 40, FAR, radius=14)
+
+
+def adductor_front(cv, P, k):
+    for s in (-1, 1):
+        kn = P[s]["knee"]
+        cv.rect(kn[0] - s * 14 - 10, kn[1] - 34, kn[0] - s * 14 + 10, kn[1] + 30, STEEL_DARK, radius=8)
+
+
+def low_cables_front(cv, P, k):
+    for s, x in ((-1, 560), (1, 80)):
+        pul = (x, 520)
+        cv.circle(pul, 11, STEEL)
+        cv.line(pul, P[s]["hd"], 5, STEEL)
+        cv.circle(P[s]["hd"], 10, NEAR)
+
+
+def low_cables_back(cv, P, k):
+    for x in (60, 580):
+        cv.rect(x - 14, 300, x + 14, G, STEEL_DARK, radius=6)
+
+
 FRONT = {
     "elevacao_lateral": dict(
         keys=[(dict(cy=440, seated=True, arm=(8, 8)), 5, 14), (dict(cy=440, seated=True, arm=(85, 78)), 3, 14)],
@@ -208,6 +231,20 @@ FRONT = {
         keys=[(dict(cy=440, seated=True, knee=34, arm=(14, 30)), 3, 14),
               (dict(cy=440, seated=True, knee=92, arm=(14, 30)), 3, 14)],
         back=bench_back, front=abductor_front, hl=("glute",)),
+    "crucifixo": dict(
+        keys=[(dict(arm=("ik", (140, 6), 1)), 3, 14), (dict(arm=("ik", (-8, -40), 1)), 3, 14)],
+        back=topdown_bench, front=hold_dumbbells, hl=("chest",)),
+    "elevacao_lateral_cabo": dict(
+        keys=[(dict(arm=(-12, -12)), 4, 14), (dict(arm=(84, 78)), 3, 14)],
+        back=low_cables_back, front=low_cables_front, hl=("delt",)),
+    "crucifixo_invertido": dict(
+        keys=[(dict(cy=440, seated=True, arm=("ik", (-6, 110), 1)), 3, 14),
+              (dict(cy=440, seated=True, arm=("ik", (128, 40), 1)), 3, 14)],
+        back=bench_back, front=hold_dumbbells, hl=("delt", "trap")),
+    "cadeira_adutora": dict(
+        keys=[(dict(cy=440, seated=True, knee=92, arm=(14, 30)), 3, 14),
+              (dict(cy=440, seated=True, knee=34, arm=(14, 30)), 3, 14)],
+        back=bench_back, front=adductor_front, hl=("quad",)),
     "polichinelo": dict(
         keys=[(dict(arm=(8, 8), leg=(3, 3), hop=0), 1, 6), (dict(arm=(95, 100), leg=(12, 12), hop=26), 0, 5),
               (dict(arm=(168, 172), leg=(20, 20), hop=0), 1, 6), (dict(arm=(95, 100), leg=(12, 12), hop=26), 0, 5)],

@@ -281,6 +281,101 @@
     ], { safety: 'Coluna neutra; a força vem do quadril, não dos braços.' }),
   };
 
+
+  // ------------------------------------------------------------- MÁQUINAS E VARIAÇÕES (academia completa)
+  Object.assign(EXTRA, {
+    supino_maquina: E('Supino máquina (chest press)', ['supino_maquina'], 'load', 'Peitoral, tríceps, deltoide anterior', [
+      'Ajuste o banco para as pegadas ficarem na linha do meio do peito.',
+      'Costas e cabeça no encosto, escápulas para trás.',
+      'Empurre até quase estender e volte controlando até sentir o peito alongar.',
+    ], { safety: 'Ótimo para ir perto da falha com segurança, sem precisar de parceiro.' }),
+    supino_declinado: E('Supino declinado com barra', ['supino_declinado'], 'load', 'Peitoral (porção inferior), tríceps', [
+      'Prenda as pernas no apoio, cabeça mais baixa que o quadril.',
+      'Desça a barra até a parte baixa do peito.',
+      'Empurre de volta sem tirar o quadril do banco.',
+    ], { safety: 'Use parceiro ou travas; não desça o banco além de ~15–20°.' }),
+    supino_halteres: E('Supino reto com halteres', ['supino_halteres'], 'load', 'Peitoral, tríceps, deltoide anterior', [
+      'Halteres na linha do peito, escápulas retraídas.',
+      'Desça até sentir o alongamento (amplitude maior que a barra).',
+      'Empurre convergindo levemente os halteres sobre o peito.',
+    ]),
+    supino_inclinado_barra: E('Supino inclinado com barra', ['supino_inclinado_barra'], 'load', 'Peitoral superior, deltoide anterior, tríceps', [
+      'Banco a 15–30°, barra na linha da clavícula.',
+      'Desça controlando até a parte alta do peito.',
+      'Empurre de volta sem arquear demais a lombar.',
+    ]),
+    crucifixo: E('Crucifixo com halteres', ['crucifixo'], 'load', 'Peitoral', [
+      'Deitado no banco, cotovelos levemente flexionados e fixos.',
+      'Abra os braços em arco até sentir o peito alongar (sem passar da linha do ombro).',
+      'Feche “abraçando” até os halteres ficarem sobre o peito.',
+    ], { safety: 'Carga moderada: o ombro fica vulnerável no ponto mais aberto.' }),
+    remada_maquina: E('Remada máquina (apoio no peito)', ['remada_maquina'], 'load', 'Dorsais, romboides, trapézio médio, bíceps', [
+      'Peito apoiado na almofada, pés firmes.',
+      'Puxe os cotovelos para trás e junte as escápulas.',
+      'Estenda os braços devagar alongando as costas. Sem sobrecarregar a lombar.',
+    ]),
+    remada_cavalinho: E('Remada cavalinho (T-bar)', ['remada_cavalinho'], 'load', 'Dorsais, romboides, trapézio, bíceps', [
+      'Pés afastados, quadril para trás, tronco a ~45° e coluna neutra.',
+      'Puxe a pegada em direção ao abdômen.',
+      'Desça controlando sem perder a posição do tronco.',
+    ], { safety: 'Se a lombar cansar antes das costas, troque pela remada máquina com apoio.' }),
+    desenvolvimento_maquina: E('Desenvolvimento máquina', ['desenvolvimento_maquina'], 'load', 'Deltoides, tríceps', [
+      'Pegadas na altura dos ombros, costas no encosto.',
+      'Empurre para cima até quase estender.',
+      'Desça até a altura das orelhas.',
+    ]),
+    elevacao_lateral_cabo: E('Elevação lateral no cabo', ['elevacao_lateral_cabo'], 'load', 'Deltoide lateral', [
+      'Polia baixa, cabo passando à frente do corpo.',
+      'Eleve o braço lateralmente até a altura do ombro.',
+      'O cabo mantém tensão também embaixo: desça devagar. Faça um lado de cada vez.',
+    ]),
+    crucifixo_invertido: E('Crucifixo invertido (deltoide posterior)', ['crucifixo_invertido'], 'load', 'Deltoide posterior, trapézio médio, romboides', [
+      'Sentado na ponta do banco com o tronco inclinado à frente (ou na máquina voador invertido).',
+      'Abra os braços para os lados com cotovelos levemente flexionados.',
+      'Segure 1 s no topo e desça devagar.',
+    ]),
+    hack_squat: E('Hack squat (máquina)', ['hack_squat'], 'load', 'Quadríceps, glúteos', [
+      'Costas e ombros apoiados, pés no meio da plataforma.',
+      'Destrave e desça até ~90° ou abaixo, joelhos na direção dos pés.',
+      'Suba empurrando a plataforma sem travar os joelhos.',
+    ], { safety: 'Sempre recoloque as travas ao terminar.' }),
+    agachamento_smith: E('Agachamento no Smith', ['agachamento_smith'], 'load', 'Quadríceps, glúteos', [
+      'Barra no trapézio, pés um pouco à frente da linha da barra.',
+      'Desça até a coxa ficar paralela.',
+      'As travas do Smith permitem ir perto da falha com mais segurança.',
+    ]),
+    agachamento_frontal: E('Agachamento frontal', ['agachamento_frontal'], 'load', 'Quadríceps, glúteos, core', [
+      'Barra apoiada na frente dos ombros, cotovelos altos.',
+      'Tronco bem ereto durante toda a descida.',
+      'Desça fundo e suba mantendo os cotovelos para cima.',
+    ]),
+    cadeira_adutora: E('Cadeira adutora', ['cadeira_adutora'], 'load', 'Adutores (parte interna da coxa)', [
+      'Apoios por dentro dos joelhos, costas no encosto.',
+      'Feche as pernas e segure 1 s.',
+      'Volte devagar até sentir o alongamento.',
+    ]),
+    rosca_inclinada: E('Rosca inclinada com halteres', ['rosca_inclinada'], 'load', 'Bíceps (cabeça longa)', [
+      'Banco a ~45–60°, braços pendurados atrás da linha do corpo.',
+      'Suba sem levar os cotovelos para frente.',
+      'Trabalha o bíceps bem alongado.',
+    ]),
+    rosca_cabo: E('Rosca no cabo', ['rosca_cabo'], 'load', 'Bíceps', [
+      'Polia baixa, barra ou corda.',
+      'Cotovelos fixos ao lado do corpo.',
+      'Tensão constante: ótimo para drop-sets.',
+    ]),
+    triceps_coice: E('Tríceps coice (kickback)', ['triceps_coice'], 'load', 'Tríceps', [
+      'Tronco inclinado com apoio no banco, braço colado ao corpo e paralelo ao chão.',
+      'Estenda o cotovelo até o braço ficar reto e segure 1 s.',
+      'Volte sem mover o braço.',
+    ]),
+    abdominal_polia: E('Abdominal na polia (ajoelhado)', ['abdominal_polia'], 'load', 'Reto abdominal', [
+      'Ajoelhado de frente para a polia alta, corda junto à cabeça.',
+      'Enrole o tronco levando os cotovelos em direção às coxas.',
+      'O quadril não se move: o movimento é da coluna. Dá para progredir carga como em qualquer exercício.',
+    ]),
+  });
+
   Object.assign(EXTRA.flexao, { load: 'bw' });
   EXERCISES.afundo.load = 'bw';
   Object.assign(EXERCISES, EXTRA);
@@ -331,6 +426,28 @@
     kettlebell_swing: ['gluteos', ['posterior', 'core'], ['kettlebell'], 'iniciante', [4, 12, 20, 60]],
   });
 
+
+  Object.assign(META, {
+    supino_maquina: ['peito', ['triceps', 'ombros'], ['maquina'], 'iniciante', [3, 8, 12, 90]],
+    supino_declinado: ['peito', ['triceps'], ['barra', 'banco'], 'intermediario', [3, 6, 10, 120]],
+    supino_halteres: ['peito', ['triceps', 'ombros'], ['halteres', 'banco'], 'iniciante', [3, 8, 12, 90]],
+    supino_inclinado_barra: ['peito', ['ombros', 'triceps'], ['barra', 'banco'], 'intermediario', [4, 6, 10, 120]],
+    crucifixo: ['peito', [], ['halteres', 'banco'], 'iniciante', [3, 10, 15, 60]],
+    remada_maquina: ['costas', ['biceps'], ['maquina'], 'iniciante', [3, 8, 12, 90]],
+    remada_cavalinho: ['costas', ['biceps', 'ombros'], ['barra', 'maquina'], 'intermediario', [4, 6, 10, 120]],
+    desenvolvimento_maquina: ['ombros', ['triceps'], ['maquina'], 'iniciante', [3, 8, 12, 90]],
+    elevacao_lateral_cabo: ['ombros', [], ['cabo'], 'iniciante', [3, 12, 15, 45]],
+    crucifixo_invertido: ['ombros', ['costas'], ['halteres', 'maquina'], 'iniciante', [3, 12, 15, 60]],
+    hack_squat: ['quadriceps', ['gluteos'], ['maquina'], 'iniciante', [4, 8, 12, 120]],
+    agachamento_smith: ['quadriceps', ['gluteos'], ['maquina'], 'iniciante', [3, 8, 12, 120]],
+    agachamento_frontal: ['quadriceps', ['gluteos', 'core'], ['barra'], 'avancado', [3, 4, 8, 180]],
+    cadeira_adutora: ['quadriceps', [], ['maquina'], 'iniciante', [3, 12, 15, 45]],
+    rosca_inclinada: ['biceps', [], ['halteres', 'banco'], 'iniciante', [3, 10, 12, 60]],
+    rosca_cabo: ['biceps', [], ['cabo'], 'iniciante', [3, 12, 15, 45]],
+    triceps_coice: ['triceps', [], ['halteres', 'banco'], 'iniciante', [3, 12, 15, 45]],
+    abdominal_polia: ['core', [], ['cabo'], 'iniciante', [3, 10, 15, 45]],
+  });
+
   for (const [id, m] of Object.entries(META)) {
     const ex = EXERCISES[id];
     if (!ex) continue;
@@ -356,13 +473,13 @@
   }
 
   const TOJI = Object.assign(DEFAULT_PLAN, {
-    id: 'toji', short: 'Toji (5 dias)', level: 'intermediario', daysPerWeek: 5, place: 'academia', goal: 'força + hipertrofia',
+    id: 'toji', focus: 'forca', short: 'Toji (5 dias)', level: 'intermediario', daysPerWeek: 5, place: 'academia', goal: 'força + hipertrofia',
     description: 'Força pesada, potência e condicionamento inspirados no Toji Fushiguro. Para quem já tem base de treino.',
   });
 
   const PROGRAMS = [
     {
-      id: 'fullbody3', name: 'Full Body 3x – Iniciante', short: 'Full Body 3x', level: 'iniciante', daysPerWeek: 3, place: 'academia',
+      id: 'fullbody3', focus: 'massa', name: 'Full Body 3x – Iniciante', short: 'Full Body 3x', level: 'iniciante', daysPerWeek: 3, place: 'academia',
       goal: 'hipertrofia + base de força',
       description: 'Corpo todo em cada treino, 3 dias não seguidos (ex.: seg/qua/sex). Cada músculo é treinado ~3x por semana — a melhor porta de entrada segundo a ACSM.',
       days: [
@@ -378,7 +495,7 @@
       ],
     },
     {
-      id: 'abc', name: 'ABC – Iniciante/Intermediário', short: 'ABC', level: 'iniciante', daysPerWeek: 3, place: 'academia',
+      id: 'abc', focus: 'massa', name: 'ABC – Iniciante/Intermediário', short: 'ABC', level: 'iniciante', daysPerWeek: 3, place: 'academia',
       goal: 'hipertrofia',
       description: 'A: peito, ombros e tríceps · B: costas e bíceps · C: pernas e abdômen. Faça ABC 3x/semana para começar ou ABCABC (6 dias) para treinar cada músculo 2x.',
       days: [
@@ -395,7 +512,7 @@
       ],
     },
     {
-      id: 'upperlower', name: 'Upper/Lower 4x – Intermediário', short: 'Upper/Lower', level: 'intermediario', daysPerWeek: 4, place: 'academia',
+      id: 'upperlower', focus: 'forca', name: 'Upper/Lower 4x – Intermediário', short: 'Upper/Lower', level: 'intermediario', daysPerWeek: 4, place: 'academia',
       goal: 'força + hipertrofia',
       description: 'Superior/inferior em 4 dias (ex.: seg/ter/qui/sex). Cada músculo 2x por semana — um dia mais pesado (A) e um mais volumoso (B).',
       days: [
@@ -414,7 +531,7 @@
       ],
     },
     {
-      id: 'abcd', name: 'ABCD – Intermediário', short: 'ABCD', level: 'intermediario', daysPerWeek: 4, place: 'academia', goal: 'hipertrofia',
+      id: 'abcd', focus: 'massa', name: 'ABCD – Intermediário', short: 'ABCD', level: 'intermediario', daysPerWeek: 4, place: 'academia', goal: 'hipertrofia',
       description: 'A: peito e tríceps · B: costas e bíceps · C: pernas · D: ombros e abdômen. Mais volume por sessão; cada músculo ~1x por semana (bíceps/tríceps recebem estímulo extra nos dias de peito/costas).',
       days: [
         day('abcd', 'a', 'Treino A', 'Peito e tríceps', [
@@ -432,7 +549,7 @@
       ],
     },
     {
-      id: 'ppl', name: 'Push/Pull/Legs – Avançado (6 dias)', short: 'PPL 6x', level: 'avancado', daysPerWeek: 6, place: 'academia', goal: 'hipertrofia',
+      id: 'ppl', focus: 'massa', name: 'Push/Pull/Legs – Avançado (6 dias)', short: 'PPL 6x', level: 'avancado', daysPerWeek: 6, place: 'academia', goal: 'hipertrofia',
       description: 'Empurrar / Puxar / Pernas, duas vezes por semana com variações A e B. Alto volume (~15–20 séries por músculo/semana). Com só 3 dias, prefira Full Body ou Upper/Lower.',
       days: [
         day('ppl', 'pa', 'Push A', 'Peito, ombros, tríceps', [
@@ -455,9 +572,109 @@
           ['mesa_flexora', 3, 10, 12, 60], ['panturrilha_sentado', 4, 12, 15, 45], ['roda_abdominal', 3, 8, 12, 60]]),
       ],
     },
+
+    {
+      id: 'phul', name: 'Força + Hipertrofia 4x (Superior/Inferior)', short: 'Força+Hipertrofia', level: 'intermediario', daysPerWeek: 4,
+      place: 'academia', goal: 'força + massa', focus: 'forca',
+      description: 'Dois dias de força (3–5 reps, descanso longo) e dois de hipertrofia (8–15 reps com técnicas de intensidade). Ex.: seg força sup., ter força inf., qui hipertrofia sup., sex hipertrofia inf.',
+      days: [
+        day('phul', 'uf', 'Superior Força', 'Pesado: 3–5 reps', [
+          ['supino_reto', 4, 3, 5, 180, '1ª série = série-topo pesada; demais −10%'], ['remada_curvada', 4, 3, 5, 180], ['desenvolvimento', 3, 5, 8, 150],
+          ['barra_fixa', 3, 0, 0, 150, 'Use carga se passar de 10 reps'], ['rosca_direta', 2, 6, 10, 90], ['triceps_testa', 2, 6, 10, 90]]),
+        day('phul', 'lf', 'Inferior Força', 'Pesado: 3–5 reps', [
+          ['agachamento', 4, 3, 5, 180, '1ª série = série-topo pesada; demais −10%'], ['terra', 3, 3, 5, 240], ['leg_press', 4, 8, 12, 120],
+          ['cadeira_flexora', 4, 6, 10, 90], ['panturrilha_pe', 4, 6, 10, 60]]),
+        day('phul', 'uh', 'Superior Hipertrofia', 'Volume: 8–15 reps', [
+          ['supino_inclinado', 4, 8, 12, 90], ['supino_maquina', 3, 10, 12, 90, 'Última série: drop-set (−20–30% e continue até a falha)'], ['crucifixo', 3, 12, 15, 60],
+          ['remada_maquina', 4, 8, 12, 90], ['puxada_alta', 3, 10, 12, 90], ['elevacao_lateral_cabo', 3, 12, 15, 45, 'Última série: rest-pause (falha, 15 s, mais reps)'],
+          ['rosca_inclinada', 3, 10, 12, 60], ['triceps_corda', 3, 12, 15, 60, 'Última série: drop-set (−20–30% e continue até a falha)']]),
+        day('phul', 'lh', 'Inferior Hipertrofia', 'Volume: 8–15 reps', [
+          ['hack_squat', 4, 8, 12, 120], ['stiff', 3, 8, 12, 90], ['cadeira_extensora', 4, 10, 15, 60, 'Última série: drop-set (−20–30% e continue até a falha)'],
+          ['mesa_flexora', 4, 10, 12, 60], ['elevacao_pelvica', 3, 8, 12, 90], ['panturrilha_sentado', 4, 12, 15, 45]]),
+      ],
+    },
+    {
+      id: 'forca5x5', name: 'Força 5×5 (3 dias)', short: 'Força 5×5', level: 'iniciante', daysPerWeek: 3, place: 'academia',
+      goal: 'força', focus: 'forca',
+      description: 'Clássico de força linear: alterne A e B em 3 dias não seguidos (A-B-A, depois B-A-B). Fechou 5×5? Suba a carga na próxima sessão. Travou 3 vezes seguidas? Reduza 10% e suba de novo.',
+      days: [
+        day('f55', 'a', 'Treino A', 'Agachamento, supino, remada', [
+          ['agachamento', 5, 5, 5, 180], ['supino_reto', 5, 5, 5, 180], ['remada_curvada', 5, 5, 5, 150], ['prancha', 3, 45, 60, 45]]),
+        day('f55', 'b', 'Treino B', 'Agachamento, desenvolvimento, terra', [
+          ['agachamento', 5, 5, 5, 180], ['desenvolvimento', 5, 5, 5, 180], ['terra', 1, 5, 5, 240, 'Uma série pesada após aquecer bem'],
+          ['barra_fixa', 3, 0, 0, 120]]),
+      ],
+    },
+    {
+      id: 'powerlifting', name: 'Força máxima: agachamento, supino e terra (4 dias)', short: 'Força máxima', level: 'avancado', daysPerWeek: 4,
+      place: 'academia', goal: 'força máxima', focus: 'forca',
+      description: 'Foco nos três levantamentos. Dias pesados em 2–3 reps (~85–90% do 1RM) e dias de volume (~70–75%). Faça deload a cada 4–6 semanas. Use o 1RM estimado do app para calcular as cargas.',
+      days: [
+        day('pl', 'sq', 'Agachamento pesado', 'Força: 3 reps', [
+          ['agachamento', 5, 3, 3, 240, '~85% do 1RM'], ['agachamento_frontal', 3, 5, 5, 180], ['stiff', 3, 6, 8, 120],
+          ['abdominal_polia', 3, 10, 12, 60]]),
+        day('pl', 'bp', 'Supino pesado', 'Força: 3 reps', [
+          ['supino_reto', 5, 3, 3, 240, '~85% do 1RM, pausa de 1 s no peito'], ['supino_fechado', 3, 6, 6, 180],
+          ['remada_curvada', 4, 6, 8, 120], ['desenvolvimento_halteres', 3, 8, 8, 90], ['triceps_testa', 3, 8, 10, 90]]),
+        day('pl', 'dl', 'Terra pesado', 'Força: 2–3 reps', [
+          ['terra', 5, 2, 3, 300, '~85–90% do 1RM'], ['agachamento', 3, 6, 8, 180, '~70% do 1RM'], ['barra_fixa', 4, 0, 0, 120],
+          ['hiperextensao', 3, 10, 12, 60], ['prancha', 3, 45, 60, 45]]),
+        day('pl', 'bv', 'Supino volume', 'Volume: 6–8 reps', [
+          ['supino_reto', 4, 6, 8, 180, '~75% do 1RM'], ['supino_inclinado_barra', 3, 6, 8, 150], ['remada_cavalinho', 4, 8, 10, 120],
+          ['face_pull', 3, 15, 15, 60], ['rosca_direta', 3, 8, 10, 60], ['elevacao_lateral', 3, 12, 15, 45]]),
+      ],
+    },
+    {
+      id: 'maquinas5', name: 'Hipertrofia academia completa (5 dias)', short: 'Academia 5x', level: 'intermediario', daysPerWeek: 5,
+      place: 'academia', goal: 'massa muscular', focus: 'massa',
+      description: 'Um grupo grande por dia com máquinas, cabos e pesos livres. Muito volume por sessão e técnicas de intensidade nas últimas séries. Ideal para academia bem equipada.',
+      days: [
+        day('mq', 'pe', 'Peito', 'Peito + abdômen', [
+          ['supino_inclinado_barra', 4, 6, 10, 150], ['supino_maquina', 4, 8, 12, 90], ['supino_declinado', 3, 8, 10, 120],
+          ['voador', 3, 12, 15, 60, 'Última série: drop-set (−20–30% e continue até a falha)'], ['crossover', 3, 12, 15, 60], ['abdominal_polia', 4, 10, 15, 45]]),
+        day('mq', 'co', 'Costas', 'Costas + lombar', [
+          ['barra_fixa', 4, 0, 0, 120], ['remada_cavalinho', 4, 6, 10, 120], ['puxada_alta', 4, 8, 12, 90],
+          ['remada_maquina', 3, 10, 12, 90, 'Última série: drop-set (−20–30% e continue até a falha)'], ['pulldown_reto', 3, 12, 15, 60], ['hiperextensao', 3, 12, 15, 60]]),
+        day('mq', 'pn', 'Pernas', 'Quadríceps, posterior, adutores, panturrilha', [
+          ['hack_squat', 4, 6, 10, 150], ['leg_press', 4, 10, 15, 120], ['cadeira_extensora', 3, 12, 15, 60, 'Última série: drop-set (−20–30% e continue até a falha)'],
+          ['cadeira_flexora', 4, 10, 12, 60], ['stiff', 3, 8, 12, 90], ['cadeira_adutora', 3, 12, 15, 45], ['panturrilha_sentado', 4, 12, 15, 45]]),
+        day('mq', 'om', 'Ombros', 'Ombros + trapézio', [
+          ['desenvolvimento_maquina', 4, 8, 12, 90], ['elevacao_lateral_cabo', 4, 12, 15, 45], ['elevacao_lateral', 3, 15, 20, 45, 'Última série: rest-pause (falha, 15 s, mais reps)'],
+          ['crucifixo_invertido', 4, 12, 15, 60], ['face_pull', 3, 15, 15, 60], ['encolhimento', 4, 10, 12, 60]]),
+        day('mq', 'br', 'Braços', 'Bíceps + tríceps (bi-set)', [
+          ['rosca_direta', 4, 8, 10, 60, 'Bi-set com o próximo'], ['triceps_testa', 4, 8, 10, 90],
+          ['rosca_inclinada', 3, 10, 12, 60, 'Bi-set com o próximo'], ['triceps_corda', 3, 12, 15, 60],
+          ['rosca_cabo', 3, 12, 15, 45, 'Última série: drop-set (−20–30% e continue até a falha)'], ['triceps_coice', 3, 12, 15, 45], ['rosca_martelo', 3, 10, 12, 60]]),
+      ],
+    },
+    {
+      id: 'arnold', name: 'Arnold split 6x – Avançado', short: 'Arnold 6x', level: 'avancado', daysPerWeek: 6, place: 'academia',
+      goal: 'massa muscular (alto volume)', focus: 'massa',
+      description: 'Peito+Costas / Ombros+Braços / Pernas, duas vezes por semana com variações. Volume muito alto (~18–25 séries por músculo). Só para quem recupera bem: durma, coma e faça deload a cada 4–6 semanas.',
+      days: [
+        day('ar', 'pc1', 'Peito + Costas A', 'Pesado', [
+          ['supino_reto', 4, 6, 10, 150], ['barra_fixa', 4, 0, 0, 120], ['supino_inclinado', 4, 8, 12, 90],
+          ['remada_curvada', 4, 8, 10, 120], ['crucifixo', 3, 10, 15, 60], ['pulldown_reto', 3, 12, 15, 60], ['abdominal_polia', 3, 12, 15, 45]]),
+        day('ar', 'ob1', 'Ombros + Braços A', 'Pesado', [
+          ['desenvolvimento', 4, 6, 10, 150], ['elevacao_lateral', 4, 12, 15, 45], ['crucifixo_invertido', 3, 12, 15, 60],
+          ['rosca_direta', 4, 8, 10, 60], ['triceps_testa', 4, 8, 10, 90], ['rosca_martelo', 3, 10, 12, 60], ['triceps_corda', 3, 12, 15, 60, 'Última série: drop-set (−20–30% e continue até a falha)']]),
+        day('ar', 'pn1', 'Pernas A', 'Agachamento', [
+          ['agachamento', 5, 5, 8, 180], ['stiff', 4, 8, 10, 120], ['leg_press', 3, 10, 15, 120],
+          ['cadeira_flexora', 3, 10, 12, 60], ['panturrilha_pe', 5, 10, 15, 45], ['abdominal_infra', 3, 15, 15, 45]]),
+        day('ar', 'pc2', 'Peito + Costas B', 'Volume', [
+          ['supino_inclinado_barra', 4, 6, 10, 150], ['remada_cavalinho', 4, 6, 10, 120], ['supino_halteres', 3, 8, 12, 90],
+          ['puxada_alta', 3, 10, 12, 90], ['crossover', 3, 12, 15, 60, 'Última série: drop-set (−20–30% e continue até a falha)'], ['remada_maquina', 3, 10, 12, 90], ['roda_abdominal', 3, 8, 12, 60]]),
+        day('ar', 'ob2', 'Ombros + Braços B', 'Volume', [
+          ['desenvolvimento_halteres', 4, 8, 12, 90], ['elevacao_lateral_cabo', 4, 12, 15, 45, 'Última série: rest-pause (falha, 15 s, mais reps)'], ['face_pull', 3, 15, 15, 60],
+          ['rosca_inclinada', 3, 10, 12, 60], ['triceps_frances', 3, 10, 12, 60], ['rosca_cabo', 3, 12, 15, 45], ['triceps_coice', 3, 12, 15, 45]]),
+        day('ar', 'pn2', 'Pernas B', 'Hack + terra', [
+          ['hack_squat', 4, 8, 12, 120], ['terra', 3, 3, 5, 240], ['bulgaro', 3, 8, 10, 90],
+          ['mesa_flexora', 3, 10, 12, 60], ['cadeira_extensora', 3, 12, 15, 60, 'Última série: drop-set (−20–30% e continue até a falha)'], ['panturrilha_sentado', 4, 12, 15, 45]]),
+      ],
+    },
     TOJI,
     {
-      id: 'casa', name: 'Em casa – peso corporal (3 dias)', short: 'Casa', level: 'iniciante', daysPerWeek: 3, place: 'casa',
+      id: 'casa', focus: 'casa', name: 'Em casa – peso corporal (3 dias)', short: 'Casa', level: 'iniciante', daysPerWeek: 3, place: 'casa',
       goal: 'condicionamento + hipertrofia',
       description: 'Sem equipamento (uma cadeira firme ajuda). Progrida com mais reps, descidas lentas (3 s) e pausas. Quando passar de 20 reps fácil, adicione uma mochila com peso.',
       days: [
@@ -473,7 +690,7 @@
       ],
     },
     {
-      id: 'halteres', name: 'Só halteres (3 dias)', short: 'Halteres', level: 'iniciante', daysPerWeek: 3, place: 'halteres',
+      id: 'halteres', focus: 'casa', name: 'Só halteres (3 dias)', short: 'Halteres', level: 'iniciante', daysPerWeek: 3, place: 'halteres',
       goal: 'hipertrofia',
       description: 'Para quem tem um par de halteres (de preferência ajustáveis) e um banco ou cadeira. Corpo todo, 3x por semana.',
       days: [
@@ -489,7 +706,7 @@
       ],
     },
     {
-      id: 'condicionamento', name: 'Condicionamento em circuito (3 dias)', short: 'Circuito', level: 'iniciante', daysPerWeek: 3,
+      id: 'condicionamento', focus: 'condicionamento', name: 'Condicionamento em circuito (3 dias)', short: 'Circuito', level: 'iniciante', daysPerWeek: 3,
       place: 'casa', goal: 'condicionamento / gasto calórico',
       description: 'Circuitos curtos e intensos. Combine com alimentação adequada se o objetivo for emagrecer. Kettlebell opcional (troque por agachamento).',
       days: [
@@ -554,6 +771,26 @@
       ],
     },
     {
+      title: 'Técnicas de intensidade (para treinos avançados)',
+      body: [
+        'Use só na ÚLTIMA série de 1–2 exercícios por treino, de preferência em máquinas e cabos (mais seguro perto da falha).',
+        'Drop-set: chegou perto da falha, reduza a carga 20–30% e continue até falhar de novo (1–2 quedas).',
+        'Rest-pause: falhou, descanse 10–20 s e faça mais reps com a mesma carga (1–2 vezes).',
+        'Bi-set: dois exercícios seguidos sem descanso (ex.: rosca + tríceps). Economiza tempo.',
+        'Série-topo + back-off: 1 série pesada e as demais 10% mais leves, com mais reps.',
+        'Evite falha total em agachamento, terra e supino livre sem segurança — use RIR 1–2 (sobrar 1–2 reps).',
+      ],
+    },
+    {
+      title: 'Treino de força: cargas e progressão',
+      body: [
+        'Força máxima pede cargas altas: 1–5 reps a ~80–90% do 1RM, 3–5 min de descanso.',
+        'Use o 1RM estimado do app (tela do exercício) para calcular: ex.: 1RM 100 kg → 85% = 85 kg.',
+        '5×5 e progressão linear funcionam muito bem nos primeiros meses: suba 2,5 kg (membros superiores) ou 5 kg (inferiores) quando fechar todas as séries.',
+        'Quando a progressão travar, alterne semanas pesadas e leves e faça deload a cada 4–6 semanas.',
+      ],
+    },
+    {
       title: 'Deload (semana leve)',
       body: [
         'A cada 4–8 semanas, ou quando o cansaço acumular, faça uma semana com ~metade das séries e carga um pouco menor.',
@@ -596,13 +833,21 @@
     if (place === 'casa') return goal === 'condicionamento' ? 'condicionamento' : 'casa';
     if (place === 'halteres') return 'halteres';
     if (goal === 'condicionamento') return 'condicionamento';
+    if (goal === 'forca') {
+      if (days <= 3) return 'forca5x5';
+      if (level === 'iniciante') return 'upperlower';
+      return level === 'avancado' ? 'powerlifting' : 'phul';
+    }
+    // hipertrofia
     if (days <= 3) return level === 'iniciante' ? 'fullbody3' : 'abc';
-    if (days === 4) return level === 'iniciante' ? 'upperlower' : (goal === 'forca' ? 'upperlower' : 'abcd');
-    if (days === 5) return 'toji';
-    return level === 'avancado' ? 'ppl' : 'upperlower';
+    if (days === 4) return level === 'iniciante' ? 'upperlower' : (level === 'avancado' ? 'phul' : 'abcd');
+    if (days === 5) return level === 'iniciante' ? 'abc' : 'maquinas5';
+    return level === 'avancado' ? 'arnold' : (level === 'intermediario' ? 'ppl' : 'upperlower');
   }
 
-  const api = { GROUPS, EQUIP, PROGRAMS, GUIDE, SOURCES, LEVELS, PLACES, recommend };
+  const FOCUS = { massa: 'Massa muscular', forca: 'Força', casa: 'Casa/halteres', condicionamento: 'Condicionamento' };
+
+  const api = { GROUPS, EQUIP, PROGRAMS, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, recommend };
   Object.assign(D, api);
   if (typeof module !== 'undefined' && module.exports) module.exports = D;
 })(typeof self !== 'undefined' ? self : this);

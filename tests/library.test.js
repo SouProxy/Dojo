@@ -17,7 +17,7 @@ test('todo exercício tem grupo, equipamento, nível, padrão, dicas e GIF exist
     assert.ok(ex.cues.length >= 2, `${id}: dicas`);
     for (const g of ex.gifs) assert.ok(fs.existsSync(path.join(GIFS, `${g}.gif`)), `${id}: gif ${g}`);
   }
-  assert.ok(Object.keys(D.EXERCISES).length >= 60);
+  assert.ok(Object.keys(D.EXERCISES).length >= 80);
 });
 
 test('todos os grupos musculares têm exercícios', () => {
@@ -58,8 +58,12 @@ test('programas de academia ficam na faixa de volume recomendada (≥ 6 séries/
 
 test('recomendação de programa', () => {
   assert.equal(D.recommend({ days: 3, level: 'iniciante', place: 'academia', goal: 'hipertrofia' }), 'fullbody3');
-  assert.equal(D.recommend({ days: 4, level: 'intermediario', place: 'academia', goal: 'forca' }), 'upperlower');
-  assert.equal(D.recommend({ days: 6, level: 'avancado', place: 'academia', goal: 'hipertrofia' }), 'ppl');
+  assert.equal(D.recommend({ days: 4, level: 'intermediario', place: 'academia', goal: 'forca' }), 'phul');
+  assert.equal(D.recommend({ days: 4, level: 'avancado', place: 'academia', goal: 'forca' }), 'powerlifting');
+  assert.equal(D.recommend({ days: 3, level: 'intermediario', place: 'academia', goal: 'forca' }), 'forca5x5');
+  assert.equal(D.recommend({ days: 5, level: 'intermediario', place: 'academia', goal: 'hipertrofia' }), 'maquinas5');
+  assert.equal(D.recommend({ days: 6, level: 'avancado', place: 'academia', goal: 'hipertrofia' }), 'arnold');
+  assert.equal(D.recommend({ days: 6, level: 'intermediario', place: 'academia', goal: 'hipertrofia' }), 'ppl');
   assert.equal(D.recommend({ days: 3, level: 'iniciante', place: 'casa', goal: 'hipertrofia' }), 'casa');
   assert.equal(D.recommend({ days: 3, level: 'iniciante', place: 'halteres', goal: 'hipertrofia' }), 'halteres');
   for (const days of [2, 3, 4, 5, 6]) for (const level of Object.keys(D.LEVELS)) for (const place of Object.keys(D.PLACES)) {
@@ -159,4 +163,24 @@ test('métricas, recordes e distribuição muscular', () => {
   const prev = L.weekBounds(day, -1);
   assert.equal(L.muscleSets(hist, D.EXERCISES, prev.start, prev.end).total, 2);
   assert.deepEqual(L.metricOptions(D.EXERCISES.prancha).map((o) => o[0]), ['best_time', 'total_time']);
+});
+
+test('programas intensos de massa: volume alto nos grupos grandes e técnicas de intensidade', () => {
+  for (const id of ['phul', 'maquinas5', 'arnold']) {
+    const p = D.PROGRAMS.find((x) => x.id === id);
+    const v = L.weeklyVolume(p, D.EXERCISES);
+    for (const g of ['peito', 'costas', 'quadriceps', 'ombros']) assert.ok(v[g] >= 12, `${id}/${g}: ${v[g]}`);
+    const notes = p.days.flatMap((d) => d.items.map((i) => i.note || '')).join(' ');
+    assert.match(notes, /drop-set|rest-pause|Bi-set|série-topo/i, `${id}: técnicas`);
+  }
+});
+
+test('programas de força usam poucas reps e descanso longo nos básicos', () => {
+  for (const id of ['forca5x5', 'powerlifting', 'phul']) {
+    const p = D.PROGRAMS.find((x) => x.id === id);
+    const main = p.days.flatMap((d) => d.items).filter((i) => ['agachamento', 'supino_reto', 'terra'].includes(i.ex));
+    assert.ok(main.length >= 2, id);
+    assert.ok(main.some((i) => i.max <= 5 && i.rest >= 180), `${id}: série pesada`);
+  }
+  for (const p of D.PROGRAMS) assert.ok(D.FOCUS[p.focus], `${p.id}: foco`);
 });

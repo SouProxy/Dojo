@@ -42,6 +42,16 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   await page.click('button.chip:text-is("Ganhar força")');
   assert(await page.locator('.card.hero >> text=Upper/Lower 4x').count() === 1, 'recomendação muda com as respostas (4 dias, força → Upper/Lower)');
   await shot('00-questionario');
+  await page.click('button.chip:text-is("Força")');
+  const forca = await page.locator('main .card h3').allTextContents();
+  assert(forca.some((t) => t.includes('Força 5×5')) && forca.some((t) => t.includes('Força máxima')) && !forca.some((t) => t.includes('Em casa')), 'filtro de programas por foco (força)');
+  await page.click('button.chip:text-is("5 dias")');
+  assert(await page.locator('main .card h3:has-text("Toji")').count() === 1 && await page.locator('main .card h3:has-text("Força 5×5")').count() === 0, 'filtro por dias combinado');
+  await page.click('button.chip:text-is("Força")');
+  await page.click('button.chip:text-is("Massa muscular")');
+  assert(await page.locator('main .card h3:has-text("Hipertrofia academia completa")').count() === 1, 'programa de máquinas 5 dias aparece em massa + 5 dias');
+  await page.click('button.chip:text-is("Massa muscular")');
+  await page.click('button.chip:text-is("5 dias")');
   await page.click('text=Continuar com Toji');
   await page.waitForSelector('text=Força pesada');
   assert(await page.locator('.card.hero >> text=Próximo · Dia 1').count() === 1, 'Dia 1 sugerido como próximo treino');

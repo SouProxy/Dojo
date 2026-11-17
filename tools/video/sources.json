@@ -10,6 +10,15 @@
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/206/view/"
   },
+  "agachamento_smith": {
+   "url": "https://wger.de/media/exercise-video/341/0cbfeace-dda9-4166-8424-f51358e88a4f.MOV",
+   "start": 2.4,
+   "duration": 6,
+   "fit": "pad",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/341/view/"
+  },
   "barra_fixa": {
    "url": "https://wger.de/media/exercise-video/475/83067ffe-ccb9-4e22-8507-5131b211ce74.MOV",
    "start": 3.8,
@@ -18,6 +27,15 @@
    "credit": "Goulart / wger.de (recortado e reenquadrado)",
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/475/view/"
+  },
+  "cadeira_adutora": {
+   "url": "https://wger.de/media/exercise-video/12/5148c579-5df2-4618-9a7b-a2e29ac4dd7d.MOV",
+   "start": 4.2,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/12/view/"
   },
   "cadeira_flexora": {
    "url": "https://wger.de/media/exercise-video/366/43df4b79-d4c3-4fbf-bcb5-e0d825b84120.MOV",
@@ -28,6 +46,15 @@
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/366/view/"
   },
+  "crucifixo_invertido": {
+   "url": "https://wger.de/media/exercise-video/82/28b53647-27e7-47cf-8852-2ee666c8b628.MOV",
+   "start": 1.5,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/82/view/"
+  },
   "desenvolvimento_halteres": {
    "url": "https://wger.de/media/exercise-video/567/64f33c19-1d96-4b7c-af17-6c6a4941c614.MOV",
    "start": 4.6,
@@ -37,6 +64,15 @@
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/567/view/"
   },
+  "desenvolvimento_maquina": {
+   "url": "https://wger.de/media/exercise-video/543/dbfd396b-1aab-4a64-a50b-2c31ff0a2cf7.MOV",
+   "start": 2.5,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/543/view/"
+  },
   "elevacao_lateral": {
    "url": "https://wger.de/media/exercise-video/348/de69928a-8a35-4096-821c-1f46de5e0e03.MOV",
    "start": 3.7,
@@ -45,6 +81,15 @@
    "credit": "Goulart / wger.de (recortado e reenquadrado)",
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/348/view/"
+  },
+  "elevacao_lateral_cabo": {
+   "url": "https://wger.de/media/exercise-video/349/9896d82e-d8b6-48af-bdd5-b8545dc523e9.MOV",
+   "start": 2.6,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/349/view/"
   },
   "elevacao_pelvica": {
    "url": "https://wger.de/media/exercise-video/294/45bacf4b-1bb6-4d47-8bd1-9f00eddd4019.MOV",
@@ -72,6 +117,15 @@
    "credit": "Goulart / wger.de (recortado e reenquadrado)",
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/222/view/"
+  },
+  "hack_squat": {
+   "url": "https://wger.de/media/exercise-video/375/effa7a81-dbdd-4014-83ee-ddf0fd835301.MOV",
+   "start": 6.4,
+   "duration": 6,
+   "fit": "pad",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/375/view/"
   },
   "leg_press": {
    "url": "https://wger.de/media/exercise-video/371/6aae16b4-01b9-4eb4-935c-3250f84d2c59.MOV",
@@ -136,6 +190,15 @@
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/92/view/"
   },
+  "rosca_cabo": {
+   "url": "https://wger.de/media/exercise-video/95/ab770931-47d3-44fd-aef0-ac7a64c3b794.MOV",
+   "start": 2.1,
+   "duration": 6,
+   "fit": "crop",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/95/view/"
+  },
   "rosca_direta": {
    "url": "https://wger.de/media/exercise-video/91/483f4bff-e108-41f1-8e7b-0caf24952552.MOV",
    "start": 2.5,
@@ -172,6 +235,15 @@
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/507/view/"
   },
+  "supino_halteres": {
+   "url": "https://wger.de/media/exercise-video/75/080c799b-8afd-4130-8d72-9cef0cd79f54.MOV",
+   "start": 2.8,
+   "duration": 6,
+   "fit": "pad",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/75/view/"
+  },
   "supino_inclinado": {
    "url": "https://wger.de/media/exercise-video/537/b9c937e9-daeb-42a9-be8e-7a77e368478c.MOV",
    "start": 5.5,
@@ -181,6 +253,15 @@
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/537/view/"
   },
+  "supino_inclinado_barra": {
+   "url": "https://wger.de/media/exercise-video/538/4349a6f6-4cee-4c09-828b-c5e7fc2c1ff1.MOV",
+   "start": 4.0,
+   "duration": 6,
+   "fit": "pad",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/538/view/"
+  },
   "supino_reto": {
    "url": "https://wger.de/media/exercise-video/73/cfb72002-898f-443a-a124-a0bce8a2e6ad.MP4",
    "start": 4.2,
@@ -189,6 +270,15 @@
    "credit": "Goulart / wger.de (recortado e reenquadrado)",
    "license": "CC-BY-SA-4.0",
    "source": "https://wger.de/exercise/73/view/"
+  },
+  "triceps_coice": {
+   "url": "https://wger.de/media/exercise-video/655/69e8c1e5-55b2-4da6-8166-092c24b16735.MOV",
+   "start": 2.4,
+   "duration": 6,
+   "fit": "pad",
+   "credit": "Goulart / wger.de (recortado e reenquadrado)",
+   "license": "CC-BY-SA-4.0",
+   "source": "https://wger.de/exercise/655/view/"
   },
   "triceps_frances": {
    "url": "https://wger.de/media/exercise-video/211/85f6eb25-a76c-409e-9af9-497794ac0dfb.MOV",

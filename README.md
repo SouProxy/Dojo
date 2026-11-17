@@ -2,24 +2,30 @@
 
 App Android de treino, offline, para qualquer nível — do primeiro dia na academia ao avançado, em casa ou com halteres.
 
-### Programas prontos (9)
-| Programa | Dias | Nível | Onde |
+### Programas prontos (14)
+| Programa | Dias | Nível | Foco |
 | --- | --- | --- | --- |
-| Full Body 3x | 3 | Iniciante | Academia |
-| ABC | 3 (ou 6) | Iniciante/intermediário | Academia |
-| Upper/Lower | 4 | Intermediário | Academia |
-| ABCD | 4 | Intermediário | Academia |
-| Push/Pull/Legs | 6 | Avançado | Academia |
-| Toji Fushiguro (Anime Physique Files #005) | 5 | Intermediário | Academia |
+| Full Body 3x | 3 | Iniciante | Massa |
+| ABC | 3 (ou 6) | Iniciante/intermediário | Massa |
+| Força 5×5 | 3 | Iniciante | Força |
+| Upper/Lower | 4 | Intermediário | Força + massa |
+| ABCD | 4 | Intermediário | Massa |
+| Força + Hipertrofia 4x (superior/inferior) | 4 | Intermediário | Força + massa |
+| Força máxima: agachamento, supino e terra | 4 | Avançado | Força |
+| Hipertrofia academia completa (máquinas) | 5 | Intermediário | Massa |
+| Toji Fushiguro (Anime Physique Files #005) | 5 | Intermediário | Força |
+| Push/Pull/Legs | 6 | Avançado | Massa |
+| Arnold split | 6 | Avançado | Massa (alto volume) |
 | Em casa – peso corporal | 3 | Iniciante | Casa |
 | Só halteres | 3 | Iniciante | Casa/academia |
-| Condicionamento em circuito | 3 | Iniciante | Casa |
+| Condicionamento em circuito | 3 | Iniciante | Condicionamento |
 
+Programas intensos trazem técnicas nas últimas séries (drop-set, rest-pause, bi-set, série-topo) e cargas por % do 1RM nos de força.
 Um **questionário** (dias por semana, experiência, local e objetivo) recomenda o programa no primeiro uso.
 
 ### Recursos
-- **23 vídeos reais em loop** (banco aberto wger, CC BY-SA 4.0, créditos no app e em [CREDITS.md](CREDITS.md)); demais exercícios com animação
-- **Biblioteca com 65 exercícios** e **64 GIFs animados** com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo muscular (13) e equipamento (13)
+- **33 vídeos reais em loop** (banco aberto wger, CC BY-SA 4.0, créditos no app e em [CREDITS.md](CREDITS.md)); demais exercícios com animação
+- **Biblioteca com 83 exercícios** (incluindo máquinas: supino máquina, hack, Smith, adutora, remada máquina, cavalinho, desenvolvimento máquina…) e **82 GIFs animados** com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo muscular (13) e equipamento (13)
 - **Monte seu treino**: edite qualquer programa ou crie do zero — adicione, remova e reordene exercícios, dias e formato (séries ou circuito)
 - **Volume semanal por músculo**: o app soma as séries do seu plano e compara com a faixa de 10–20 séries/semana
 - **Guia de treino** baseado em evidências: volume, frequência, divisões, reps/descanso, progressão, deload, aquecimento e segurança, com fontes

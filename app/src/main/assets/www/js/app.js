@@ -2,11 +2,11 @@
 (function () {
   'use strict';
 
-  const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, recommend } = window.DojoData;
+  const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, recommend } = window.DojoData;
   const Lg = window.DojoLogic;
   const MEDIA = window.DojoMedia || {};
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.3.0';
+  const APP_VERSION = '1.4.0';
 
   // ================================================================ estado
 
@@ -1213,7 +1213,8 @@
         h('span', { class: 'badge gold', text: `${p.daysPerWeek} dias/semana` }),
         h('span', { class: 'badge', text: LEVELS[p.level] }),
         h('span', { class: 'badge', text: PLACES[p.place] }),
-        h('span', { class: 'badge', text: p.goal })),
+        h('span', { class: 'badge', text: p.goal }),
+        h('span', { class: 'badge', text: `${p.days.reduce((a, d) => a + d.items.length, 0)} exercícios` })),
       h('p', { class: 'muted small mt', text: p.description }),
       h('div', { class: 'row mt' },
         h('button', { class: 'btn ghost grow sm', onclick: () => openProgramModal(p) }, 'Ver treinos'),
@@ -1261,7 +1262,12 @@
     wrap.appendChild(h('div', { class: 'section-title', text: 'Sugestão' }));
     wrap.appendChild(programCard(recP, true));
     wrap.appendChild(h('div', { class: 'section-title', text: 'Todos os programas' }));
-    wrap.appendChild(h('div', { class: 'stack' }, PROGRAMS.filter((p) => p.id !== rec).map((p) => programCard(p, false))));
+    const pf = ui.progFilter || (ui.progFilter = { focus: null, days: null });
+    const fchip = (key, val, label) => h('button', { class: `chip${pf[key] === val ? ' on' : ''}`, onclick: () => { pf[key] = pf[key] === val ? null : val; render(); } }, label);
+    wrap.appendChild(h('div', { class: 'chips scroll-x' }, Object.entries(FOCUS).map(([k, l]) => fchip('focus', k, l))));
+    wrap.appendChild(h('div', { class: 'chips scroll-x mt-s' }, [3, 4, 5, 6].map((d) => fchip('days', d, `${d} dias`))));
+    const shown = PROGRAMS.filter((p) => p.id !== rec && (!pf.focus || p.focus === pf.focus) && (!pf.days || p.daysPerWeek === pf.days));
+    wrap.appendChild(h('div', { class: 'stack mt' }, shown.length ? shown.map((p) => programCard(p, false)) : h('div', { class: 'card empty', text: 'Nenhum programa com esses filtros.' })));
     const customs = Object.values(state.plans).concat([state.plan]).filter((p, i, arr) => p.custom && arr.findIndex((x) => x.id === p.id) === i);
     wrap.appendChild(h('div', { class: 'section-title', text: 'Meus treinos' }));
     const mine = h('div', { class: 'stack' });
