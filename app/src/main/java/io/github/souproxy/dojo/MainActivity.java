@@ -339,11 +339,16 @@ public class MainActivity extends ComponentActivity {
     protected void onResume() {
         super.onResume();
         webView.onResume();
+        webView.resumeTimers();
     }
 
     @Override
     protected void onPause() {
+        // Em segundo plano: congela JS/timers e solta a tela (economia de bateria).
+        // Os timers do app usam horário absoluto, então voltam certos ao reabrir.
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         webView.onPause();
+        webView.pauseTimers();
         super.onPause();
     }
 

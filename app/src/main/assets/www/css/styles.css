@@ -151,7 +151,8 @@ button.chip.on { border-color: var(--accent); color: var(--text); background: rg
 .restbar .time { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .restbar.done { background: #11261b; border-top-color: var(--ok); }
 .progress { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 8px; }
-.progress > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s linear; }
+/* scaleX não dispara layout (só composição); sem transição para não animar 60 fps. */
+.progress > i { display: block; height: 100%; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left center; }
 
 /* ---------- modal ---------- */
 .modal-wrap { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .6); display: flex; align-items: flex-end; justify-content: center; }

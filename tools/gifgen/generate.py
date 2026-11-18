@@ -21,6 +21,14 @@ from rig import (ACCENT, FAR, NEAR, STEEL, STEEL_DARK, THICK, Canvas, add, draw_
                  ease, save_gif, solve, timeline, vdown)
 
 OUT = Path(__file__).resolve().parents[2] / "app/src/main/assets/www/gifs"
+THUMBS = OUT.parent / "thumbs"
+
+
+def save_thumb(frames, name, size=128):
+    """Miniatura estática (quadro do meio do movimento) para listas: não anima = não gasta bateria."""
+    THUMBS.mkdir(parents=True, exist_ok=True)
+    f = frames[int(len(frames) * 0.35)].convert("RGB").resize((size, size), Image.LANCZOS)
+    f.quantize(colors=32, method=Image.Quantize.MEDIANCUT).save(THUMBS / f"{name}.png", optimize=True)
 
 
 def render_side(spec):
@@ -106,6 +114,7 @@ def build(names=None):
         frames, dur = render_side(spec) if kind == "side" else front.render(spec)
         path = OUT / f"{name}.gif"
         save_gif(frames, path, duration=dur)
+        save_thumb(frames, name)
         out[name] = frames
         print(f"{name:26s} {len(frames):3d} quadros  {path.stat().st_size / 1024:6.1f} KB")
     return out

@@ -184,3 +184,12 @@ test('programas de força usam poucas reps e descanso longo nos básicos', () =>
   }
   for (const p of D.PROGRAMS) assert.ok(D.FOCUS[p.focus], `${p.id}: foco`);
 });
+
+test('toda animação tem miniatura estática (listas não animam = menos bateria)', () => {
+  const gifs = fs.readdirSync(GIFS).filter((f) => f.endsWith('.gif'));
+  for (const g of gifs) {
+    const png = path.join(__dirname, '../app/src/main/assets/www/thumbs', g.replace('.gif', '.png'));
+    assert.ok(fs.existsSync(png), `miniatura de ${g}`);
+    assert.ok(fs.statSync(png).size < 12 * 1024, `miniatura pequena: ${g}`);
+  }
+});

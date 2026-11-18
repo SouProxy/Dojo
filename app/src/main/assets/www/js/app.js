@@ -6,7 +6,7 @@
   const Lg = window.DojoLogic;
   const MEDIA = window.DojoMedia || {};
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.4.0';
+  const APP_VERSION = '1.4.1';
 
   // ================================================================ estado
 
@@ -82,6 +82,8 @@
   }
 
   function gifSrc(name) { return `gifs/${name}.gif`; }
+  /** Miniatura estática para listas (GIF animado só na tela do exercício: economiza bateria). */
+  function thumbSrc(name) { return `thumbs/${name}.png`; }
 
   function parseNum(v) {
     if (v === null || v === undefined) return null;
@@ -127,7 +129,19 @@
     };
   }
 
-  function setKeepAwake(on) { Native.post({ type: 'keepAwake', on: !!on }); }
+  let wakeOn = null;
+  function setKeepAwake(on) {
+    if (wakeOn === !!on) return;
+    wakeOn = !!on;
+    Native.post({ type: 'keepAwake', on: wakeOn });
+  }
+  /** Tela ligada só enquanto algo está contando (descanso ou timer) e o app está visível. */
+  function wantWake() {
+    if (!state.settings.keepAwake || document.hidden) return false;
+    const r = state.active && state.active.rest;
+    return !!(ui.runner || (r && !r.finished));
+  }
+  function updateWake() { setKeepAwake(wantWake()); }
 
   // ================================================================ som/vibração
 
@@ -194,6 +208,7 @@
     if (dt2) dt2.scrollTop = dScroll;
     window.scrollTo(0, winScroll);
     tick();
+    schedule();
   }
 
   function viewNav() {
@@ -277,7 +292,7 @@
         day.mode === 'circuit' ? h('span', { class: 'badge accent', text: `Circuito ${day.rounds} voltas` }) : null),
       day.items.length ? null : h('p', { class: 'muted small', text: 'Sem exercícios ainda. Toque em “Editar” para montar este treino.' }),
       h('div', { class: 'chips' }, day.items.map((it) => h('span', { class: 'chip', text: `${EXERCISES[it.ex].name} · ${Lg.prescription(it, EXERCISES[it.ex])}` }))),
-      h('div', { class: 'thumbs' }, day.items.map((it) => h('img', { src: gifSrc(EXERCISES[it.ex].gifs[0]), alt: EXERCISES[it.ex].name, loading: 'lazy' }))),
+      h('div', { class: 'thumbs' }, day.items.map((it) => h('img', { src: thumbSrc(EXERCISES[it.ex].gifs[0]), alt: EXERCISES[it.ex].name, loading: 'lazy' }))),
       last ? h('p', { class: 'muted tiny', text: `Último: ${fmtDate(last.startedAt, { weekday: 'short', day: '2-digit', month: 'short' })}` }) : null);
     if (featured) {
       card.appendChild(h('button', { class: 'btn primary block', style: null, onclick: () => confirmStart(day) }, '▶ Começar treino'));
@@ -306,7 +321,7 @@
     if (last) due = Lg.daysUntil(last.t + CHALLENGE.everyDays * Lg.DAY_MS, Date.now());
     return h('div', { class: 'card' },
       h('div', { class: 'ex-head' },
-        h('img', { src: gifSrc('barra_carga'), alt: 'Barra fixa com carga', onclick: () => openExerciseModal('barra_carga') }),
+        h('img', { src: thumbSrc('barra_carga'), alt: 'Barra fixa com carga', onclick: () => openExerciseModal('barra_carga') }),
         h('div', { class: 'grow' },
           h('div', { class: 'ex-name', text: 'Barra fixa com carga' }),
           h('p', { class: 'muted small', text: CHALLENGE.text }),
@@ -341,7 +356,7 @@
     if (!state.settings.startDate) state.settings.startDate = Date.now();
     save();
     ui.sessionOpen = true;
-    if (state.settings.keepAwake) setKeepAwake(true);
+    updateWake();
     render();
     window.scrollTo(0, 0);
   }
@@ -375,7 +390,7 @@
     const doneCount = Lg.doneSets(entry).length;
     const card = h('div', { class: `card ${doneCount >= entry.sets.length ? 'done' : ''}` },
       h('div', { class: 'ex-head' },
-        h('img', { src: gifSrc(ex.gifs[0]), alt: ex.name, onclick: () => openExerciseModal(it.ex) }),
+        h('img', { src: thumbSrc(ex.gifs[0]), alt: ex.name, onclick: () => openExerciseModal(it.ex) }),
         h('div', { class: 'grow' },
           h('div', { class: 'ex-name', text: ex.name }),
           h('div', { class: 'muted small', text: `${Lg.prescription(it, ex)} · descanso ${Lg.fmtRest(it.rest)}` }),
@@ -410,7 +425,7 @@
         const sug = Lg.suggest(it, ex, last, state.settings);
         card.appendChild(h('div', { class: 'circuit-item' },
           h('div', { class: 'ex-head' },
-            h('img', { src: gifSrc(ex.gifs[0]), alt: ex.name, onclick: () => openExerciseModal(it.ex) }),
+            h('img', { src: thumbSrc(ex.gifs[0]), alt: ex.name, onclick: () => openExerciseModal(it.ex) }),
             h('div', { class: 'grow' }, h('div', { class: 'ex-name', text: ex.name }), h('div', { class: 'muted small', text: Lg.prescription(it, ex) }))),
           r === 0 ? h('div', { class: `suggest ${sug.kind}`, text: sug.text }) : null,
           h('div', { class: 'sets' }, setRow(a, it, ex, i, r, last, sug))));
@@ -707,8 +722,8 @@
     r.stop = stop;
     ui.runner = r;
     root.appendChild(r.el);
-    if (state.settings.keepAwake) setKeepAwake(true);
     tick();
+    schedule();
   }
 
   function runCountdown(sec, title, onComplete) {
@@ -739,7 +754,6 @@
       r.done = true;
       cue.end();
       r.stop();
-      if (!state.active && !ui.sessionOpen) setKeepAwake(false);
       if (r.onComplete) r.onComplete();
       else toast('Timer concluído!');
       return;
@@ -759,7 +773,7 @@
     setText('run-clock', Lg.fmtClock(secCeil));
     setText('run-pause', r.pausedAt ? 'Continuar' : 'Pausar');
     const bar = document.getElementById('run-prog');
-    if (bar) bar.style.width = `${Math.min(100, (elapsed / r.total) * 100)}%`;
+    if (bar) bar.style.transform = `scaleX(${Math.min(1, elapsed / r.total).toFixed(3)})`;
   }
 
   // Cronômetro da aba Timer
@@ -887,7 +901,7 @@
     const card = h('div', { class: 'card', style: null });
     card.classList.add('mt');
     card.append(h('div', { class: 'ex-head' },
-      h('img', { src: gifSrc(ex.gifs[0]), alt: ex.name, onclick: () => openExerciseModal(ui.progressEx) }),
+      h('img', { src: thumbSrc(ex.gifs[0]), alt: ex.name, onclick: () => openExerciseModal(ui.progressEx) }),
       h('div', { class: 'grow' }, h('div', { class: 'ex-name', text: ex.name }), h('div', { class: 'muted small', text: ser.label }),
         ser.points.length ? h('span', { class: 'badge gold', text: `Melhor: ${Lg.fmtNum(Math.max(...ser.points.map((p) => p.v)))}` }) : null)));
     card.append(h('button', { class: 'btn ghost block sm mt', onclick: () => openExerciseModal(ui.progressEx) }, 'Ver detalhes, recordes e histórico'));
@@ -918,7 +932,7 @@
     const m = MEDIA[name];
     const fallback = () => { holder.textContent = ''; holder.appendChild(h('img', { class: 'big', src: gifSrc(name), alt: ex.name })); };
     if (!m) { fallback(); return holder; }
-    const v = h('video', { class: 'big', src: m.src, autoplay: true, loop: true, muted: true, playsinline: true, preload: 'auto', 'aria-label': ex.name, poster: gifSrc(name) });
+    const v = h('video', { class: 'big', src: m.src, autoplay: true, loop: true, muted: true, playsinline: true, preload: 'auto', 'aria-label': ex.name, poster: thumbSrc(name) });
     v.muted = true;
     v.addEventListener('error', fallback);
     holder.append(v, h('p', { class: 'tiny muted credit', text: `Vídeo: ${m.credit} · ${m.license}` }));
@@ -1333,7 +1347,7 @@
       if (!items.length) list.appendChild(h('div', { class: 'card empty', text: 'Nada encontrado com esses filtros.' }));
       items.forEach(([id, ex]) => list.appendChild(h('div', { class: 'card tap', onclick: () => (picking ? addItem(picking, id) : openExerciseModal(id)) },
         h('div', { class: 'ex-head' },
-          h('img', { src: gifSrc(ex.gifs[0]), alt: ex.name, loading: 'lazy' }),
+          h('img', { src: thumbSrc(ex.gifs[0]), alt: ex.name, loading: 'lazy' }),
           h('div', { class: 'grow' },
             h('div', { class: 'ex-name', text: ex.name }),
             h('div', { class: 'muted small', text: ex.muscles }),
@@ -1389,7 +1403,7 @@
       d.items.forEach((it, ii) => {
         const ex = EXERCISES[it.ex];
         tbl.appendChild(h('div', { class: 'edit-row' },
-          h('img', { src: gifSrc(ex.gifs[0]), alt: '', loading: 'lazy' }),
+          h('img', { src: thumbSrc(ex.gifs[0]), alt: '', loading: 'lazy' }),
           h('div', { class: 'grow' }, h('div', { class: 'small', text: ex.name }), h('div', { class: 'tiny muted', text: `${Lg.prescription(it, ex)} · ${Lg.fmtRest(it.rest)}` })),
           h('button', { class: 'icon-btn sm', 'aria-label': 'Subir', disabled: ii === 0, onclick: () => { d.items.splice(ii - 1, 0, d.items.splice(ii, 1)[0]); save(); render(); } }, '↑'),
           h('button', { class: 'icon-btn sm', 'aria-label': 'Descer', disabled: ii === d.items.length - 1, onclick: () => { d.items.splice(ii + 1, 0, d.items.splice(ii, 1)[0]); save(); render(); } }, '↓'),
@@ -1477,7 +1491,7 @@
           h('div', { class: 'chips' }, [0.5, 1, 1.25, 2.5].map((v) => h('button', { class: `chip${st.step === v ? ' on' : ''}`, onclick: () => { st.step = v; save(); render(); } }, `${numStr(v)} kg`))))),
       toggle('sound', 'Sons', 'Bipes no fim do descanso e nas trocas de intervalo'),
       toggle('vibrate', 'Vibração'),
-      toggle('keepAwake', 'Manter tela ligada no treino', 'Evita que o timer pare com a tela apagada')));
+      toggle('keepAwake', 'Tela ligada no descanso e nos timers', 'Só enquanto um descanso ou timer está contando; depois a tela apaga normalmente')));
 
     wrap.appendChild(h('div', { class: 'section-title', text: 'Plano de treino' }));
     wrap.appendChild(h('div', { class: 'card stack' },
@@ -1624,17 +1638,39 @@
           setText('rest-time', r.finished ? 'Bora! 🔥' : Lg.fmtClock(sec));
           setText('rest-label', r.finished ? 'Descanso concluído — próxima série' : r.label);
           const p = document.getElementById('rest-prog');
-          if (p) p.style.width = `${Math.min(100, (1 - Math.max(0, left) / r.total) * 100)}%`;
+          if (p) p.style.transform = `scaleX(${Math.min(1, 1 - Math.max(0, left) / r.total).toFixed(3)})`;
         }
         if (r.finished && left < -6) { a.rest = null; save(); render(); return; }
       }
     }
     if (ui.tab === 'timer' && ui.timerMode === 'stopwatch') setText('sw-clock', fmtMs(swElapsed(now)));
     tickRunner(now);
+    updateWake();
   }
 
-  setInterval(tick, 200);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  // Agendador adaptativo: só acorda quando há algo contando, na frequência necessária.
+  // Parado (sem treino/timer) ou em segundo plano: zero despertares → economia de bateria.
+  let tickTimer = null;
+  function tickInterval() {
+    if (document.hidden) return 0;
+    if (ui.runner) return 250;
+    const a = state.active;
+    if (a && a.rest) return !a.rest.finished && a.rest.endAt - Date.now() < 4500 ? 250 : 1000;
+    if (ui.tab === 'timer' && ui.timerMode === 'stopwatch' && sw.startAt && !ui.page) return 100;
+    return a ? 1000 : 0;
+  }
+  function schedule() {
+    clearTimeout(tickTimer);
+    tickTimer = null;
+    const ms = tickInterval();
+    if (ms) tickTimer = setTimeout(() => { tick(); schedule(); }, ms);
+  }
+  document.addEventListener('visibilitychange', () => {
+    document.querySelectorAll('video').forEach((v) => { if (document.hidden) v.pause(); else if (v.play) v.play().catch(() => {}); });
+    if (!document.hidden) tick();
+    schedule();
+    updateWake();
+  });
 
   /** Chamado pelo botão Voltar do Android. Retorna true se tratou o evento. */
   window.dojoBack = function () {
@@ -1648,7 +1684,6 @@
   };
 
   window.addEventListener('error', (e) => console.error(`DOJO_ERROR ${e.message}`));
-  if (state.active && state.settings.keepAwake) setKeepAwake(true);
   render();
   // Sinal para o teste no emulador (só aparece no logcat em builds de debug).
   const h264 = document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"') !== '';

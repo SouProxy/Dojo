@@ -58,6 +58,14 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   const gifsOk = await page.$$eval('img', (imgs) => imgs.every((i) => i.complete && i.naturalWidth > 0));
   assert(gifsOk, 'todos os GIFs da tela inicial carregaram');
   await shot('01-inicio');
+  const animated = await page.$$eval('main img', (imgs) => imgs.filter((i) => i.src.endsWith('.gif')).length);
+  assert(animated === 0, 'tela inicial sem GIFs animados (miniaturas estáticas)');
+  const idleTimer = await page.evaluate(() => new Promise((ok) => {
+    let n = 0; const orig = window.setTimeout;
+    window.setTimeout = (f, ms, ...a) => { n += 1; return orig(f, ms, ...a); };
+    orig(() => { window.setTimeout = orig; ok(n); }, 1500);
+  }));
+  assert(idleTimer === 0, `sem timers acordando o app parado (${idleTimer})`);
 
   // Começa o treino
   await page.click('text=▶ Começar treino');
@@ -75,6 +83,8 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   for (let k = 1; k < 4; k++) await first.locator('button.check').nth(k).click();
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('dojo.v1')).active.entries[0].sets);
   assert(stored.every((s) => s.done && s.w === 100 && s.r === 6), 'prefill repetiu 100 kg × 6 nas séries seguintes');
+  const prog = await page.$eval('#rest-prog', (e) => e.style.transform);
+  assert(prog.startsWith('scaleX('), 'barra de descanso anima por transform (sem layout)');
 
   await page.click('.restbar >> text=Pular');
   await page.click('.session-top >> text=Finalizar');
