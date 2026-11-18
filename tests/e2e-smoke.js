@@ -69,8 +69,11 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   await page.click('text=Continuar com Toji');
   await page.waitForSelector('text=Força pesada');
   assert(await page.locator('.card.hero >> text=Próximo · Dia 1').count() === 1, 'Dia 1 sugerido como próximo treino');
-  const gifsOk = await page.$$eval('img', (imgs) => imgs.every((i) => i.complete && i.naturalWidth > 0));
-  assert(gifsOk, 'todos os GIFs da tela inicial carregaram');
+  const gifsOk = await page.$$eval('main img', (imgs) => Promise.all(imgs.map((i) => (i.decode
+    ? i.decode().then(() => i.naturalWidth > 0, () => false)
+    : new Promise((ok) => { if (i.complete) ok(i.naturalWidth > 0); else { i.onload = () => ok(true); i.onerror = () => ok(false); } }))))
+    .then((r) => r.length > 0 && r.every(Boolean)));
+  assert(gifsOk, 'todas as miniaturas da tela inicial carregaram');
   await shot('01-inicio');
   const animated = await page.$$eval('main img', (imgs) => imgs.filter((i) => i.src.endsWith('.gif')).length);
   assert(animated === 0, 'tela inicial sem GIFs animados (miniaturas estáticas)');
