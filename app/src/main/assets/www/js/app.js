@@ -4,9 +4,8 @@
 
   const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, recommend } = window.DojoData;
   const Lg = window.DojoLogic;
-  const MEDIA = window.DojoMedia || {};
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.4.1';
+  const APP_VERSION = '1.5.0';
 
   // ================================================================ estado
 
@@ -44,7 +43,7 @@
 
   let state = load();
   const ui = { tab: 'home', page: state.onboarded ? null : 'programs', sessionOpen: !!state.active, modals: [], timerMode: 'stopwatch',
-    progressEx: null, runner: null, lib: { q: '', group: null, equip: null }, pickDay: null, quiz: { days: 3, level: 'iniciante', place: 'academia', goal: 'hipertrofia' } };
+    progressEx: null, runner: null, lib: { q: '', group: null, equip: null, level: null }, pickDay: null, quiz: { days: 3, level: 'iniciante', place: 'academia', goal: 'hipertrofia' } };
 
   function save() {
     try {
@@ -145,29 +144,47 @@
 
   // ================================================================ som/vibração
 
+  // Áudio só acordado enquanto toca: um AudioContext "running" processa silêncio sem parar e gasta bateria.
   let audioCtx = null;
-  function unlockAudio() {
+  let audioSleep = null;
+  function ensureAudio() {
     if (!audioCtx) {
       const AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) audioCtx = new AC();
+      if (!AC) return null;
+      audioCtx = new AC();
     }
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function unlockAudio() {
+    // Cria no primeiro toque (exigência de autoplay) e já suspende até precisar tocar.
+    if (audioCtx) return;
+    const ctx = ensureAudio();
+    if (ctx && ctx.state === 'running') ctx.suspend();
+    document.removeEventListener('pointerdown', unlockAudio);
   }
   document.addEventListener('pointerdown', unlockAudio, { passive: true });
+  function sleepAudioSoon(ms) {
+    clearTimeout(audioSleep);
+    audioSleep = setTimeout(() => { if (audioCtx && audioCtx.state === 'running') audioCtx.suspend(); }, ms);
+  }
 
   function beep(freq, ms, when) {
-    if (!state.settings.sound || !audioCtx) return;
-    const t0 = audioCtx.currentTime + (when || 0);
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
+    if (!state.settings.sound) return;
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    const t0 = ctx.currentTime + 0.02 + (when || 0);
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
     o.type = 'sine';
     o.frequency.value = freq;
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(0.4, t0 + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + ms / 1000);
-    o.connect(g).connect(audioCtx.destination);
+    o.connect(g).connect(ctx.destination);
     o.start(t0);
     o.stop(t0 + ms / 1000 + 0.02);
+    sleepAudioSoon(((when || 0) * 1000) + ms + 600);
   }
 
   function vibrate(pattern) {
@@ -216,101 +233,101 @@
     return h('nav', { class: 'nav', 'aria-label': 'Navegação' },
       tabs.map(([id, ico, label]) => h('button', {
         class: ui.tab === id && !ui.page ? 'active' : '', 'aria-current': ui.tab === id && !ui.page ? 'page' : null,
-        onclick: () => { ui.tab = id; ui.page = null; ui.pickDay = null; render(); window.scrollTo(0, 0); },
+        onclick: () => { resetNav(id); render(); window.scrollTo(0, 0); },
       }, h('span', { class: 'ico', 'aria-hidden': 'true', text: ico }), label)));
   }
 
   function topbar(sub) {
     return h('div', { class: 'topbar' },
-      h('div', { class: 'brand' }, h('h1', null, 'DOJO', h('span', { text: '.' })), sub ? h('span', { class: 'muted small', text: sub }) : null),
-      h('span', { class: 'badge gold', text: `Semana ${Lg.weekNumber(state.settings.startDate, Date.now())}` }));
+      h('div', { class: 'brand' }, h('h1', null, 'DOJO', h('span', { text: '.' })), sub ? h('span', { class: 'muted small sub', text: sub }) : null),
+      h('span', { class: 'badge', text: `Semana ${Lg.weekNumber(state.settings.startDate, Date.now())}` }));
   }
 
   // ================================================================ início
+
+  function estMinutes(day) {
+    const sec = day.items.reduce((a, it) => a + (day.mode === 'circuit' ? (day.rounds || 3) : it.sets) * (40 + (it.rest || 60)), 0);
+    return Math.max(10, Math.round(sec / 300) * 5);
+  }
 
   function viewHome() {
     const plan = state.plan;
     const nextIdx = Lg.nextDayIndex(plan, state.history);
     const next = plan.days[nextIdx];
-    const wrap = h('main', { class: 'screen' }, topbar(plan.short || plan.name || 'Meu treino'));
-    wrap.appendChild(h('div', { class: 'card row between' },
-      h('div', { class: 'grow' }, h('div', { class: 'day-num', text: 'Programa' }), h('div', { class: 'ex-name', text: plan.name || 'Meu treino' })),
-      h('button', { class: 'btn sm', onclick: () => openPage('programs') }, 'Trocar'),
-      h('button', { class: 'btn sm ghost', onclick: () => openPage('editor') }, 'Editar')));
+    const wrap = h('main', { class: 'screen' }, topbar());
+    wrap.appendChild(h('div', { class: 'prog-head' },
+      h('div', { class: 'grow' }, h('div', { class: 'tiny muted', text: 'Programa' }), h('div', { class: 'ttl', text: plan.name || 'Meu treino' })),
+      h('button', { class: 'btn sm ghost', onclick: () => openPage('programs') }, 'Trocar'),
+      h('button', { class: 'icon-btn sm', 'aria-label': 'Editar', title: 'Editar treino', onclick: () => openPage('editor') }, '✎')));
 
     if (state.active) {
       wrap.appendChild(h('div', { class: 'card hero tap', onclick: () => { ui.sessionOpen = true; render(); } },
         h('div', { class: 'row between' },
-          h('div', null, h('div', { class: 'day-num', text: 'Treino em andamento' }), h('h2', { text: `${state.active.dayName} – ${state.active.title}` })),
+          h('div', { class: 'grow' }, h('div', { class: 'day-num', text: 'Em andamento' }), h('h2', { text: `${state.active.dayName} – ${state.active.title}` })),
           h('span', { class: 'badge accent', 'data-clock': 'session' }, '')),
-        h('p', { class: 'muted small', text: 'Toque para continuar.' })));
+        h('p', { class: 'muted small mt-s', text: 'Toque para continuar.' })));
     } else if (next) {
-      wrap.appendChild(dayCard(next, nextIdx, true));
+      wrap.appendChild(heroCard(next));
     }
 
-    wrap.appendChild(h('div', { class: 'section-title', text: 'Semana de treino' }));
-    const list = h('div', { class: 'stack' });
-    plan.days.forEach((d, i) => { if (state.active || i !== nextIdx) list.appendChild(dayCard(d, i, false)); });
+    wrap.appendChild(h('div', { class: 'section-title', text: 'Semana' }));
+    const list = h('div', { class: 'list' });
+    plan.days.forEach((d, i) => { if (state.active || i !== nextIdx) list.appendChild(dayRow(d)); });
+    if (list.children.length) wrap.appendChild(list);
     const restDays = 7 - plan.days.length;
-    if (restDays > 0) {
-      list.appendChild(h('div', { class: 'card' },
-        h('div', { class: 'day-num', text: `${restDays} dia${restDays > 1 ? 's' : ''} de descanso` }),
-        h('p', { class: 'muted small', text: 'Recuperação faz parte do treino: sono, comida e caminhada leve. Evite treinar o mesmo músculo pesado dois dias seguidos.' })));
-    }
-    wrap.appendChild(list);
+    if (restDays > 0) wrap.appendChild(h('p', { class: 'tiny muted mt-s', text: `+ ${restDays} dia${restDays > 1 ? 's' : ''} de descanso. Evite treinar o mesmo músculo pesado em dias seguidos.` }));
 
-    wrap.appendChild(h('div', { class: 'card tap mt', onclick: () => openPage('guide') },
-      h('div', { class: 'row between' }, h('div', null, h('h3', { text: '📘 Guia de treino' }),
-        h('p', { class: 'muted small', text: 'Séries por semana, divisões, progressão, descanso e segurança — e o volume do seu plano por músculo.' })),
-      h('span', { class: 'muted', text: '›' }))));
-
-    wrap.appendChild(h('div', { class: 'section-title', text: CHALLENGE.title }));
-    wrap.appendChild(challengeCard());
-
-    wrap.appendChild(h('div', { class: 'section-title', text: 'Histórico recente' }));
-    const recent = state.history.slice().sort((a, b) => b.startedAt - a.startedAt).slice(0, 6);
+    const recent = state.history.slice().sort((a, b) => b.startedAt - a.startedAt).slice(0, 3);
+    wrap.appendChild(h('div', { class: 'section-title', text: 'Recentes' }));
     if (!recent.length) wrap.appendChild(h('div', { class: 'card empty', text: 'Nenhum treino ainda. Bora começar!' }));
-    else wrap.appendChild(h('div', { class: 'stack' }, recent.map(historyRow)));
-    wrap.appendChild(progressionNote());
+    else wrap.appendChild(h('div', { class: 'list' }, recent.map(historyRow)));
+
+    wrap.appendChild(h('div', { class: 'list mt' },
+      h('div', { class: 'list-row', onclick: () => openPage('guide') },
+        h('span', { class: 'grow' }, h('div', { class: 'ttl', text: 'Guia de treino' }), h('div', { class: 'tiny muted', text: 'Volume, divisões, progressão e segurança' })),
+        h('span', { class: 'chev', text: '›' }))));
     return wrap;
   }
 
-  function progressionNote() {
-    return h('div', { class: 'card', style: null },
-      h('h3', { text: 'Como progredir' }),
-      h('p', { class: 'muted small', text: 'Quando fechar todas as séries no topo da faixa de repetições, suba a carga de 2,5 a 5%. O app calcula e sugere a próxima carga em cada exercício.' }));
+  function heroCard(day) {
+    const done = state.history.filter((s) => s.dayId === day.id && s.finishedAt).sort((a, b) => b.startedAt - a.startedAt)[0];
+    const n = day.items.length;
+    const card = h('div', { class: 'card hero' },
+      h('div', { class: 'row between' },
+        h('div', { class: 'grow' },
+          h('div', { class: 'day-num', text: `Próximo · ${day.name}` }),
+          h('h2', { text: day.title })),
+        day.mode === 'circuit' ? h('span', { class: 'badge accent', text: `Circuito ${day.rounds}×` } ) : null),
+      h('p', { class: 'tiny muted mt-s', text: n ? `${n} exercício${n > 1 ? 's' : ''} · ~${estMinutes(day)} min${done ? ` · último ${fmtDate(done.startedAt)}` : ''}` : 'Sem exercícios ainda. Toque no ✎ para montar este treino.' }));
+    if (n) {
+      card.appendChild(h('div', { class: 'thumbs' }, day.items.map((it) => h('img', { src: thumbSrc(EXERCISES[it.ex].gifs[0]), alt: EXERCISES[it.ex].name, title: EXERCISES[it.ex].name, loading: 'lazy' }))));
+      card.appendChild(h('details', { class: 'fold mt-s' },
+        h('summary', { class: 'small muted' }, 'Ver exercícios'),
+        h('table', { class: 'tbl mt-s' }, h('tbody', null, day.items.map((it) => h('tr', null,
+          h('td', { text: EXERCISES[it.ex].name }), h('td', { class: 'muted', text: Lg.prescription(it, EXERCISES[it.ex]) })))))));
+    }
+    card.appendChild(h('button', { class: 'btn primary block mt', onclick: () => confirmStart(day) }, '▶ Começar treino'));
+    return card;
   }
 
-  function dayCard(day, idx, featured) {
-    const done = state.history.filter((s) => s.dayId === day.id && s.finishedAt);
-    const last = done.sort((a, b) => b.startedAt - a.startedAt)[0];
-    const card = h('div', { class: `card ${featured ? 'hero' : 'tap'}`, onclick: featured ? null : () => confirmStart(day) },
-      h('div', { class: 'day-head' },
-        h('div', null,
-          h('div', { class: 'day-num', text: featured ? `Próximo · ${day.name}` : day.name }),
-          h('h2', { text: day.title })),
-        day.mode === 'circuit' ? h('span', { class: 'badge accent', text: `Circuito ${day.rounds} voltas` }) : null),
-      day.items.length ? null : h('p', { class: 'muted small', text: 'Sem exercícios ainda. Toque em “Editar” para montar este treino.' }),
-      h('div', { class: 'chips' }, day.items.map((it) => h('span', { class: 'chip', text: `${EXERCISES[it.ex].name} · ${Lg.prescription(it, EXERCISES[it.ex])}` }))),
-      h('div', { class: 'thumbs' }, day.items.map((it) => h('img', { src: thumbSrc(EXERCISES[it.ex].gifs[0]), alt: EXERCISES[it.ex].name, loading: 'lazy' }))),
-      last ? h('p', { class: 'muted tiny', text: `Último: ${fmtDate(last.startedAt, { weekday: 'short', day: '2-digit', month: 'short' })}` }) : null);
-    if (featured) {
-      card.appendChild(h('button', { class: 'btn primary block', style: null, onclick: () => confirmStart(day) }, '▶ Começar treino'));
-      card.lastChild.classList.add('mt');
-    }
-    return card;
+  function dayRow(day) {
+    const n = day.items.length;
+    return h('div', { class: 'list-row', onclick: () => confirmStart(day) },
+      h('span', { class: 'grow' },
+        h('div', { class: 'ttl' }, h('span', { class: 'muted', text: `${day.name} · ` }), day.title),
+        h('div', { class: 'tiny muted', text: n ? `${n} exercício${n > 1 ? 's' : ''} · ~${estMinutes(day)} min${day.mode === 'circuit' ? ' · circuito' : ''}` : 'Vazio' })),
+      h('span', { class: 'chev', text: '›' }));
   }
 
   function historyRow(s) {
     const day = findDay(s.dayId);
     const st = Lg.sessionStats(s);
     const dur = s.finishedAt ? Lg.fmtClock((s.finishedAt - s.startedAt) / 1000) : '–';
-    return h('div', { class: 'card tap', onclick: () => openHistoryModal(s) },
-      h('div', { class: 'row between' },
-        h('div', null,
-          h('div', { class: 'ex-name', text: day ? `${day.name} – ${day.title}` : s.dayId }),
-          h('div', { class: 'muted small', text: `${fmtDate(s.startedAt, { weekday: 'short', day: '2-digit', month: 'short' })} · ${dur}` })),
-        h('div', { class: 'muted small', text: `${st.sets} séries${st.volume ? ` · ${st.volume.toLocaleString('pt-BR')} kg` : ''}` })));
+    return h('div', { class: 'list-row', onclick: () => openHistoryModal(s) },
+      h('span', { class: 'grow' },
+        h('div', { class: 'ttl', text: day ? `${day.name} – ${day.title}` : s.dayId }),
+        h('div', { class: 'tiny muted', text: `${fmtDate(s.startedAt, { weekday: 'short', day: '2-digit', month: 'short' })} · ${dur} · ${st.sets} séries${st.volume ? ` · ${st.volume.toLocaleString('pt-BR')} kg` : ''}` })),
+      h('span', { class: 'chev', text: '›' }));
   }
 
   function challengeCard() {
@@ -881,10 +898,10 @@
       h('div', { class: 'stat' }, h('b', { text: String(hist.filter((s) => s.startedAt >= weekAgo).length) }), h('span', { text: 'últimos 7 dias' })),
       h('div', { class: 'stat' }, h('b', { text: vol >= 1000 ? `${Lg.fmtNum(vol / 1000)} t` : `${vol}` }), h('span', { text: 'volume total' }))));
 
-    wrap.appendChild(h('div', { class: 'card tap mt', onclick: () => openPage('body') },
-      h('div', { class: 'row between' },
-        h('div', null, h('h3', { text: '🫀 Distribuição muscular' }), h('p', { class: 'muted small', text: 'Quais músculos você treinou em cada semana, no mapa do corpo.' })),
-        h('span', { class: 'muted', text: '›' }))));
+    wrap.appendChild(h('div', { class: 'list mt' },
+      h('div', { class: 'list-row', onclick: () => openPage('body') },
+        h('span', { class: 'grow' }, h('div', { class: 'ttl', text: 'Distribuição muscular' }), h('div', { class: 'tiny muted', text: 'Músculos treinados por semana, no mapa do corpo' })),
+        h('span', { class: 'chev', text: '›' }))));
     const exIds = [];
     state.plan.days.forEach((d) => d.items.forEach((it) => { if (!exIds.includes(it.ex)) exIds.push(it.ex); }));
     hist.forEach((se) => se.entries.forEach((e) => { if (EXERCISES[e.ex] && !exIds.includes(e.ex)) exIds.push(e.ex); }));
@@ -892,9 +909,9 @@
       ui.progressEx = exIds.find((id) => hist.some((s) => s.entries.some((e) => e.ex === id))) || exIds[0];
     }
     wrap.appendChild(h('div', { class: 'section-title', text: 'Evolução por exercício' }));
-    wrap.appendChild(h('div', { class: 'chips' }, exIds.map((id) => h('button', {
-      class: `chip${ui.progressEx === id ? ' on' : ''}`, onclick: () => { ui.progressEx = id; render(); },
-    }, EXERCISES[id].name))));
+    const sel = h('select', { class: 'select', 'aria-label': 'Exercício', onchange: (e) => { ui.progressEx = e.target.value; render(); } },
+      exIds.map((id) => h('option', { value: id, selected: id === ui.progressEx }, EXERCISES[id].name)));
+    wrap.appendChild(sel);
 
     const ex = EXERCISES[ui.progressEx];
     const ser = Lg.series(hist, ui.progressEx, ex, state.settings);
@@ -904,16 +921,16 @@
       h('img', { src: thumbSrc(ex.gifs[0]), alt: ex.name, onclick: () => openExerciseModal(ui.progressEx) }),
       h('div', { class: 'grow' }, h('div', { class: 'ex-name', text: ex.name }), h('div', { class: 'muted small', text: ser.label }),
         ser.points.length ? h('span', { class: 'badge gold', text: `Melhor: ${Lg.fmtNum(Math.max(...ser.points.map((p) => p.v)))}` }) : null)));
-    card.append(h('button', { class: 'btn ghost block sm mt', onclick: () => openExerciseModal(ui.progressEx) }, 'Ver detalhes, recordes e histórico'));
     if (!ser.points.length) card.append(h('p', { class: 'empty', text: 'Sem registros ainda.' }));
     else {
       card.append(chart(ser.points));
       const rows = [];
       hist.slice().sort((a, b) => b.startedAt - a.startedAt).forEach((s) => s.entries.forEach((e) => {
-        if (e.ex === ui.progressEx && rows.length < 10) rows.push(h('tr', null, h('td', { text: fmtDate(s.startedAt) }), h('td', { text: setsSummary(e) })));
+        if (e.ex === ui.progressEx && rows.length < 4) rows.push(h('tr', null, h('td', { text: fmtDate(s.startedAt) }), h('td', { text: setsSummary(e) })));
       }));
       card.append(h('table', { class: 'tbl' }, h('tbody', null, rows)));
     }
+    card.append(h('button', { class: 'btn ghost block sm mt', onclick: () => openExerciseModal(ui.progressEx) }, 'Detalhes, recordes e histórico'));
     wrap.appendChild(card);
     if ((Lg.typeOf(ex) === 'max' || ex.load === 'bw') && !state.settings.bodyweight) {
       wrap.appendChild(h('p', { class: 'muted tiny', text: 'Dica: informe seu peso corporal em Ajustes para ver o 1RM estimado de barra e paralelas.' }));
@@ -928,17 +945,7 @@
   // ================================================================ tela do exercício
 
   function mediaBox(ex, name) {
-    const holder = h('div', { class: 'media-box' });
-    const m = MEDIA[name];
-    const fallback = () => { holder.textContent = ''; holder.appendChild(h('img', { class: 'big', src: gifSrc(name), alt: ex.name })); };
-    if (!m) { fallback(); return holder; }
-    const v = h('video', { class: 'big', src: m.src, autoplay: true, loop: true, muted: true, playsinline: true, preload: 'auto', 'aria-label': ex.name, poster: thumbSrc(name) });
-    v.muted = true;
-    v.addEventListener('error', fallback);
-    holder.append(v, h('p', { class: 'tiny muted credit', text: `Vídeo: ${m.credit} · ${m.license}` }));
-    const pl = v.play && v.play();
-    if (pl && pl.catch) pl.catch(() => {});
-    return holder;
+    return h('div', { class: 'media-box' }, h('img', { class: 'big', src: gifSrc(name), alt: ex.name }));
   }
 
   const RANGES = [['1m', '1 mês', 30], ['3m', '3 meses', 91], ['1a', '1 ano', 365], ['all', 'Tudo', 0]];
@@ -1095,7 +1102,7 @@
   function heat(v) {
     if (!(v > 0)) return 'var(--body-0)';
     const k = Math.min(1, v / 16);
-    const a = [74, 50, 56]; const b = [226, 69, 79];
+    const a = [42, 46, 57]; const b = [122, 162, 255];
     const c = a.map((x, i) => Math.round(x + (b[i] - x) * k));
     return `rgb(${c[0]},${c[1]},${c[2]})`;
   }
@@ -1174,8 +1181,35 @@
     return null;
   }
 
-  function openPage(page) { ui.page = page; render(); window.scrollTo(0, 0); }
-  function closePage() { ui.page = null; ui.pickDay = null; render(); window.scrollTo(0, 0); }
+  // ---------------------------------------------------------------- navegação (pilha)
+  // Cada ida para uma tela guarda onde você estava; "voltar" retorna exatamente para lá.
+  ui.nav = [];
+  function snapshot() { return { tab: ui.tab, page: ui.page, pickDay: ui.pickDay, y: window.scrollY }; }
+  function restore(snap) {
+    ui.tab = snap.tab; ui.page = snap.page; ui.pickDay = snap.pickDay;
+    render();
+    window.scrollTo(0, snap.y || 0);
+  }
+  function go(target) {
+    ui.nav.push(snapshot());
+    if (ui.nav.length > 20) ui.nav.shift();
+    ui.tab = target.tab || ui.tab;
+    ui.page = target.page || null;
+    ui.pickDay = target.pickDay || null;
+    render();
+    window.scrollTo(0, 0);
+  }
+  function openPage(page) { go({ page }); }
+  /** Troca a tela atual sem empilhar (ex.: criar treino → editor). */
+  function replacePage(page) { ui.page = page; ui.pickDay = null; render(); window.scrollTo(0, 0); }
+  function back() {
+    if (ui.nav.length) { restore(ui.nav.pop()); return true; }
+    if (ui.page || ui.pickDay) { ui.page = null; ui.pickDay = null; render(); window.scrollTo(0, 0); return true; }
+    if (ui.tab !== 'home') { ui.tab = 'home'; render(); window.scrollTo(0, 0); return true; }
+    return false;
+  }
+  function closePage() { back(); }
+  function resetNav(tab) { ui.nav = []; ui.page = null; ui.pickDay = null; if (tab) ui.tab = tab; }
 
   function switchProgram(id) {
     if (state.active) { toast('Finalize ou descarte o treino em andamento antes de trocar.'); return; }
@@ -1185,7 +1219,7 @@
     state.plan = saved ? saved : clone(base);
     state.onboarded = true;
     save();
-    ui.page = null;
+    resetNav('home');
     render();
     window.scrollTo(0, 0);
     toast(`Programa ativo: ${state.plan.name}`);
@@ -1202,7 +1236,7 @@
     };
     state.onboarded = true;
     save();
-    openPage('editor');
+    replacePage('editor');
   }
 
   function exerciseBadges(ex) {
@@ -1213,26 +1247,26 @@
       ex.level ? h('span', { class: 'badge', text: LEVELS[ex.level] }) : null);
   }
 
-  function programCard(p, recommended) {
+  function programMeta(p) { return `${p.daysPerWeek} dias · ${LEVELS[p.level]} · ${FOCUS[p.focus] || p.goal}`; }
+
+  function programCard(p) {
     const isActive = state.plan.id === p.id;
-    const groups = new Set();
-    p.days.forEach((d) => d.items.forEach((i) => groups.add(EXERCISES[i.ex].group)));
-    return h('div', { class: `card ${recommended ? 'hero' : ''}` },
+    return h('div', { class: 'card hero' },
       h('div', { class: 'row between' },
-        h('div', { class: 'grow' },
-          recommended ? h('div', { class: 'day-num', text: '★ Recomendado para você' }) : null,
-          h('h3', { text: p.name })),
+        h('div', { class: 'grow' }, h('div', { class: 'day-num', text: 'Recomendado para você' }), h('h3', { text: p.name })),
         isActive ? h('span', { class: 'badge ok', text: 'Ativo' }) : null),
-      h('div', { class: 'chips mt' },
-        h('span', { class: 'badge gold', text: `${p.daysPerWeek} dias/semana` }),
-        h('span', { class: 'badge', text: LEVELS[p.level] }),
-        h('span', { class: 'badge', text: PLACES[p.place] }),
-        h('span', { class: 'badge', text: p.goal }),
-        h('span', { class: 'badge', text: `${p.days.reduce((a, d) => a + d.items.length, 0)} exercícios` })),
-      h('p', { class: 'muted small mt', text: p.description }),
+      h('p', { class: 'tiny muted mt-s', text: programMeta(p) }),
+      h('p', { class: 'small muted mt-s', text: p.description }),
       h('div', { class: 'row mt' },
         h('button', { class: 'btn ghost grow sm', onclick: () => openProgramModal(p) }, 'Ver treinos'),
         isActive ? null : h('button', { class: 'btn primary grow sm', onclick: () => confirmSwitch(p) }, 'Usar este')));
+  }
+
+  function programRow(p) {
+    const isActive = state.plan.id === p.id;
+    return h('div', { class: 'list-row prog', onclick: () => openProgramModal(p) },
+      h('span', { class: 'grow' }, h('div', { class: 'ttl', text: p.name }), h('div', { class: 'tiny muted', text: programMeta(p) })),
+      isActive ? h('span', { class: 'badge ok', text: 'Ativo' }) : h('span', { class: 'chev', text: '›' }));
   }
 
   function confirmSwitch(p) {
@@ -1261,35 +1295,40 @@
     const wrap = h('main', { class: 'screen' }, pageTop(state.onboarded ? 'Programas' : 'Bem-vindo ao Dojo'));
     const q = ui.quiz;
     const rec = recommend(q);
-    if (!state.onboarded) {
-      wrap.appendChild(h('p', { class: 'muted', text: 'Responda 4 perguntas e eu sugiro o melhor programa para você. Dá para trocar ou editar depois.' }));
-    }
     const ask = (label, key, opts) => h('div', { class: 'mt' }, h('label', { class: 'lbl', text: label }),
-      h('div', { class: 'chips' }, opts.map(([v, l]) => h('button', { class: `chip${q[key] === v ? ' on' : ''}`, onclick: () => { q[key] = v; render(); } }, l))));
-    wrap.appendChild(h('div', { class: 'card' },
-      h('h3', { text: 'Qual programa combina com você?' }),
-      ask('Quantos dias por semana você consegue treinar?', 'days', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']]),
-      ask('Experiência', 'level', [['iniciante', 'Iniciante (< 6 meses)'], ['intermediario', 'Intermediário'], ['avancado', 'Avançado (2+ anos)']]),
+      h('div', { class: 'chips' }, opts.map(([v, l]) => h('button', { class: `chip${q[key] === v ? ' on' : ''}`, onclick: () => { q[key] = v; ui.quizOpen = true; render(); } }, l))));
+    wrap.appendChild(h('details', { class: 'card fold', open: !state.onboarded || ui.quizOpen ? true : null },
+      h('summary', null, h('span', null, h('h3', { text: 'Qual programa combina com você?' }),
+        h('div', { class: 'tiny muted', text: '4 perguntas rápidas para uma sugestão' }))),
+      ask('Dias por semana', 'days', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']]),
+      ask('Experiência', 'level', [['iniciante', 'Iniciante'], ['intermediario', 'Intermediário'], ['avancado', 'Avançado']]),
       ask('Onde vai treinar?', 'place', [['academia', 'Academia'], ['halteres', 'Casa com halteres'], ['casa', 'Casa sem equipamento']]),
-      ask('Objetivo principal', 'goal', [['hipertrofia', 'Ganhar massa'], ['forca', 'Ganhar força'], ['condicionamento', 'Condicionamento / emagrecer']])));
-    const recP = programById(rec);
-    wrap.appendChild(h('div', { class: 'section-title', text: 'Sugestão' }));
-    wrap.appendChild(programCard(recP, true));
-    wrap.appendChild(h('div', { class: 'section-title', text: 'Todos os programas' }));
-    const pf = ui.progFilter || (ui.progFilter = { focus: null, days: null });
-    const fchip = (key, val, label) => h('button', { class: `chip${pf[key] === val ? ' on' : ''}`, onclick: () => { pf[key] = pf[key] === val ? null : val; render(); } }, label);
-    wrap.appendChild(h('div', { class: 'chips scroll-x' }, Object.entries(FOCUS).map(([k, l]) => fchip('focus', k, l))));
-    wrap.appendChild(h('div', { class: 'chips scroll-x mt-s' }, [3, 4, 5, 6].map((d) => fchip('days', d, `${d} dias`))));
-    const shown = PROGRAMS.filter((p) => p.id !== rec && (!pf.focus || p.focus === pf.focus) && (!pf.days || p.daysPerWeek === pf.days));
-    wrap.appendChild(h('div', { class: 'stack mt' }, shown.length ? shown.map((p) => programCard(p, false)) : h('div', { class: 'card empty', text: 'Nenhum programa com esses filtros.' })));
+      ask('Objetivo', 'goal', [['hipertrofia', 'Ganhar massa'], ['forca', 'Ganhar força'], ['condicionamento', 'Condicionamento']])));
+    wrap.appendChild(h('div', { class: 'mt' }, programCard(programById(rec))));
+
+    wrap.appendChild(h('div', { class: 'section-title', text: `Todos os programas (${PROGRAMS.length})` }));
+    const pf = ui.progFilter || (ui.progFilter = { focus: null, days: null, level: null });
+    const select = (key, label, opts) => h('select', { class: `select${pf[key] ? ' on' : ''}`, 'aria-label': label,
+      onchange: (e) => { const v = e.target.value; pf[key] = v === '' ? null : (key === 'days' ? Number(v) : v); render(); } },
+      h('option', { value: '' }, label), opts.map(([k, l]) => h('option', { value: String(k), selected: pf[key] === k }, l)));
+    wrap.appendChild(h('div', { class: 'filters three' },
+      select('focus', 'Foco', Object.entries(FOCUS)),
+      select('days', 'Dias', [2, 3, 4, 5, 6].map((d) => [d, `${d} dias`])),
+      select('level', 'Nível', Object.entries(LEVELS))));
+    const shown = PROGRAMS.filter((p) => (!pf.focus || p.focus === pf.focus) && (!pf.days || p.daysPerWeek === pf.days) && (!pf.level || p.level === pf.level));
+    const active = ['focus', 'days', 'level'].filter((k) => pf[k]).length;
+    wrap.appendChild(h('div', { class: 'filter-bar' }, h('span', { class: 'small muted', text: `${shown.length} programa${shown.length === 1 ? '' : 's'}` }),
+      active ? h('button', { class: 'clear', onclick: () => { ui.progFilter = { focus: null, days: null, level: null }; render(); } }, `Limpar filtros (${active})`) : null));
+    wrap.appendChild(shown.length ? h('div', { class: 'list' }, shown.map(programRow)) : h('div', { class: 'card empty', text: 'Nenhum programa com esses filtros.' }));
+
     const customs = Object.values(state.plans).concat([state.plan]).filter((p, i, arr) => p.custom && arr.findIndex((x) => x.id === p.id) === i);
     wrap.appendChild(h('div', { class: 'section-title', text: 'Meus treinos' }));
-    const mine = h('div', { class: 'stack' });
-    customs.forEach((p) => mine.appendChild(h('div', { class: 'card row between' },
-      h('div', { class: 'grow' }, h('div', { class: 'ex-name', text: p.name }), h('div', { class: 'muted small', text: `${p.days.length} treino(s)` })),
-      state.plan.id === p.id ? h('span', { class: 'badge ok', text: 'Ativo' }) : h('button', { class: 'btn sm primary', onclick: () => switchProgram(p.id) }, 'Usar'))));
-    mine.appendChild(h('button', { class: 'btn ghost block', onclick: createCustom }, '+ Montar meu próprio treino do zero'));
-    wrap.appendChild(mine);
+    if (customs.length) {
+      wrap.appendChild(h('div', { class: 'list' }, customs.map((p) => h('div', { class: 'list-row', onclick: () => (state.plan.id === p.id ? null : switchProgram(p.id)) },
+        h('span', { class: 'grow' }, h('div', { class: 'ttl', text: p.name }), h('div', { class: 'tiny muted', text: `${p.days.length} treino(s)` })),
+        state.plan.id === p.id ? h('span', { class: 'badge ok', text: 'Ativo' }) : h('span', { class: 'btn sm primary', text: 'Usar' })))));
+    }
+    wrap.appendChild(h('button', { class: 'btn ghost block mt', onclick: createCustom }, '+ Montar meu próprio treino'));
     if (!state.onboarded) {
       wrap.appendChild(h('button', { class: 'btn block mt', onclick: () => { state.onboarded = true; save(); closePage(); } }, `Continuar com ${state.plan.name}`));
     }
@@ -1312,6 +1351,7 @@
       if (id === 'barra_carga') return false;
       if (f.group && ex.group !== f.group && !(ex.secondary || []).includes(f.group)) return false;
       if (f.equip && !(ex.equip || []).includes(f.equip)) return false;
+      if (f.level && ex.level !== f.level) return false;
       if (q) {
         const hay = `${ex.name} ${ex.muscles} ${GROUPS[ex.group] || ''}`.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
         if (!hay.includes(q)) return false;
@@ -1328,34 +1368,33 @@
     const picking = ui.pickDay ? state.plan.days.find((d) => d.id === ui.pickDay) : null;
     const wrap = h('main', { class: 'screen' }, picking ? pageTop(`Adicionar em ${picking.name}`) : topbar('Exercícios'));
     const f = ui.lib;
-    const search = h('input', { class: 'text-input', type: 'search', placeholder: 'Buscar exercício ou músculo…', value: f.q, 'aria-label': 'Buscar',
+    if (f.level === undefined) f.level = null;
+    const search = h('input', { class: 'text-input', type: 'search', placeholder: 'Buscar exercício ou músculo', value: f.q, 'aria-label': 'Buscar',
       oninput: (e) => { f.q = e.target.value; paintList(); } });
-    wrap.appendChild(search);
-    const chipRow = (label, key, map) => h('div', { class: 'mt' }, h('label', { class: 'lbl', text: label }),
-      h('div', { class: 'chips scroll-x' },
-        h('button', { class: `chip${!f[key] ? ' on' : ''}`, onclick: () => { f[key] = null; render(); } }, 'Todos'),
-        Object.entries(map).map(([k, l]) => h('button', { class: `chip${f[key] === k ? ' on' : ''}`, onclick: () => { f[key] = f[key] === k ? null : k; render(); } }, l))));
-    wrap.appendChild(chipRow('Grupo muscular', 'group', GROUPS));
-    wrap.appendChild(chipRow('Equipamento', 'equip', EQUIP));
-    const count = h('div', { class: 'section-title' });
-    const list = h('div', { class: 'stack' });
-    wrap.append(count, list);
+    wrap.appendChild(h('div', { class: 'search' }, h('span', { class: 'ico', 'aria-hidden': 'true', text: '⌕' }), search));
+    wrap.appendChild(h('div', { class: 'chips scroll-x mt' },
+      h('button', { class: `chip${!f.group ? ' on' : ''}`, onclick: () => { f.group = null; render(); } }, 'Todos'),
+      Object.entries(GROUPS).map(([k, l]) => h('button', { class: `chip${f.group === k ? ' on' : ''}`, onclick: () => { f.group = f.group === k ? null : k; render(); } }, l))));
+    const select = (key, label, map) => h('select', { class: `select${f[key] ? ' on' : ''}`, 'aria-label': label, onchange: (e) => { f[key] = e.target.value || null; render(); } },
+      h('option', { value: '' }, label), Object.entries(map).map(([k, l]) => h('option', { value: k, selected: f[key] === k }, l)));
+    wrap.appendChild(h('div', { class: 'filters' }, select('equip', 'Equipamento', EQUIP), select('level', 'Nível', LEVELS)));
+    const count = h('span', { class: 'small muted' });
+    const active = ['group', 'equip', 'level'].filter((k) => f[k]).length + (f.q ? 1 : 0);
+    wrap.appendChild(h('div', { class: 'filter-bar' }, count,
+      active ? h('button', { class: 'clear', onclick: () => { ui.lib = { q: '', group: null, equip: null, level: null }; render(); } }, `Limpar filtros (${active})`) : null));
+    const list = h('div', { class: 'list' });
+    wrap.append(list);
     function paintList() {
       const items = filteredExercises();
       count.textContent = `${items.length} exercício${items.length === 1 ? '' : 's'}`;
       list.textContent = '';
-      if (!items.length) list.appendChild(h('div', { class: 'card empty', text: 'Nada encontrado com esses filtros.' }));
-      items.forEach(([id, ex]) => list.appendChild(h('div', { class: 'card tap', onclick: () => (picking ? addItem(picking, id) : openExerciseModal(id)) },
-        h('div', { class: 'ex-head' },
-          h('img', { src: thumbSrc(ex.gifs[0]), alt: ex.name, loading: 'lazy' }),
-          h('div', { class: 'grow' },
-            h('div', { class: 'ex-name', text: ex.name }),
-            h('div', { class: 'muted small', text: ex.muscles }),
-            h('div', { class: 'chips mt-s' },
-              h('span', { class: 'badge accent', text: GROUPS[ex.group] }),
-              ex.gifs.some((g) => MEDIA[g]) ? h('span', { class: 'badge ok', text: '▶ Vídeo' }) : null,
-              (ex.equip || []).slice(0, 2).map((e) => h('span', { class: 'badge gold', text: EQUIP[e] })))),
-          picking ? h('span', { class: 'icon-btn center', 'aria-hidden': 'true', text: '+' }) : null))));
+      if (!items.length) list.appendChild(h('div', { class: 'empty', text: 'Nada encontrado com esses filtros.' }));
+      items.forEach(([id, ex]) => list.appendChild(h('div', { class: 'list-row ex', onclick: () => (picking ? addItem(picking, id) : openExerciseModal(id)) },
+        h('img', { src: thumbSrc(ex.gifs[0]), alt: '', loading: 'lazy' }),
+        h('span', { class: 'grow' },
+          h('div', { class: 'ttl', text: ex.name }),
+          h('div', { class: 'tiny muted', text: `${GROUPS[ex.group]} · ${(ex.equip || []).map((e) => EQUIP[e]).slice(0, 2).join(', ')}` })),
+        h('span', { class: picking ? 'icon-btn sm' : 'chev', 'aria-hidden': 'true', text: picking ? '+' : '›' }))));
     }
     paintList();
     return wrap;
@@ -1376,7 +1415,7 @@
     day.items.push(Lg.newItem(exId, EXERCISES[exId], day.id, day.items));
     save();
     toast(`${EXERCISES[exId].name} adicionado em ${day.name}.`);
-    if (ui.pickDay) { ui.pickDay = null; ui.tab = 'home'; ui.page = 'editor'; render(); window.scrollTo(0, 0); }
+    if (ui.pickDay) back();
   }
 
   // ---------------------------------------------------------------- editor
@@ -1412,7 +1451,7 @@
       });
       card.append(tbl);
       card.append(h('div', { class: 'row mt' },
-        h('button', { class: 'btn grow sm primary', onclick: () => { ui.pickDay = d.id; ui.lib = { q: '', group: null, equip: null }; ui.page = null; ui.tab = 'library'; render(); window.scrollTo(0, 0); } }, '+ Exercício'),
+        h('button', { class: 'btn grow sm primary', onclick: () => { ui.lib = { q: '', group: null, equip: null, level: null }; go({ tab: 'library', pickDay: d.id }); } }, '+ Exercício'),
         plan.days.length > 1 ? h('button', { class: 'btn ghost sm', onclick: () => confirmModal(`Remover ${d.name}?`, 'O histórico desse treino continua salvo.', 'Remover', () => { plan.days.splice(di, 1); save(); render(); }) }, 'Remover treino') : null));
       wrap.appendChild(card);
     });
@@ -1499,7 +1538,7 @@
       h('div', { class: 'row' },
         h('button', { class: 'btn grow', onclick: () => openPage('editor') }, '✎ Editar treino'),
         h('button', { class: 'btn grow', onclick: () => openPage('programs') }, '⇄ Trocar programa')),
-      h('button', { class: 'btn ghost block', onclick: () => openPage('guide') }, '📘 Guia de treino'),
+      h('button', { class: 'btn ghost block', onclick: () => openPage('guide') }, 'Guia de treino'),
       programById(state.plan.id) ? h('button', { class: 'btn ghost block sm', onclick: () => confirmModal('Restaurar programa original?', 'Séries, repetições, exercícios e descansos voltam ao original. O histórico é mantido.', 'Restaurar', () => {
         state.plan = clone(programById(state.plan.id)); save(); render(); toast('Programa restaurado.');
       }) }, 'Restaurar programa original') : null));
@@ -1511,27 +1550,12 @@
         h('button', { class: 'btn grow', onclick: exportBackup }, '⇩ Exportar backup'),
         h('button', { class: 'btn grow', onclick: importBackup }, '⇧ Importar backup')),
       h('button', { class: 'btn danger block', onclick: () => confirmModal('Apagar TODOS os dados?', 'Histórico, testes e ajustes serão apagados deste aparelho.', 'Apagar tudo', () => {
-        state = defaultState(); save(); ui.sessionOpen = false; ui.page = 'programs'; setKeepAwake(false); render(); toast('Dados apagados.');
+        state = defaultState(); save(); ui.sessionOpen = false; resetNav('home'); ui.page = 'programs'; setKeepAwake(false); render(); toast('Dados apagados.');
       }) }, 'Apagar todos os dados')));
 
-    wrap.appendChild(h('button', { class: 'btn ghost block mt', onclick: openCreditsModal }, 'Créditos e licenças'));
     wrap.appendChild(h('p', { class: 'muted tiny', style: null, text: `Dojo v${APP_VERSION} · GIFs gerados pelo próprio projeto · Plano baseado em “Anime Physique Files #005 – Toji Fushiguro”. Consulte um profissional antes de iniciar treinos intensos.` }));
     wrap.lastChild.classList.add('mt');
     return wrap;
-  }
-
-  function openCreditsModal() {
-    const LIC = { 'CC-BY-SA-4.0': 'creativecommons.org/licenses/by-sa/4.0', 'CC-BY-4.0': 'creativecommons.org/licenses/by/4.0', CC0: 'creativecommons.org/publicdomain/zero/1.0' };
-    openModal((box, close) => {
-      box.append(h('h2', { text: 'Créditos e licenças' }),
-        h('p', { class: 'small muted', text: 'Animações (GIFs) feitas pelo próprio projeto. Vídeos de terceiros com licença aberta, recortados, reenquadrados e sem áudio; os clipes derivados seguem a mesma licença.' }));
-      const rows = Object.entries(MEDIA).map(([id, m]) => {
-        const ex = Object.values(EXERCISES).find((e) => e.gifs.includes(id));
-        return h('tr', null, h('td', { text: ex ? ex.name : id }), h('td', { class: 'tiny muted', text: `${m.credit} · ${m.license}${LIC[m.license] ? ` (${LIC[m.license]})` : ''}${m.source ? ` · ${m.source.replace('https://', '')}` : ''}` }));
-      });
-      if (rows.length) box.append(h('table', { class: 'tbl' }, h('tbody', null, rows)));
-      box.append(h('button', { class: 'btn block mt', onclick: close }, 'Fechar'));
-    });
   }
 
   function openEditItem(day, it) {
@@ -1666,7 +1690,6 @@
     if (ms) tickTimer = setTimeout(() => { tick(); schedule(); }, ms);
   }
   document.addEventListener('visibilitychange', () => {
-    document.querySelectorAll('video').forEach((v) => { if (document.hidden) v.pause(); else if (v.play) v.play().catch(() => {}); });
     if (!document.hidden) tick();
     schedule();
     updateWake();
@@ -1678,14 +1701,11 @@
     if (ui.runner) { confirmModal('Parar o timer?', '', 'Parar', () => ui.runner && ui.runner.stop()); return true; }
     if (ui.detail) { ui.detail = null; render(); return true; }
     if (ui.sessionOpen) { ui.sessionOpen = false; render(); return true; }
-    if (ui.page) { closePage(); return true; }
-    if (ui.tab !== 'home') { ui.tab = 'home'; render(); return true; }
-    return false;
+    return back();
   };
 
   window.addEventListener('error', (e) => console.error(`DOJO_ERROR ${e.message}`));
   render();
   // Sinal para o teste no emulador (só aparece no logcat em builds de debug).
-  const h264 = document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"') !== '';
-  console.info(`DOJO_READY bridge=${Native.available} days=${state.plan.days.length} h264=${h264} videos=${Object.keys(MEDIA).length}`);
+  console.info(`DOJO_READY bridge=${Native.available} days=${state.plan.days.length}`);
 })();

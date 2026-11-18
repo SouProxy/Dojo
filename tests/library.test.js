@@ -123,15 +123,6 @@ test('backup com histórico real (timestamps) é aceito', () => {
   assert.equal(L.validateBackup({ app: 'dojo', version: 2, plans: { toji }, programId: 'toji', history: bad, challenge: [], settings: {} }, D.EXERCISES).ok, false);
 });
 
-test('vídeos do manifesto existem e têm crédito e licença', () => {
-  const MEDIA = require('../app/src/main/assets/www/js/media.js');
-  for (const [id, m] of Object.entries(MEDIA)) {
-    assert.ok(Object.values(D.EXERCISES).some((e) => e.gifs.includes(id)), `${id}: exercício`);
-    assert.ok(fs.existsSync(path.join(__dirname, '../app/src/main/assets/www', m.src)), `${id}: arquivo`);
-    assert.ok(m.credit && m.license, `${id}: crédito/licença`);
-  }
-});
-
 test('métricas, recordes e distribuição muscular', () => {
   const S = (w, r) => ({ w, r, sec: null, m: null, done: true });
   const day = new Date(2026, 10, 11, 10).getTime(); // quarta
@@ -192,4 +183,20 @@ test('toda animação tem miniatura estática (listas não animam = menos bateri
     assert.ok(fs.existsSync(png), `miniatura de ${g}`);
     assert.ok(fs.statSync(png).size < 12 * 1024, `miniatura pequena: ${g}`);
   }
+});
+
+test('25 programas, nomes e ids únicos, todos os dias com exercícios', () => {
+  assert.equal(D.PROGRAMS.length, 25);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 25);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 25);
+  for (const p of D.PROGRAMS) {
+    for (const d of p.days) {
+      assert.ok(d.items.length >= 3, `${p.id}/${d.id}`);
+      for (const i of d.items) {
+        const t = D.EXERCISES[i.ex].type || 'reps';
+        if (t === 'reps') assert.ok(i.max > 0, `${p.id}/${i.ex}: faixa de reps`);
+      }
+    }
+  }
+  for (const days of [2, 3, 4, 5, 6]) assert.ok(D.PROGRAMS.some((p) => p.daysPerWeek === days), `${days} dias`);
 });

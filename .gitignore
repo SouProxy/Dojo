@@ -10,4 +10,3 @@ captures/
 *.aab
 node_modules/
 __pycache__/
-tools/video/.cache/

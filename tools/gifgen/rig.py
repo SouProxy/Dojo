@@ -18,16 +18,16 @@ from PIL import Image, ImageDraw
 SS = 2
 W = H = 320 * SS
 
-BG = (21, 22, 27)
-FLOOR = (52, 55, 64)
-NEAR = (236, 233, 228)
-FAR = (120, 124, 136)
-ACCENT = (226, 69, 79)
-ACCENT_FAR = (140, 52, 60)
-EQUIP = (201, 162, 39)
-EQUIP_DARK = (120, 98, 30)
-STEEL = (150, 156, 168)
-STEEL_DARK = (88, 92, 102)
+BG = (22, 24, 29)
+FLOOR = (38, 41, 50)
+NEAR = (226, 229, 236)
+FAR = (98, 104, 118)
+ACCENT = (122, 162, 255)
+ACCENT_FAR = (66, 88, 140)
+EQUIP = (186, 160, 104)
+EQUIP_DARK = (112, 96, 64)
+STEEL = (150, 156, 170)
+STEEL_DARK = (66, 70, 82)
 
 L = dict(torso=120, neck=10, head=27, ua=78, fa=72, th=100, sh=98, ft=34)
 THICK = dict(torso=34, ua=22, fa=19, th=27, sh=22, ft=13)
@@ -254,9 +254,9 @@ class Canvas:
 
 SKIN = NEAR
 SKIN_FAR = FAR
-SHOE = (60, 64, 76)
+SHOE = (52, 56, 68)
 SHOE_FAR = (44, 47, 56)
-SHADOW = (14, 15, 19)
+SHADOW = (15, 16, 20)
 
 # Raios (início, fim) de cada segmento: dá volume à figura.
 RADII = dict(torso=(17, 23), th=(16, 11), sh=(12, 7), ua=(12, 9), fa=(9.5, 7))

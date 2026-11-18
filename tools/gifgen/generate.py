@@ -25,10 +25,21 @@ THUMBS = OUT.parent / "thumbs"
 
 
 def save_thumb(frames, name, size=128):
-    """Miniatura estática (quadro do meio do movimento) para listas: não anima = não gasta bateria."""
+    """Miniatura estática (quadro do meio do movimento), recortada em volta da figura, para listas.
+
+    Não anima = não gasta bateria; o recorte deixa a figura legível em 40–48 px."""
+    from PIL import ImageChops
     THUMBS.mkdir(parents=True, exist_ok=True)
-    f = frames[int(len(frames) * 0.35)].convert("RGB").resize((size, size), Image.LANCZOS)
-    f.quantize(colors=32, method=Image.Quantize.MEDIANCUT).save(THUMBS / f"{name}.png", optimize=True)
+    f = frames[int(len(frames) * 0.35)].convert("RGB")
+    bg = Image.new("RGB", f.size, f.getpixel((2, 2)))
+    box = ImageChops.difference(f, bg).convert("L").point(lambda v: 255 if v > 18 else 0).getbbox() or (0, 0, *f.size)
+    cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+    half = max(box[2] - box[0], box[3] - box[1]) / 2 * 1.12 + 4
+    half = min(half, min(f.size) / 2)
+    cx = min(max(cx, half), f.size[0] - half)
+    cy = min(max(cy, half), f.size[1] - half)
+    crop = f.crop((int(cx - half), int(cy - half), int(cx + half), int(cy + half))).resize((size, size), Image.LANCZOS)
+    crop.quantize(colors=32, method=Image.Quantize.MEDIANCUT).save(THUMBS / f"{name}.png", optimize=True)
 
 
 def render_side(spec):
