@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 
-from rig import (ACCENT, FLOOR, Canvas, NEAR, SHADOW, SHOE, STEEL, STEEL_DARK, FAR, add, ease, ik,
+from rig import (EQUIP, EQUIP_DARK, ACCENT, FLOOR, Canvas, NEAR, SHADOW, SHOE, STEEL, STEEL_DARK, FAR, add, ease, ik,
                  tapered, vdown)
 
 G = 552
@@ -190,6 +190,16 @@ def jack_back(cv, P, k):
     pass
 
 
+def hold_barbell(cv, P, k):
+    l, r = P[-1]["hd"], P[1]["hd"]
+    cv.line((l[0] - 60, l[1] + 4), (r[0] + 60, r[1] + 4), 8, STEEL)
+    for x in (l[0] - 50, r[0] + 50):
+        cv.rect(x - 9, l[1] - 34, x + 9, l[1] + 42, EQUIP_DARK, radius=5)
+        cv.rect(x - 5, l[1] - 30, x + 5, l[1] + 38, EQUIP, radius=4)
+    for s in (-1, 1):
+        cv.circle(P[s]["hd"], 10, NEAR)
+
+
 def topdown_bench(cv, P, k):
     cv.rect(CX - 46, P["sh_y"] - 70, CX + 46, P["cy"] + 40, FAR, radius=14)
 
@@ -231,6 +241,9 @@ FRONT = {
         keys=[(dict(cy=440, seated=True, knee=34, arm=(14, 30)), 3, 14),
               (dict(cy=440, seated=True, knee=92, arm=(14, 30)), 3, 14)],
         back=bench_back, front=abductor_front, hl=("glute",)),
+    "encolhimento_barra": dict(
+        keys=[(dict(arm=(4, 4), shrug=0), 4, 10), (dict(arm=(4, 4), shrug=22), 4, 10)],
+        front=hold_barbell, hl=("trap",)),
     "crucifixo": dict(
         keys=[(dict(arm=("ik", (140, 6), 1)), 3, 14), (dict(arm=("ik", (-8, -40), 1)), 3, 14)],
         back=topdown_bench, front=hold_dumbbells, hl=("chest",)),

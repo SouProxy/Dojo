@@ -52,7 +52,7 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   assert(await page.locator('.card.hero >> text=Upper/Lower 4x').count() === 1, 'recomendação muda com as respostas (4 dias, força → Upper/Lower)');
   await shot('00-questionario');
   const progTitles = () => page.locator('.list-row.prog .ttl').allTextContents();
-  assert((await progTitles()).length === 25, '25 programas listados');
+  assert((await progTitles()).length === 50, '50 programas listados');
   await page.selectOption('select[aria-label="Foco"]', 'forca');
   const forca = await progTitles();
   assert(forca.some((t) => t.includes('Força 5×5')) && forca.some((t) => t.includes('Força máxima')) && !forca.some((t) => t.includes('Em casa')), 'filtro de programas por foco (força)');
@@ -62,7 +62,11 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   await page.selectOption('select[aria-label="Foco"]', 'massa');
   assert((await progTitles()).some((t) => t.includes('Hipertrofia academia completa')), 'programa de máquinas 5 dias aparece em massa + 5 dias');
   await page.click('button.clear');
-  assert((await progTitles()).length === 25, 'limpar filtros volta a mostrar todos');
+  assert((await progTitles()).length === 50, 'limpar filtros volta a mostrar todos');
+  await page.fill('input[aria-label="Buscar programa"]', 'perna b');
+  const pb = await progTitles();
+  assert(pb.some((t) => t.includes('Peito, Perna A, Braço')) && pb.length < 10, `busca de programas por dia ("perna b" → ${pb.length})`);
+  await page.fill('input[aria-label="Buscar programa"]', '');
   await page.click('.list-row.prog:has-text("Calistenia")');
   await page.waitForSelector('.modal >> text=Puxar A');
   await page.evaluate(() => window.dojoBack());

@@ -224,7 +224,24 @@ ABDOMINAL_POLIA = dict(
 )
 
 
+# ---------------------------------------------------------------- NOVOS (divisões clássicas)
+
+PULLOVER = dict(
+    keys=[(dict(_bp, arm_n=(182, 182), arm_f=(182, 182)), 3, 14), (dict(_bp, arm_n=(252, 250), arm_f=(252, 250)), 3, 14)],
+    back=flat_bench_back, front=db_vertical, hl=("back", "chest"),
+)
+
+_ar = dict(hip=(270, 442), t=-6, leg_n=(88, 0), leg_f=(88, 0))
+DESENV_ARNOLD = dict(
+    keys=[(dict(_ar, arm_n=(12, 168), arm_f=(12, 168)), 3, 13), (dict(_ar, arm_n=(60, 175), arm_f=(60, 175)), 0, 10),
+          (dict(_ar, arm_n=(175, 178), arm_f=(175, 178)), 3, 13), (dict(_ar, arm_n=(60, 175), arm_f=(60, 175)), 0, 10)],
+    back=bench_backrest, front=db_vertical, hl=("delt", "tri"),
+)
+
+
 SIDE3 = {
+    "pullover": PULLOVER,
+    "desenvolvimento_arnold": DESENV_ARNOLD,
     "supino_maquina": SUPINO_MAQUINA,
     "supino_declinado": SUPINO_DECLINADO,
     "supino_halteres": SUPINO_HALTERES,

@@ -2,40 +2,65 @@
 
 App Android de treino, offline, para qualquer nível — do primeiro dia na academia ao avançado, em casa ou com halteres.
 
-### Programas prontos (25)
+### Programas prontos (50)
 | Programa | Dias | Nível | Foco |
 | --- | --- | --- | --- |
 | Minimalista 2x (40 min) | 2 | Iniciante | Massa muscular |
 | ABC – Iniciante/Intermediário | 3 | Iniciante | Massa muscular |
+| ABC em máquinas – Iniciante | 3 | Iniciante | Massa muscular |
+| Atleta: força e potência (3 dias) | 3 | Intermediário | Força |
 | Baixo impacto e saúde (3 dias) | 3 | Iniciante | Condicionamento |
 | Condicionamento em circuito (3 dias) | 3 | Iniciante | Condicionamento |
 | Em casa – peso corporal (3 dias) | 3 | Iniciante | Casa/halteres |
+| Especialização no agachamento (3 dias) | 3 | Avançado | Força |
 | Força 5×5 (3 dias) | 3 | Iniciante | Força |
 | Full Body 3x – Iniciante | 3 | Iniciante | Massa muscular |
 | Full Body ondulado 3x – Avançado | 3 | Avançado | Massa muscular |
 | Primeiros passos – máquinas (3 dias) | 3 | Iniciante | Massa muscular |
+| Retorno após pausa (3 dias) | 3 | Iniciante | Massa muscular |
 | Só halteres (3 dias) | 3 | Iniciante | Casa/halteres |
+| Superior / Inferior / Corpo todo (3 dias) | 3 | Intermediário | Massa muscular |
 | ABCD – Intermediário | 4 | Intermediário | Massa muscular |
+| Antagonistas 4 dias (bi-sets) | 4 | Intermediário | Massa muscular |
 | Calistenia 4 dias (barra e paralelas) | 4 | Intermediário | Casa/halteres |
+| Especialização no supino (4 dias) | 4 | Intermediário | Força |
+| Especialização no terra e posterior (4 dias) | 4 | Intermediário | Força |
 | Foco em glúteos e pernas (4 dias) | 4 | Intermediário | Massa muscular |
 | Foco em peito e braços (4 dias) | 4 | Intermediário | Massa muscular |
+| Força + condicionamento (4 dias) | 4 | Intermediário | Condicionamento |
 | Força + Hipertrofia 4x (Superior/Inferior) | 4 | Intermediário | Força |
+| Força avançada: pesados + back-off (4 dias) | 4 | Avançado | Força |
 | Força máxima: agachamento, supino e terra (4 dias) | 4 | Avançado | Força |
+| Full Body 4x – Intermediário | 4 | Intermediário | Massa muscular |
 | Halteres Upper/Lower 4 dias | 4 | Intermediário | Casa/halteres |
 | Upper/Lower 4x – Intermediário | 4 | Intermediário | Força |
+| ABCDE avançado (5 dias) | 5 | Avançado | Massa muscular |
 | ABCDE pesos livres (5 dias) | 5 | Intermediário | Massa muscular |
+| Clássico 5 dias: Peito, Costas, Pernas, Deltoides, Braços | 5 | Intermediário | Massa muscular |
 | Costas e ombros “V” (5 dias) | 5 | Intermediário | Massa muscular |
+| Especialização em braços (5 dias) | 5 | Intermediário | Massa muscular |
+| Especialização em ombros (5 dias) | 5 | Intermediário | Massa muscular |
+| Full Body 5x – Avançado (alta frequência) | 5 | Avançado | Massa muscular |
+| Halteres e banco – divisão 5 dias | 5 | Intermediário | Casa/halteres |
 | Hipertrofia academia completa (5 dias) | 5 | Intermediário | Massa muscular |
+| Inferior 3x + superior 2x (5 dias) | 5 | Intermediário | Massa muscular |
+| Pernas pesadas: 2 dias de perna (5 dias) | 5 | Intermediário | Massa muscular |
+| Peso corporal avançado (5 dias) | 5 | Avançado | Casa/halteres |
 | Powerbuilding 5 dias | 5 | Avançado | Força |
+| Recomposição corporal (5 dias) | 5 | Intermediário | Condicionamento |
 | Toji Fushiguro – Anime Physique Files #005 | 5 | Intermediário | Força |
+| Upper/Lower + PPL (5 dias) | 5 | Intermediário | Massa muscular |
+| 6 dias: Peito, Perna A, Braço, Costas, Perna B, Ombros | 6 | Avançado | Massa muscular |
+| ABC 2x por semana (6 dias) | 6 | Avançado | Massa muscular |
 | Arnold split 6x – Avançado | 6 | Avançado | Massa muscular |
 | Push/Pull/Legs – Avançado (6 dias) | 6 | Avançado | Massa muscular |
+| Upper/Lower 6x – Avançado | 6 | Avançado | Massa muscular |
 
-Programas intensos trazem técnicas nas últimas séries (drop-set, rest-pause, bi-set, série-topo) e cargas por % do 1RM nos de força.
+Programas intensos trazem técnicas nas últimas séries (drop-set, rest-pause, bi-set, série-topo), cargas por % do 1RM nos de força e séries “até a falha”. Os avançados têm 18+ séries por sessão, RIR 1 nos básicos e falha nos isoladores.
 Um **questionário** (dias por semana, experiência, local e objetivo) recomenda o programa, e filtros por foco, dias e nível ajudam a escolher.
 
 ### Recursos
-- **Biblioteca com 83 exercícios** (incluindo máquinas: supino máquina, hack, Smith, adutora, remada máquina, cavalinho, desenvolvimento máquina…) e **82 animações** com o músculo-alvo destacado com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo muscular (13) e equipamento (13)
+- **Biblioteca com 86 exercícios** (incluindo máquinas: supino máquina, hack, Smith, adutora, remada máquina, cavalinho, desenvolvimento máquina…) e **82 animações** com o músculo-alvo destacado com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo muscular (13) e equipamento (13)
 - **Monte seu treino**: edite qualquer programa ou crie do zero — adicione, remova e reordene exercícios, dias e formato (séries ou circuito)
 - **Volume semanal por músculo**: o app soma as séries do seu plano e compara com a faixa de 10–20 séries/semana
 - **Guia de treino** baseado em evidências: volume, frequência, divisões, reps/descanso, progressão, deload, aquecimento e segurança, com fontes

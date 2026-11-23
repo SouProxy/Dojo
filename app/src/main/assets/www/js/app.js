@@ -5,7 +5,7 @@
   const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, recommend } = window.DojoData;
   const Lg = window.DojoLogic;
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.5.0';
+  const APP_VERSION = '1.6.0';
 
   // ================================================================ estado
 
@@ -471,7 +471,7 @@
     if (prev && prev.w !== null) w = prev.w;
     else if (sug && sug.weight !== undefined && sug.weight !== null) w = sug.weight;
     else if (lastSet && lastSet.w !== null) w = lastSet.w;
-    const t = Lg.typeOf(ex);
+    const t = Lg.itemType(it, ex);
     let r = null;
     if (t === 'reps') r = it.max;
     else if (t === 'max') r = lastSet && lastSet.r ? lastSet.r : null;
@@ -491,7 +491,7 @@
   function setRow(a, it, ex, i, si, last, sug) {
     const entry = a.entries[i];
     const s = entry.sets[si];
-    const t = Lg.typeOf(ex);
+    const t = Lg.itemType(it, ex);
     const pf = prefill(entry, si, last, sug, it, ex);
     const upd = (k) => (v) => { s[k] = v; save(); };
     const label = String(si + 1);
@@ -1307,19 +1307,35 @@
     wrap.appendChild(h('div', { class: 'mt' }, programCard(programById(rec))));
 
     wrap.appendChild(h('div', { class: 'section-title', text: `Todos os programas (${PROGRAMS.length})` }));
-    const pf = ui.progFilter || (ui.progFilter = { focus: null, days: null, level: null });
+    const pf = ui.progFilter || (ui.progFilter = { focus: null, days: null, level: null, q: '' });
+    const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const progSearch = h('input', { class: 'text-input', type: 'search', placeholder: 'Buscar (ex.: peito, perna, 5x5, braço)', value: pf.q || '', 'aria-label': 'Buscar programa',
+      oninput: (e) => { pf.q = e.target.value; paintProgs(); } });
+    wrap.appendChild(h('div', { class: 'search' }, h('span', { class: 'ico', 'aria-hidden': 'true', text: '⌕' }), progSearch));
     const select = (key, label, opts) => h('select', { class: `select${pf[key] ? ' on' : ''}`, 'aria-label': label,
       onchange: (e) => { const v = e.target.value; pf[key] = v === '' ? null : (key === 'days' ? Number(v) : v); render(); } },
       h('option', { value: '' }, label), opts.map(([k, l]) => h('option', { value: String(k), selected: pf[key] === k }, l)));
-    wrap.appendChild(h('div', { class: 'filters three' },
+    wrap.appendChild(h('div', { class: 'filters three mt-s' },
       select('focus', 'Foco', Object.entries(FOCUS)),
       select('days', 'Dias', [2, 3, 4, 5, 6].map((d) => [d, `${d} dias`])),
       select('level', 'Nível', Object.entries(LEVELS))));
-    const shown = PROGRAMS.filter((p) => (!pf.focus || p.focus === pf.focus) && (!pf.days || p.daysPerWeek === pf.days) && (!pf.level || p.level === pf.level));
-    const active = ['focus', 'days', 'level'].filter((k) => pf[k]).length;
-    wrap.appendChild(h('div', { class: 'filter-bar' }, h('span', { class: 'small muted', text: `${shown.length} programa${shown.length === 1 ? '' : 's'}` }),
-      active ? h('button', { class: 'clear', onclick: () => { ui.progFilter = { focus: null, days: null, level: null }; render(); } }, `Limpar filtros (${active})`) : null));
-    wrap.appendChild(shown.length ? h('div', { class: 'list' }, shown.map(programRow)) : h('div', { class: 'card empty', text: 'Nenhum programa com esses filtros.' }));
+    const count = h('span', { class: 'small muted' });
+    const clearBtn = h('button', { class: 'clear', onclick: () => { ui.progFilter = { focus: null, days: null, level: null, q: '' }; render(); } });
+    wrap.appendChild(h('div', { class: 'filter-bar' }, count, clearBtn));
+    const listBox = h('div');
+    wrap.appendChild(listBox);
+    function paintProgs() {
+      const q = norm((pf.q || '').trim());
+      const shown = PROGRAMS.filter((p) => (!pf.focus || p.focus === pf.focus) && (!pf.days || p.daysPerWeek === pf.days) && (!pf.level || p.level === pf.level) &&
+        (!q || norm(`${p.name} ${p.description} ${p.days.map((d) => `${d.name} ${d.title}`).join(' ')}`).includes(q)));
+      const active = ['focus', 'days', 'level', 'q'].filter((k) => pf[k]).length;
+      count.textContent = `${shown.length} programa${shown.length === 1 ? '' : 's'}`;
+      clearBtn.textContent = `Limpar filtros (${active})`;
+      clearBtn.classList.toggle('hidden', !active);
+      listBox.textContent = '';
+      listBox.appendChild(shown.length ? h('div', { class: 'list' }, shown.map(programRow)) : h('div', { class: 'card empty', text: 'Nenhum programa com esses filtros.' }));
+    }
+    paintProgs();
 
     const customs = Object.values(state.plans).concat([state.plan]).filter((p, i, arr) => p.custom && arr.findIndex((x) => x.id === p.id) === i);
     wrap.appendChild(h('div', { class: 'section-title', text: 'Meus treinos' }));

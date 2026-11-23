@@ -6,6 +6,11 @@
   const DAY_MS = 24 * 60 * 60 * 1000;
 
   function typeOf(ex) { return (ex && ex.type) || 'reps'; }
+  /** Tipo efetivo de um item do plano: faixa 0–0 em exercício de reps = "até a falha" (reps máximas). */
+  function itemType(item, ex) {
+    const t = typeOf(ex);
+    return t === 'reps' && item && item.min === 0 && item.max === 0 ? 'max' : t;
+  }
 
   function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -37,9 +42,9 @@
   function range(min, max) { return min === max ? `${min}` : `${min}–${max}`; }
 
   function prescription(item, ex) {
-    const t = typeOf(ex);
+    const t = itemType(item, ex);
     let main;
-    if (t === 'max') main = `${item.sets}×máx`;
+    if (t === 'max') main = `${item.sets}×falha`;
     else if (t === 'time') main = `${item.sets}×${range(item.min, item.max)}s`;
     else if (t === 'distance') main = `${range(item.min, item.max)} m`;
     else if (t === 'interval') {
@@ -85,7 +90,7 @@
    */
   function suggest(item, ex, last, settings) {
     const step = (settings && settings.step) || 0.5;
-    const t = typeOf(ex);
+    const t = itemType(item, ex);
     if (!last) {
       if (t === 'interval') return { kind: 'first', text: 'Ajuste a velocidade dos tiros para um esforço forte de verdade.' };
       if (ex.load === 'load') return { kind: 'first', text: 'Primeira vez: escolha uma carga que deixe 1–2 reps na reserva.' };
@@ -440,7 +445,7 @@
   }
 
   const api = {
-    typeOf, fmtClock, fmtRest, fmtKg, fmtNum, prescription, roundUp, doneSets, lastEntry, suggest, e1rm,
+    typeOf, itemType, fmtClock, fmtRest, fmtKg, fmtNum, prescription, roundUp, doneSets, lastEntry, suggest, e1rm,
     sessionStats, metric, series, prs, weekNumber, nextDayIndex, daysUntil, validateBackup, upgradeBackup, validPlan, weeklyVolume, newItem, DAY_MS,
     metricOptions, metricValue, exerciseSessions, metricSeries, personalRecords, weekBounds, muscleSets,
   };

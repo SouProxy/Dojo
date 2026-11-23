@@ -24,7 +24,7 @@ test('todo item do plano aponta para um exercício e GIF existentes', () => {
 test('prescrição formatada', () => {
   assert.equal(L.prescription(squat, EXERCISES.agachamento), '4×4–6');
   assert.equal(L.prescription(DEFAULT_PLAN.days[0].items[3], EXERCISES.afundo), '3×10 por perna');
-  assert.equal(L.prescription(DEFAULT_PLAN.days[1].items[0], EXERCISES.barra_fixa), '4×máx');
+  assert.equal(L.prescription(DEFAULT_PLAN.days[1].items[0], EXERCISES.barra_fixa), '4×falha');
   assert.equal(L.prescription(DEFAULT_PLAN.days[3].items[3], EXERCISES.prancha), '3×45s');
   assert.equal(L.prescription(DEFAULT_PLAN.days[4].items[0], EXERCISES.farmer), '30–40 m');
   assert.equal(L.prescription(DEFAULT_PLAN.days[4].items[1], EXERCISES.esteira), '20s forte / 40s leve ×6');
@@ -141,4 +141,14 @@ test('validação de backup rejeita conteúdo malicioso ou malformado', () => {
   const longName = JSON.parse(JSON.stringify(good));
   longName.plan.days[0].title = 'x'.repeat(5000);
   assert.equal(L.validateBackup(longName, EXERCISES).ok, false);
+});
+
+test('item com faixa 0–0 = "até a falha" (progressão por reps totais)', () => {
+  const item = { uid: 'x', ex: 'paralelas', sets: 3, min: 0, max: 0, rest: 90 };
+  assert.equal(L.itemType(item, EXERCISES.paralelas), 'max');
+  assert.equal(L.prescription(item, EXERCISES.paralelas), '3×falha');
+  const S = (r) => ({ w: 0, r, sec: null, m: null, done: true });
+  const s = L.suggest(item, EXERCISES.paralelas, { sets: [S(12), S(10), S(9)] }, {});
+  assert.equal(s.target, 32);
+  assert.equal(L.itemType({ ...item, max: 12 }, EXERCISES.paralelas), 'reps');
 });

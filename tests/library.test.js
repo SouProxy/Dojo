@@ -61,8 +61,9 @@ test('recomendação de programa', () => {
   assert.equal(D.recommend({ days: 4, level: 'intermediario', place: 'academia', goal: 'forca' }), 'phul');
   assert.equal(D.recommend({ days: 4, level: 'avancado', place: 'academia', goal: 'forca' }), 'powerlifting');
   assert.equal(D.recommend({ days: 3, level: 'intermediario', place: 'academia', goal: 'forca' }), 'forca5x5');
-  assert.equal(D.recommend({ days: 5, level: 'intermediario', place: 'academia', goal: 'hipertrofia' }), 'maquinas5');
-  assert.equal(D.recommend({ days: 6, level: 'avancado', place: 'academia', goal: 'hipertrofia' }), 'arnold');
+  assert.equal(D.recommend({ days: 5, level: 'intermediario', place: 'academia', goal: 'hipertrofia' }), 'classico5');
+  assert.equal(D.recommend({ days: 5, level: 'avancado', place: 'academia', goal: 'hipertrofia' }), 'abcde_av');
+  assert.equal(D.recommend({ days: 6, level: 'avancado', place: 'academia', goal: 'hipertrofia' }), 'split6');
   assert.equal(D.recommend({ days: 6, level: 'intermediario', place: 'academia', goal: 'hipertrofia' }), 'ppl');
   assert.equal(D.recommend({ days: 3, level: 'iniciante', place: 'casa', goal: 'hipertrofia' }), 'casa');
   assert.equal(D.recommend({ days: 3, level: 'iniciante', place: 'halteres', goal: 'hipertrofia' }), 'halteres');
@@ -185,18 +186,44 @@ test('toda animação tem miniatura estática (listas não animam = menos bateri
   }
 });
 
-test('25 programas, nomes e ids únicos, todos os dias com exercícios', () => {
-  assert.equal(D.PROGRAMS.length, 25);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 25);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 25);
+test('50 programas, nomes e ids únicos, todos os dias com exercícios', () => {
+  assert.equal(D.PROGRAMS.length, 50);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 50);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 50);
   for (const p of D.PROGRAMS) {
     for (const d of p.days) {
       assert.ok(d.items.length >= 3, `${p.id}/${d.id}`);
       for (const i of d.items) {
         const t = D.EXERCISES[i.ex].type || 'reps';
-        if (t === 'reps') assert.ok(i.max > 0, `${p.id}/${i.ex}: faixa de reps`);
+        if (t === 'reps') assert.ok(i.max > 0 || (i.min === 0 && i.max === 0), `${p.id}/${i.ex}: faixa de reps ou até a falha`);
       }
     }
   }
   for (const days of [2, 3, 4, 5, 6]) assert.ok(D.PROGRAMS.some((p) => p.daysPerWeek === days), `${days} dias`);
+});
+
+test('treino clássico do usuário: segunda a sexta exatamente como pedido', () => {
+  const p = D.PROGRAMS.find((x) => x.id === 'classico5');
+  const fmt = (d) => d.items.map((i) => `${i.ex} ${L.prescription(i, D.EXERCISES[i.ex])}`);
+  assert.deepEqual(p.days.map((d) => d.title), ['Peitoral', 'Costas', 'Pernas', 'Deltoides e trapézio', 'Braços']);
+  assert.deepEqual(fmt(p.days[0]), ['supino_reto 4×6–8', 'supino_inclinado 4×10', 'supino_declinado 4×12', 'crossover 3×12', 'crucifixo 3×12']);
+  assert.deepEqual(fmt(p.days[1]), ['barra_fixa 4×falha', 'remada_curvada 4×8', 'remada_cabo 4×12', 'pullover 4×10', 'terra 3×10']);
+  assert.deepEqual(fmt(p.days[2]), ['agachamento 4×8', 'leg_press 4×10–12', 'stiff 4×8–10', 'cadeira_extensora 3×12', 'cadeira_flexora 3×12']);
+  assert.deepEqual(fmt(p.days[3]), ['desenvolvimento 4×8', 'desenvolvimento_arnold 4×10', 'elevacao_lateral 3×12', 'encolhimento_barra 4×8', 'encolhimento 4×12']);
+  assert.deepEqual(fmt(p.days[4]), ['paralelas 3×falha', 'triceps_frances 3×10', 'triceps_corda 3×12', 'rosca_direta 3×10', 'rosca_alternada 3×12', 'rosca_martelo 3×10']);
+  const s6 = D.PROGRAMS.find((x) => x.id === 'split6');
+  assert.deepEqual(s6.days.map((d) => d.title), ['Peito', 'Perna A – quadríceps', 'Braço', 'Costas', 'Perna B – posterior e glúteos', 'Ombros + abdômen']);
+});
+
+test('avançados são pesados de verdade: volume alto e falha/RIR nas notas', () => {
+  for (const p of D.PROGRAMS.filter((x) => x.level === 'avancado' && x.place === 'academia' && x.focus === 'massa')) {
+    const v = L.weeklyVolume(p, D.EXERCISES);
+    const mult = p.daysPerWeek / p.days.length;
+    for (const g of ['peito', 'costas', 'quadriceps']) assert.ok(v[g] * mult >= 12, `${p.id}/${g}: ${v[g] * mult}`);
+    const perSession = p.days.reduce((a, d) => a + d.items.reduce((b, i) => b + i.sets, 0), 0) / p.days.length;
+    assert.ok(perSession >= 18, `${p.id}: ${perSession} séries/sessão`);
+    const notes = p.days.flatMap((d) => d.items.map((i) => i.note || '')).join(' ');
+    assert.match(notes, /RIR 1/);
+    assert.match(notes, /falha/);
+  }
 });
