@@ -46,29 +46,40 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   await page.goto(base);
   // Primeiro uso: questionário de programa
   await page.waitForSelector('text=Bem-vindo ao Dojo');
-  assert(await page.locator('.card.hero >> text=Full Body 3x – Iniciante').count() === 1, 'questionário recomenda Full Body para iniciante 3x');
-  await page.click('button.chip:text-is("4")');
-  await page.click('button.chip:text-is("Ganhar força")');
-  assert(await page.locator('.card.hero >> text=Upper/Lower 4x').count() === 1, 'recomendação muda com as respostas (4 dias, força → Upper/Lower)');
-  await shot('00-questionario');
+  assert(await page.locator('.card.hero >> text=Full Body 3x – Iniciante').count() === 1, 'escolhas padrão recomendam Full Body para iniciante 3x');
+  assert(await page.locator('main select').count() === 0, 'sem filtros duplicados (dias/nível/objetivo só aparecem uma vez)');
+  assert(await page.locator('main .lbl:text-is("Dias por semana")').count() === 1, 'pergunta de dias aparece uma única vez');
+  const openProgram = async (name) => {
+    if (await page.locator('main .card button.clear').count()) await page.click('main .card button.clear');
+    await page.fill('input[aria-label="Buscar programa"]', name);
+    await page.click(`.list-row.prog:has-text("${name}")`);
+  };
   const progTitles = () => page.locator('.list-row.prog .ttl').allTextContents();
-  assert((await progTitles()).length === 50, '50 programas listados');
-  await page.selectOption('select[aria-label="Foco"]', 'forca');
-  const forca = await progTitles();
-  assert(forca.some((t) => t.includes('Força 5×5')) && forca.some((t) => t.includes('Força máxima')) && !forca.some((t) => t.includes('Em casa')), 'filtro de programas por foco (força)');
-  await page.selectOption('select[aria-label="Dias"]', '5');
-  const f5 = await progTitles();
-  assert(f5.some((t) => t.includes('Toji')) && !f5.some((t) => t.includes('Força 5×5')), 'filtro por dias combinado');
-  await page.selectOption('select[aria-label="Foco"]', 'massa');
-  assert((await progTitles()).some((t) => t.includes('Hipertrofia academia completa')), 'programa de máquinas 5 dias aparece em massa + 5 dias');
-  await page.click('button.clear');
-  assert((await progTitles()).length === 50, 'limpar filtros volta a mostrar todos');
+  const progMeta = () => page.locator('.list-row.prog .tiny').allTextContents();
+  // Caso do print: 6 dias, avançado, academia, força → programa de 6 dias, e a lista só com 6 dias
+  await page.click('.ask:has-text("Dias") button.chip:text-is("6")');
+  await page.click('.ask:has-text("Experiência") button.chip:text-is("Avançado")');
+  await page.click('.ask:has-text("Objetivo") button.chip:text-is("Ganhar força")');
+  const heroTxt = await page.textContent('.card.hero');
+  assert(heroTxt.includes('Recomendado para você') && heroTxt.includes('6 dias'), `recomendação respeita os dias escolhidos (${heroTxt.slice(0, 80)})`);
+  await shot('00-questionario');
+  // Objetivo massa: lista mostra só programas de 6 dias avançados
+  await page.click('.ask:has-text("Objetivo") button.chip:text-is("Ganhar massa")');
+  const meta6 = await progMeta();
+  assert(meta6.length >= 2 && meta6.every((t) => t.startsWith('6 dias') && t.includes('Avançado')), `lista coerente com as escolhas (${meta6.join(' | ')})`);
+  // Tocar de novo = qualquer; "Limpar" mostra todos
+  await page.click('main .card button.clear');
+  assert((await progTitles()).length === 49, 'sem escolhas: os outros 49 programas na lista');
   await page.fill('input[aria-label="Buscar programa"]', 'perna b');
   const pb = await progTitles();
   assert(pb.some((t) => t.includes('Peito, Perna A, Braço')) && pb.length < 10, `busca de programas por dia ("perna b" → ${pb.length})`);
   await page.fill('input[aria-label="Buscar programa"]', '');
-  await page.click('.list-row.prog:has-text("Calistenia")');
-  await page.waitForSelector('.modal >> text=Puxar A');
+  // Iniciante com 6 dias: explica por que sugere 3
+  await page.click('.ask:has-text("Dias") button.chip:text-is("6")');
+  await page.click('.ask:has-text("Experiência") button.chip:text-is("Iniciante")');
+  assert(await page.locator('text=Para quem está começando, 3 dias').count() === 1, 'iniciante com 6 dias recebe a explicação');
+  await page.click('.list-row.prog >> nth=0');
+  await page.waitForSelector('.modal h2');
   await page.evaluate(() => window.dojoBack());
   await page.click('text=Continuar com Toji');
   await page.waitForSelector('text=Força pesada');
@@ -268,7 +279,7 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
 
   // Trocar programa com treino em andamento é bloqueado
   await page.click('main button:text-is("Trocar")');
-  await page.click('.list-row.prog:has-text("Upper/Lower 4x")');
+  await openProgram('Upper/Lower 4x');
   await page.click('.modal button:text-is("Usar este")');
   await page.click('.modal button:text-is("Usar")');
   await page.waitForSelector('#toast:has-text("Finalize ou descarte")');
@@ -280,13 +291,13 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
 
   // Trocar programa e voltar: edições preservadas
   await page.click('main button:text-is("Trocar")');
-  await page.click('.list-row.prog:has-text("Upper/Lower 4x")');
+  await openProgram('Upper/Lower 4x');
   await page.click('.modal button:text-is("Usar este")');
   await page.click('.modal button:text-is("Usar")');
   await page.waitForSelector('text=Superior A');
   await shot('13-upper-lower');
   await page.click('main button:text-is("Trocar")');
-  await page.click('.list-row.prog:has-text("Toji")');
+  await openProgram('Toji');
   await page.click('.modal button:text-is("Usar este")');
   await page.click('.modal button:text-is("Usar")');
   await page.waitForSelector('text=Força pesada');

@@ -951,7 +951,7 @@
       ],
     },
     {
-      id: 'hibrido5', focus: 'massa', name: 'Upper/Lower + PPL (5 dias)', short: 'Híbrido 5x', level: 'intermediario', daysPerWeek: 5, place: 'academia',
+      id: 'hibrido5', focus: 'forca', name: 'Upper/Lower + PPL (5 dias)', short: 'Híbrido 5x', level: 'intermediario', daysPerWeek: 5, place: 'academia',
       goal: 'força + massa', description: 'Superior e inferior pesados no começo da semana, depois empurrar, puxar e pernas com mais volume. Cada músculo ~2x por semana.',
       days: [
         day('hb', 'u', 'Superior', 'Força', [
@@ -982,7 +982,7 @@
       ],
     },
     {
-      id: 'ul6', focus: 'massa', name: 'Upper/Lower 6x – Avançado', short: 'Upper/Lower 6x', level: 'avancado', daysPerWeek: 6, place: 'academia',
+      id: 'ul6', focus: 'forca', name: 'Upper/Lower 6x – Avançado', short: 'Upper/Lower 6x', level: 'avancado', daysPerWeek: 6, place: 'academia',
       goal: 'força + massa (alta frequência)', description: 'Superior e inferior alternados 3x cada por semana: um dia pesado, um moderado e um de volume para cada metade do corpo.',
       days: [
         day('u6', 'u1', 'Superior 1', 'Pesado', [
@@ -1468,9 +1468,10 @@
     if (days <= 2) return 'minimal2';
     if (goal === 'condicionamento') return 'condicionamento';
     if (goal === 'forca') {
-      if (days <= 3) return 'forca5x5';
-      if (level === 'iniciante') return 'upperlower';
-      return level === 'avancado' ? 'powerlifting' : 'phul';
+      if (days <= 3) return level === 'avancado' ? 'esp_agacho' : 'forca5x5';
+      if (days === 4) return level === 'iniciante' ? 'upperlower' : (level === 'avancado' ? 'powerlifting' : 'phul');
+      if (days === 5) return level === 'avancado' ? 'powerbuilding' : 'hibrido5';
+      return 'ul6';
     }
     // hipertrofia
     if (days <= 3) return level === 'iniciante' ? 'fullbody3' : 'abc';
@@ -1479,9 +1480,51 @@
     return level === 'avancado' ? 'split6' : (level === 'intermediario' ? 'ppl' : 'upperlower');
   }
 
+  const GOAL_FOCUS = { hipertrofia: 'massa', forca: 'forca', condicionamento: 'condicionamento' };
+
+  /** Um programa atende às respostas? (null = qualquer). Em casa, o objetivo só filtra condicionamento. */
+  function matches(p, a) {
+    if (a.days && p.daysPerWeek !== a.days) return false;
+    if (a.level && p.level !== a.level) return false;
+    if (a.place && p.place !== a.place) return false;
+    if (a.goal) {
+      const f = GOAL_FOCUS[a.goal];
+      if (p.place === 'academia' || a.goal === 'condicionamento') { if (p.focus !== f) return false; }
+    }
+    return true;
+  }
+
+  const LEVEL_N = { iniciante: 0, intermediario: 1, avancado: 2 };
+
+  /** Proximidade quando nada atende tudo: local > dias > experiência > objetivo. */
+  function closeness(p, a) {
+    let sc = 0;
+    if (a.place) sc += p.place === a.place ? 20 : (a.place === 'halteres' && p.place === 'casa' ? 8 : 0);
+    if (a.days) sc += 10 - 4 * Math.abs(p.daysPerWeek - a.days);
+    if (a.level) {
+      const d = LEVEL_N[p.level] - LEVEL_N[a.level];
+      sc += d === 0 ? 6 : d === -1 ? 3 : d === 1 ? -2 : -12; // nunca empurra avançado para iniciante
+    }
+    if (a.goal) sc += p.focus === GOAL_FOCUS[a.goal] || (p.place !== 'academia' && a.goal !== 'condicionamento') ? 5 : 0;
+    return sc;
+  }
+
+  /** Recomendação + lista coerentes: a recomendação respeita o que foi escolhido; sem programa exato, mostra o mais próximo. */
+  function findPrograms(a) {
+    const list = PROGRAMS.filter((p) => matches(p, a));
+    const full = a.days && a.level && a.place && a.goal;
+    if (list.length) {
+      const pref = full ? recommend(a) : null;
+      const best = list.find((p) => p.id === pref) || list[0];
+      return { best, approx: false, others: list.filter((p) => p !== best) };
+    }
+    const near = PROGRAMS.slice().sort((x, y) => closeness(y, a) - closeness(x, a)).slice(0, 6);
+    return { best: near[0], approx: true, others: near.slice(1) };
+  }
+
   const FOCUS = { massa: 'Massa muscular', forca: 'Força', casa: 'Casa/halteres', condicionamento: 'Condicionamento' };
 
-  const api = { GROUPS, EQUIP, PROGRAMS, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, recommend };
+  const api = { GROUPS, EQUIP, PROGRAMS, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, recommend, findPrograms, matches };
   Object.assign(D, api);
   if (typeof module !== 'undefined' && module.exports) module.exports = D;
 })(typeof self !== 'undefined' ? self : this);

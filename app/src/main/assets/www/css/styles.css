@@ -185,7 +185,7 @@ button.chip.on { border-color: var(--accent); color: var(--text); background: va
 img.big { width: 100%; max-width: 300px; display: block; margin: 0 auto; border-radius: 14px; background: var(--surface); }
 .media-box { margin: 2px 0 4px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-label.lbl { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.lbl { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
 .text-input, textarea.text-input, .select {
   width: 100%; min-height: 42px; background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 9px; padding: 9px 10px; font-size: 15px;
 }
@@ -294,3 +294,5 @@ details.fold[open] > summary::after { content: "–"; }
 .legend { display: flex; align-items: center; gap: 8px; justify-content: center; }
 .legend-bar { display: inline-block; width: 130px; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #2a2e39, #3b4f86, #7aa2ff); }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.ask { margin-top: 10px; }
+.ask .lbl { margin-bottom: 5px; }

@@ -57,7 +57,7 @@ App Android de treino, offline, para qualquer nível — do primeiro dia na acad
 | Upper/Lower 6x – Avançado | 6 | Avançado | Massa muscular |
 
 Programas intensos trazem técnicas nas últimas séries (drop-set, rest-pause, bi-set, série-topo), cargas por % do 1RM nos de força e séries “até a falha”. Os avançados têm 18+ séries por sessão, RIR 1 nos básicos e falha nos isoladores.
-Um **questionário** (dias por semana, experiência, local e objetivo) recomenda o programa, e filtros por foco, dias e nível ajudam a escolher.
+Um único bloco de escolhas (dias por semana, experiência, local e objetivo) recomenda o programa e filtra a lista ao mesmo tempo; sem programa exato, mostra os mais próximos.
 
 ### Recursos
 - **Biblioteca com 86 exercícios** (incluindo máquinas: supino máquina, hack, Smith, adutora, remada máquina, cavalinho, desenvolvimento máquina…) e **82 animações** com o músculo-alvo destacado com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo muscular (13) e equipamento (13)

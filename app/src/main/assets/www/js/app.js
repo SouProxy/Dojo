@@ -2,10 +2,10 @@
 (function () {
   'use strict';
 
-  const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, recommend } = window.DojoData;
+  const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, findPrograms } = window.DojoData;
   const Lg = window.DojoLogic;
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.6.0';
+  const APP_VERSION = '1.6.1';
 
   // ================================================================ estado
 
@@ -43,7 +43,7 @@
 
   let state = load();
   const ui = { tab: 'home', page: state.onboarded ? null : 'programs', sessionOpen: !!state.active, modals: [], timerMode: 'stopwatch',
-    progressEx: null, runner: null, lib: { q: '', group: null, equip: null, level: null }, pickDay: null, quiz: { days: 3, level: 'iniciante', place: 'academia', goal: 'hipertrofia' } };
+    progressEx: null, runner: null, lib: { q: '', group: null, equip: null, level: null }, pickDay: null, quiz: { days: 3, level: 'iniciante', place: 'academia', goal: 'hipertrofia', q: '' } };
 
   function save() {
     try {
@@ -1249,11 +1249,11 @@
 
   function programMeta(p) { return `${p.daysPerWeek} dias · ${LEVELS[p.level]} · ${FOCUS[p.focus] || p.goal}`; }
 
-  function programCard(p) {
+  function programCard(p, label) {
     const isActive = state.plan.id === p.id;
     return h('div', { class: 'card hero' },
       h('div', { class: 'row between' },
-        h('div', { class: 'grow' }, h('div', { class: 'day-num', text: 'Recomendado para você' }), h('h3', { text: p.name })),
+        h('div', { class: 'grow' }, h('div', { class: 'day-num', text: label || 'Sugestão' }), h('h3', { text: p.name })),
         isActive ? h('span', { class: 'badge ok', text: 'Ativo' }) : null),
       h('p', { class: 'tiny muted mt-s', text: programMeta(p) }),
       h('p', { class: 'small muted mt-s', text: p.description }),
@@ -1294,46 +1294,50 @@
   function viewPrograms() {
     const wrap = h('main', { class: 'screen' }, pageTop(state.onboarded ? 'Programas' : 'Bem-vindo ao Dojo'));
     const q = ui.quiz;
-    const rec = recommend(q);
-    const ask = (label, key, opts) => h('div', { class: 'mt' }, h('label', { class: 'lbl', text: label }),
-      h('div', { class: 'chips' }, opts.map(([v, l]) => h('button', { class: `chip${q[key] === v ? ' on' : ''}`, onclick: () => { q[key] = v; ui.quizOpen = true; render(); } }, l))));
-    wrap.appendChild(h('details', { class: 'card fold', open: !state.onboarded || ui.quizOpen ? true : null },
-      h('summary', null, h('span', null, h('h3', { text: 'Qual programa combina com você?' }),
-        h('div', { class: 'tiny muted', text: '4 perguntas rápidas para uma sugestão' }))),
+    if (q.q === undefined) q.q = '';
+    // Um único bloco de escolhas: serve de sugestão E de filtro. Tocar de novo numa opção = "qualquer".
+    const ask = (label, key, opts) => h('div', { class: 'ask' }, h('span', { class: 'lbl', text: label }),
+      h('div', { class: 'chips scroll-x' }, opts.map(([v, l]) => h('button', {
+        class: `chip${q[key] === v ? ' on' : ''}`, 'aria-pressed': q[key] === v ? 'true' : 'false',
+        onclick: () => { q[key] = q[key] === v ? null : v; render(); },
+      }, l))));
+    const chosen = ['days', 'level', 'place', 'goal'].filter((k) => q[k]).length;
+    wrap.appendChild(h('div', { class: 'card' },
+      h('div', { class: 'row between' }, h('h3', { text: 'Encontre seu programa' }),
+        chosen ? h('button', { class: 'clear', onclick: () => { ui.quiz = { days: null, level: null, place: null, goal: null, q: '' }; render(); } }, 'Limpar') : null),
       ask('Dias por semana', 'days', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']]),
       ask('Experiência', 'level', [['iniciante', 'Iniciante'], ['intermediario', 'Intermediário'], ['avancado', 'Avançado']]),
-      ask('Onde vai treinar?', 'place', [['academia', 'Academia'], ['halteres', 'Casa com halteres'], ['casa', 'Casa sem equipamento']]),
+      ask('Onde', 'place', [['academia', 'Academia'], ['halteres', 'Casa com halteres'], ['casa', 'Casa sem equipamento']]),
       ask('Objetivo', 'goal', [['hipertrofia', 'Ganhar massa'], ['forca', 'Ganhar força'], ['condicionamento', 'Condicionamento']])));
-    wrap.appendChild(h('div', { class: 'mt' }, programCard(programById(rec))));
 
-    wrap.appendChild(h('div', { class: 'section-title', text: `Todos os programas (${PROGRAMS.length})` }));
-    const pf = ui.progFilter || (ui.progFilter = { focus: null, days: null, level: null, q: '' });
-    const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const progSearch = h('input', { class: 'text-input', type: 'search', placeholder: 'Buscar (ex.: peito, perna, 5x5, braço)', value: pf.q || '', 'aria-label': 'Buscar programa',
-      oninput: (e) => { pf.q = e.target.value; paintProgs(); } });
-    wrap.appendChild(h('div', { class: 'search' }, h('span', { class: 'ico', 'aria-hidden': 'true', text: '⌕' }), progSearch));
-    const select = (key, label, opts) => h('select', { class: `select${pf[key] ? ' on' : ''}`, 'aria-label': label,
-      onchange: (e) => { const v = e.target.value; pf[key] = v === '' ? null : (key === 'days' ? Number(v) : v); render(); } },
-      h('option', { value: '' }, label), opts.map(([k, l]) => h('option', { value: String(k), selected: pf[key] === k }, l)));
-    wrap.appendChild(h('div', { class: 'filters three mt-s' },
-      select('focus', 'Foco', Object.entries(FOCUS)),
-      select('days', 'Dias', [2, 3, 4, 5, 6].map((d) => [d, `${d} dias`])),
-      select('level', 'Nível', Object.entries(LEVELS))));
-    const count = h('span', { class: 'small muted' });
-    const clearBtn = h('button', { class: 'clear', onclick: () => { ui.progFilter = { focus: null, days: null, level: null, q: '' }; render(); } });
-    wrap.appendChild(h('div', { class: 'filter-bar' }, count, clearBtn));
+    const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const { best, others, approx } = findPrograms(q);
+    if (approx) {
+      const why = q.level === 'iniciante' && q.days >= 5
+        ? 'Para quem está começando, 3 dias por semana rendem mais: o músculo cresce na recuperação. Use os outros dias para caminhar ou descansar.'
+        : 'Nenhum programa com exatamente essas escolhas. Estes são os mais próximos:';
+      wrap.appendChild(h('p', { class: 'tiny muted mt', text: why }));
+    }
+    wrap.appendChild(h('div', { class: 'mt' }, programCard(best, approx ? 'Mais próximo' : (chosen === 4 ? 'Recomendado para você' : 'Sugestão'))));
+    if (!others.length) {
+      wrap.appendChild(h('p', { class: 'tiny muted mt', text: 'Só este programa combina com tudo o que você marcou. Toque de novo numa opção para desmarcar e ver mais.' }));
+    }
+    wrap.appendChild(h('div', { class: `section-title${others.length ? '' : ' hidden'}`, text: approx ? 'Outras opções próximas' : (chosen ? `Outros que combinam (${others.length})` : `Todos os programas (${PROGRAMS.length})`) }));
+    const progSearch = h('input', { class: 'text-input', type: 'search', placeholder: 'Buscar (ex.: peito, perna b, 5x5, braço)', value: q.q, 'aria-label': 'Buscar programa',
+      oninput: (e) => { q.q = e.target.value; paintProgs(); } });
+    wrap.appendChild(h('div', { class: `search${others.length ? '' : ' hidden'}` }, h('span', { class: 'ico', 'aria-hidden': 'true', text: '⌕' }), progSearch));
+    const count = h('div', { class: `small muted filter-bar${others.length ? '' : ' hidden'}` });
+    wrap.appendChild(count);
     const listBox = h('div');
     wrap.appendChild(listBox);
     function paintProgs() {
-      const q = norm((pf.q || '').trim());
-      const shown = PROGRAMS.filter((p) => (!pf.focus || p.focus === pf.focus) && (!pf.days || p.daysPerWeek === pf.days) && (!pf.level || p.level === pf.level) &&
-        (!q || norm(`${p.name} ${p.description} ${p.days.map((d) => `${d.name} ${d.title}`).join(' ')}`).includes(q)));
-      const active = ['focus', 'days', 'level', 'q'].filter((k) => pf[k]).length;
+      const s = norm((q.q || '').trim());
+      const pool = others;
+      const shown = pool.filter((p) => !s || norm(`${p.name} ${p.description} ${p.days.map((d) => `${d.name} ${d.title}`).join(' ')}`).includes(s));
       count.textContent = `${shown.length} programa${shown.length === 1 ? '' : 's'}`;
-      clearBtn.textContent = `Limpar filtros (${active})`;
-      clearBtn.classList.toggle('hidden', !active);
       listBox.textContent = '';
-      listBox.appendChild(shown.length ? h('div', { class: 'list' }, shown.map(programRow)) : h('div', { class: 'card empty', text: 'Nenhum programa com esses filtros.' }));
+      if (!pool.length) return;
+      listBox.appendChild(shown.length ? h('div', { class: 'list' }, shown.map(programRow)) : h('div', { class: 'card empty', text: 'Nenhum programa encontrado.' }));
     }
     paintProgs();
 

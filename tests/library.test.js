@@ -227,3 +227,22 @@ test('avançados são pesados de verdade: volume alto e falha/RIR nas notas', ()
     assert.match(notes, /falha/);
   }
 });
+
+test('encontrar programa: escolhas coerentes com a recomendação e a lista', () => {
+  for (const days of [2, 3, 4, 5, 6]) for (const level of Object.keys(D.LEVELS)) for (const place of Object.keys(D.PLACES)) {
+    for (const goal of ['hipertrofia', 'forca', 'condicionamento']) {
+      const a = { days, level, place, goal };
+      const r = D.findPrograms(a);
+      assert.ok(r.best, `${days}/${level}/${place}/${goal}`);
+      if (!r.approx) {
+        for (const p of [r.best, ...r.others]) assert.ok(D.matches(p, a), `${p.id} não deveria aparecer`);
+        assert.equal(r.best.daysPerWeek, days, 'recomendação respeita os dias');
+      }
+      if (level === 'iniciante') assert.notEqual(r.best.level, 'avancado', 'iniciante nunca recebe avançado');
+      assert.ok(r.best.place === place || (place === 'halteres' && r.best.place === 'casa'), 'respeita o local');
+    }
+  }
+  const print = D.findPrograms({ days: 6, level: 'avancado', place: 'academia', goal: 'forca' });
+  assert.equal(print.best.daysPerWeek, 6, 'caso do print: 6 dias, avançado, força → programa de 6 dias');
+  assert.equal(D.findPrograms({ days: null, level: null, place: null, goal: null }).others.length, 49, 'sem escolhas: todos');
+});
