@@ -5,7 +5,7 @@
   const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, findPrograms } = window.DojoData;
   const Lg = window.DojoLogic;
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.7.0';
+  const APP_VERSION = '1.8.0';
 
   // ================================================================ estado
 
@@ -46,6 +46,7 @@
     progressEx: null, runner: null, lib: { q: '', group: null, equip: null, level: null }, pickDay: null, quiz: { days: 3, level: 'iniciante', place: 'academia', goal: 'hipertrofia', q: '' } };
 
   function save() {
+    dirty = true;
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(state));
     } catch (e) {
@@ -124,9 +125,29 @@
         else if (typeof msg.content === 'string') importBackupText(msg.content);
       } else if (msg.type === 'export') {
         toast(msg.ok ? 'Backup salvo.' : (msg.error || 'Backup cancelado.'));
+      } else if (msg.type === 'backupStatus') {
+        const was = ui.backup.configured;
+        ui.backup = { configured: !!msg.configured, name: typeof msg.name === 'string' ? msg.name.slice(0, 80) : '', at: Number(msg.lastModified) || ui.backup.at || null, known: true };
+        if (ui.backup.configured && !was && state.history.length) autoBackup(true);
+        if (ui.tab === 'settings' || ui.page === 'programs') render();
+      } else if (msg.type === 'autoBackup') {
+        if (msg.ok) { ui.backup.at = Number(msg.at) || Date.now(); dirty = false; } else if (msg.error) toast(msg.error);
+        if (ui.tab === 'settings') render();
       }
     };
   }
+
+  // ---------------------------------------------------------------- backup automático
+  // Salva numa pasta escolhida pelo usuário (sobrevive a desinstalar/atualizar).
+  // Só grava em momentos-chave (fim de treino, app indo para segundo plano) para não gastar bateria.
+  ui.backup = { configured: false, name: '', at: null, known: false };
+  let dirty = false;
+  function autoBackup(force) {
+    if (!Native.available || !ui.backup.configured) return;
+    if (!force && !dirty) return;
+    Native.post({ type: 'autoBackup', content: JSON.stringify(backupObject()) });
+  }
+  if (Native.available) Native.post({ type: 'backupStatus' });
 
   let wakeOn = null;
   function setKeepAwake(on) {
@@ -284,6 +305,12 @@
     const restDays = 7 - plan.days.length;
     if (restDays > 0) wrap.appendChild(h('p', { class: 'tiny muted mt-s', text: `+ ${restDays} dia${restDays > 1 ? 's' : ''} de descanso. Evite treinar o mesmo músculo pesado em dias seguidos.` }));
 
+    if (Native.available && ui.backup.known && !ui.backup.configured && state.history.length) {
+      wrap.appendChild(h('div', { class: 'list mt' }, h('div', { class: 'list-row', onclick: () => Native.post({ type: 'pickBackupFolder' }) },
+        h('span', { class: 'grow' }, h('div', { class: 'ttl', text: 'Ative o backup automático' }),
+          h('div', { class: 'tiny muted', text: 'Para não perder seu progresso ao atualizar ou trocar de celular' })),
+        h('span', { class: 'chev', text: '›' }))));
+    }
     const recent = state.history.slice().sort((a, b) => b.startedAt - a.startedAt).slice(0, 3);
     wrap.appendChild(h('div', { class: 'section-title', text: 'Recentes' }));
     if (!recent.length) wrap.appendChild(h('div', { class: 'card empty', text: 'Nenhum treino ainda. Bora começar!' }));
@@ -617,6 +644,7 @@
   }
 
   function finishSession() {
+    setTimeout(() => autoBackup(true), 0);
     const a = state.active;
     const session = {
       id: a.id, dayId: a.dayId, startedAt: a.startedAt, finishedAt: Date.now(),
@@ -1339,6 +1367,12 @@
 
   function viewPrograms() {
     const wrap = h('main', { class: 'screen' }, pageTop(state.onboarded ? 'Programas' : 'Bem-vindo ao Dojo'));
+    if (!state.onboarded) {
+      wrap.appendChild(h('div', { class: 'list' }, h('div', { class: 'list-row restore-row', onclick: () => (Native.available ? Native.post({ type: 'pickBackupFolder', restore: true }) : importBackup()) },
+        h('span', { class: 'grow' }, h('div', { class: 'ttl', text: 'Já usava o Dojo? Restaurar backup' }),
+          h('div', { class: 'tiny muted', text: 'Escolha a pasta onde está o dojo-backup.json (ex.: Documentos/Dojo)' })),
+        h('span', { class: 'chev', text: '›' }))));
+    }
     const q = ui.quiz;
     if (q.q === undefined) q.q = '';
     // Um único bloco de escolhas: serve de sugestão E de filtro. Tocar de novo numa opção = "qualquer".
@@ -1581,6 +1615,23 @@
 
   // ================================================================ ajustes
 
+  function backupCard() {
+    const b = ui.backup;
+    if (!Native.available) {
+      return h('div', { class: 'card' }, h('p', { class: 'small muted', text: 'O backup automático em pasta funciona no app Android. Aqui, use Exportar/Importar abaixo.' }));
+    }
+    const when = b.at ? new Date(b.at).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'ainda não feito';
+    return h('div', { class: 'card stack' },
+      b.configured
+        ? h('div', null, h('div', { class: 'ttl', text: `Ativo · pasta “${b.name}”` }), h('div', { class: 'tiny muted', text: `Último backup: ${when}. Salva ao terminar cada treino e ao sair do app.` }))
+        : h('div', null, h('div', { class: 'ttl', text: 'Desativado' }),
+          h('div', { class: 'tiny muted', text: 'Escolha uma pasta do celular (ex.: Documentos/Dojo). O backup fica fora do app, então sobrevive a atualizações e reinstalações.' })),
+      h('div', { class: 'row' },
+        h('button', { class: `btn grow ${b.configured ? 'ghost' : 'primary'}`, onclick: () => Native.post({ type: 'pickBackupFolder' }) }, b.configured ? 'Trocar pasta' : 'Escolher pasta'),
+        b.configured ? h('button', { class: 'btn grow', onclick: () => { autoBackup(true); toast('Salvando backup…'); } }, 'Fazer agora') : null),
+      b.configured ? h('button', { class: 'btn ghost block sm', onclick: () => Native.post({ type: 'restoreFromFolder' }) }, 'Restaurar desta pasta') : null);
+  }
+
   function viewSettings() {
     const st = state.settings;
     const wrap = h('main', { class: 'screen' }, topbar('Ajustes'));
@@ -1609,6 +1660,8 @@
         state.plan = clone(programById(state.plan.id)); save(); render(); toast('Programa restaurado.');
       }) }, 'Restaurar programa original') : null));
 
+    wrap.appendChild(h('div', { class: 'section-title', text: 'Backup automático' }));
+    wrap.appendChild(backupCard());
     wrap.appendChild(h('div', { class: 'section-title', text: 'Seus dados' }));
     wrap.appendChild(h('div', { class: 'card stack' },
       h('p', { class: 'muted small', text: 'Tudo fica salvo só neste aparelho. O app não tem permissão de internet e não envia nada para lugar nenhum. Faça backup antes de trocar de celular ou reinstalar.' }),
@@ -1698,7 +1751,8 @@
           startDate: typeof obj.settings.startDate === 'number' ? obj.settings.startDate : null,
         }),
       };
-      save(); ui.sessionOpen = false; render(); toast('Backup importado!');
+      save(); ui.sessionOpen = false; resetNav('home'); render(); window.scrollTo(0, 0); toast('Backup importado!');
+      autoBackup(true);
     });
   }
 
@@ -1756,6 +1810,7 @@
     if (ms) tickTimer = setTimeout(() => { tick(); schedule(); }, ms);
   }
   document.addEventListener('visibilitychange', () => {
+    if (document.hidden && !state.active) autoBackup(false);
     if (!document.hidden) tick();
     schedule();
     updateWake();

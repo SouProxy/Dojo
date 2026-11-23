@@ -1,5 +1,7 @@
 package io.github.souproxy.dojo;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.graphics.Color;
 import android.net.Uri;
@@ -30,6 +32,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.webkit.JavaScriptReplyProxy;
 import androidx.webkit.WebMessageCompat;
 import androidx.webkit.WebViewAssetLoader;
@@ -84,6 +87,15 @@ public class MainActivity extends ComponentActivity {
             registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"), this::onExportTarget);
     private final ActivityResultLauncher<String[]> openDocument =
             registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::onImportSource);
+    private final ActivityResultLauncher<Uri> openTree =
+            registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), this::onBackupFolder);
+
+    // Backup automático: pasta escolhida pelo usuário (fora do app), sobrevive a desinstalações.
+    private static final String PREFS = "dojo";
+    private static final String KEY_DIR = "backupDir";
+    private static final String BACKUP = "dojo-backup.json";
+    private static final String BACKUP_PREV = "dojo-backup-anterior.json";
+    private boolean restoreAfterPick;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -222,6 +234,21 @@ public class MainActivity extends ComponentActivity {
                 case "import":
                     openDocument.launch(new String[]{"application/json", "text/plain", "application/octet-stream"});
                     break;
+                case "pickBackupFolder":
+                    restoreAfterPick = msg.optBoolean("restore");
+                    openTree.launch(null);
+                    break;
+                case "backupStatus":
+                    sendBackupStatus();
+                    break;
+                case "autoBackup":
+                    String data2 = msg.optString("content", "");
+                    if (data2.isEmpty() || data2.length() > MAX_FILE_BYTES) return;
+                    writeAutoBackup(data2);
+                    break;
+                case "restoreFromFolder":
+                    restoreFromFolder();
+                    break;
                 default:
                     Log.w(TAG, "Mensagem desconhecida ignorada");
             }
@@ -303,6 +330,156 @@ public class MainActivity extends ComponentActivity {
                 main.post(() -> replyImportError("Não foi possível ler o arquivo."));
             }
         });
+    }
+
+    // ------------------------------------------------------------------ backup automático em pasta
+
+    @Nullable
+    private DocumentFile backupDir() {
+        String u = getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_DIR, null);
+        if (u == null) return null;
+        Uri tree = Uri.parse(u);
+        boolean granted = false;
+        for (android.content.UriPermission p : getContentResolver().getPersistedUriPermissions()) {
+            if (p.getUri().equals(tree) && p.isWritePermission()) granted = true;
+        }
+        if (!granted) return null;
+        DocumentFile dir = DocumentFile.fromTreeUri(this, tree);
+        return dir != null && dir.canWrite() ? dir : null;
+    }
+
+    private void onBackupFolder(@Nullable Uri tree) {
+        if (tree == null) {
+            restoreAfterPick = false;
+            sendBackupStatus();
+            return;
+        }
+        try {
+            getContentResolver().takePersistableUriPermission(tree,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_DIR, tree.toString()).apply();
+        } catch (SecurityException e) {
+            Log.w(TAG, "Sem permissão persistente na pasta", e);
+        }
+        boolean restore = restoreAfterPick;
+        restoreAfterPick = false;
+        sendBackupStatus();
+        if (restore) restoreFromFolder();
+    }
+
+    private void sendBackupStatus() {
+        io.execute(() -> {
+            JSONObject r = new JSONObject();
+            try {
+                DocumentFile dir = backupDir();
+                r.put("type", "backupStatus").put("configured", dir != null);
+                if (dir != null) {
+                    r.put("name", dir.getName() == null ? "pasta escolhida" : dir.getName());
+                    DocumentFile f = dir.findFile(BACKUP);
+                    if (f != null) r.put("lastModified", f.lastModified());
+                }
+            } catch (JSONException | SecurityException ignored) {
+                // status vazio
+            }
+            main.post(() -> post(r));
+        });
+    }
+
+    private void writeAutoBackup(String content) {
+        io.execute(() -> {
+            String error = null;
+            try {
+                DocumentFile dir = backupDir();
+                if (dir == null) throw new IOException("pasta indisponível");
+                DocumentFile cur = dir.findFile(BACKUP);
+                if (cur != null && cur.length() > 0 && cur.length() <= MAX_FILE_BYTES) {
+                    // Mantém a versão anterior: se algo der errado, ainda há uma cópia boa.
+                    String old = readAll(cur.getUri());
+                    DocumentFile prev = dir.findFile(BACKUP_PREV);
+                    if (prev == null) prev = dir.createFile("application/json", BACKUP_PREV);
+                    if (prev != null) writeAll(prev.getUri(), old);
+                }
+                if (cur == null) cur = dir.createFile("application/json", BACKUP);
+                if (cur == null) throw new IOException("não foi possível criar o arquivo");
+                writeAll(cur.getUri(), content);
+            } catch (IOException | SecurityException e) {
+                Log.w(TAG, "Falha no backup automático", e);
+                error = "Backup automático falhou: escolha a pasta de novo em Ajustes.";
+            }
+            final String err = error;
+            main.post(() -> {
+                try {
+                    JSONObject r = new JSONObject().put("type", "autoBackup").put("ok", err == null).put("at", System.currentTimeMillis());
+                    if (err != null) r.put("error", err);
+                    post(r);
+                } catch (JSONException ignored) {
+                    // inalcançável
+                }
+            });
+        });
+    }
+
+    private void restoreFromFolder() {
+        io.execute(() -> {
+            try {
+                DocumentFile dir = backupDir();
+                DocumentFile f = dir == null ? null : newestBackup(dir);
+                if (f == null) {
+                    main.post(() -> replyImportError("Nenhum backup do Dojo (dojo-backup*.json) nessa pasta."));
+                    return;
+                }
+                if (f.length() > MAX_FILE_BYTES) {
+                    main.post(() -> replyImportError("Arquivo grande demais (máx. 5 MB)."));
+                    return;
+                }
+                String text = readAll(f.getUri());
+                main.post(() -> {
+                    try {
+                        post(new JSONObject().put("type", "import").put("content", text).put("source", "folder"));
+                    } catch (JSONException ignored) {
+                        replyImportError("Falha ao ler o backup.");
+                    }
+                });
+            } catch (IOException | SecurityException e) {
+                Log.w(TAG, "Falha ao restaurar da pasta", e);
+                main.post(() -> replyImportError("Não foi possível ler o backup da pasta."));
+            }
+        });
+    }
+
+    /** dojo-backup.json; se não houver, o dojo-backup*.json mais recente (ex.: exportado manualmente). */
+    @Nullable
+    private static DocumentFile newestBackup(DocumentFile dir) {
+        DocumentFile exact = dir.findFile(BACKUP);
+        if (exact != null && exact.isFile()) return exact;
+        DocumentFile best = null;
+        for (DocumentFile f : dir.listFiles()) {
+            String n = f.getName();
+            if (n == null || !f.isFile() || !n.startsWith("dojo-backup") || !n.endsWith(".json") || n.equals(BACKUP_PREV)) continue;
+            if (best == null || f.lastModified() > best.lastModified()) best = f;
+        }
+        return best;
+    }
+
+    private String readAll(Uri uri) throws IOException {
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
+            if (in == null) throw new IOException("sem stream");
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            byte[] chunk = new byte[16 * 1024];
+            int n;
+            while ((n = in.read(chunk)) != -1) {
+                if (buf.size() + n > MAX_FILE_BYTES) throw new IOException("arquivo grande demais");
+                buf.write(chunk, 0, n);
+            }
+            return buf.toString(StandardCharsets.UTF_8.name());
+        }
+    }
+
+    private void writeAll(Uri uri, String content) throws IOException {
+        try (OutputStream out = getContentResolver().openOutputStream(uri, "wt")) {
+            if (out == null) throw new IOException("sem stream");
+            out.write(content.getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     private void replyImportError(String error) {

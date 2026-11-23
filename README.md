@@ -83,28 +83,27 @@ Um único bloco de escolhas (dias por semana, experiência, local e objetivo) re
 
 Ao criar uma tag `v*` (ex.: `v1.0.0`), o workflow publica o APK em **Releases**.
 
-### Assinatura de release (recomendado)
+## Nunca perder seus dados
 
-Sem uma chave fixa, cada build de debug é assinado com uma chave diferente e o Android
-recusa atualizar por cima — seria preciso desinstalar (perdendo os dados, então exporte o backup antes).
-Crie a sua chave **uma vez**, localmente, e guarde-a com segurança:
+1. **Backup automático em pasta (no app):** Ajustes → *Backup automático* → *Escolher pasta* (ex.: `Documentos/Dojo`).
+   O app grava `dojo-backup.json` (e `dojo-backup-anterior.json`) ao terminar cada treino e ao sair do app.
+   A pasta fica fora do app, então **sobrevive a desinstalar, atualizar ou trocar de celular**.
+   Ao instalar de novo: na tela de boas-vindas, *Já usava o Dojo? Restaurar backup* → escolha a mesma pasta.
+2. **Assinatura fixa (atualizar por cima, sem desinstalar):** o Android só instala uma versão nova por cima
+   se ela for assinada com **a mesma chave**. Crie a sua chave uma vez e o GitHub assina todas as versões:
 
-```bash
-keytool -genkeypair -v -keystore dojo-release.jks -alias dojo \
-  -keyalg RSA -keysize 4096 -validity 10000
-base64 -w0 dojo-release.jks > dojo-release.jks.b64
-```
+   ```bash
+   # Linux/macOS/WSL (precisa de um JDK)
+   ./tools/signing/criar-chave.sh
+   # Windows (PowerShell)
+   ./tools/signing/criar-chave.ps1
+   ```
 
-Em *Settings → Secrets and variables → Actions*, crie os segredos:
-
-| Segredo | Valor |
-| --- | --- |
-| `DOJO_KEYSTORE_BASE64` | conteúdo de `dojo-release.jks.b64` |
-| `DOJO_KEYSTORE_PASSWORD` | senha do keystore |
-| `DOJO_KEY_ALIAS` | `dojo` |
-| `DOJO_KEY_PASSWORD` | senha da chave |
-
-Apague o `.b64` depois e **nunca** versione o `.jks` (o `.gitignore` já bloqueia).
+   Cole os 4 valores mostrados em *GitHub → Settings → Secrets and variables → Actions*
+   (`DOJO_KEYSTORE_BASE64`, `DOJO_KEYSTORE_PASSWORD`, `DOJO_KEY_ALIAS`, `DOJO_KEY_PASSWORD`).
+   A partir daí, cada merge na `main` publica em **Releases** um `dojo.apk` assinado com a sua chave e com
+   `versionCode` sempre maior — instala por cima mantendo treinos e progresso.
+   Guarde o `.jks` e a senha num gerenciador de senhas; nunca versione esses arquivos (o `.gitignore` já bloqueia).
 
 ## Bateria
 
