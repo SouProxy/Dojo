@@ -9,7 +9,9 @@
   /** Tipo efetivo de um item do plano: faixa 0–0 em exercício de reps = "até a falha" (reps máximas). */
   function itemType(item, ex) {
     const t = typeOf(ex);
-    return t === 'reps' && item && item.min === 0 && item.max === 0 ? 'max' : t;
+    if (t === 'reps' && item && item.min === 0 && item.max === 0) return 'max';
+    if (t === 'max' && item && item.max > 0) return 'reps'; // ex.: barra fixa com carga 4×4–6
+    return t;
   }
 
   function pad2(n) { return String(n).padStart(2, '0'); }
@@ -350,6 +352,80 @@
     return { groups, total, days: [...days].sort() };
   }
 
+
+  // ------------------------------------------------------------ periodização
+
+  /** Modelos de periodização conhecidos (o plano guarda só a chave + data de início). */
+  const PERIODS = {
+    fh26: {
+      weeks: 26, deloadEvery: 4,
+      blocks: [
+        { from: 1, to: 8, name: 'Base', main: { sets: 4, min: 6, max: 8 }, pct: [70, 77], rir: [3, 2, 1], acc: 0 },
+        { from: 9, to: 16, name: 'Força', main: { sets: 5, min: 4, max: 5 }, pct: [80, 85], rir: [2, 2, 1], acc: 0 },
+        { from: 17, to: 24, name: 'Pico', main: { sets: 5, min: 2, max: 3 }, pct: [87, 92], rir: [2, 1, 1], acc: -1 },
+        { from: 25, to: 25, name: 'Polimento', main: { sets: 3, min: 2, max: 3 }, pct: [87, 92], rir: [2], taper: true },
+        { from: 26, to: 26, name: 'Teste de 1RM', main: { sets: 1, min: 1, max: 1 }, pct: [100, 100], rir: [0], test: true },
+      ],
+    },
+  };
+
+  function planWeek(plan, nowTs) {
+    const per = plan && PERIODS[plan.periodization];
+    if (!per) return null;
+    const start = isFinite(plan.startedAt) ? plan.startedAt : nowTs;
+    const w = Math.floor((startOfDay(nowTs) - startOfDay(start)) / (7 * DAY_MS)) + 1;
+    return { week: Math.min(per.weeks, Math.max(1, w)), done: w > per.weeks };
+  }
+
+  /** Fase de uma semana: bloco, deload, RIR e % do 1RM para os principais. */
+  function phaseInfo(key, week) {
+    const per = PERIODS[key];
+    if (!per) return null;
+    const wk = Math.min(per.weeks, Math.max(1, week));
+    const block = per.blocks.find((b) => wk >= b.from && wk <= b.to);
+    const deload = !block.taper && !block.test && wk % per.deloadEvery === 0;
+    const pos = (wk - 1) % per.deloadEvery;
+    const rir = block.rir[Math.min(block.rir.length - 1, pos)];
+    const label = deload ? `Semana ${wk}/${per.weeks} · ${block.name} · Deload` : `Semana ${wk}/${per.weeks} · ${block.name} · RIR ${rir}`;
+    return { week: wk, total: per.weeks, block, deload, rir, pct: block.pct, label };
+  }
+
+  const half = (n) => Math.max(1, Math.ceil(n / 2));
+
+  /** Aplica a fase aos itens de um dia (cópia): principais seguem o bloco; deload/polimento cortam séries. */
+  function applyPhase(items, info) {
+    if (!info) return items;
+    const b = info.block;
+    return items.map((it0) => {
+      const it = Object.assign({}, it0);
+      if (it.main) {
+        it.sets = Math.max(1, b.main.sets + (it.mainDelta || 0));
+        it.min = b.main.min;
+        it.max = b.main.max;
+        if (b.test) it.note = 'Teste de 1RM: aqueça (40%×8, 60%×5, 75%×3, 85%×1) e suba até a máxima com boa técnica';
+        else it.note = `${b.name}: ~${b.pct[0]}–${b.pct[1]}% do 1RM · RIR ${info.rir} (nunca até a falha)`;
+      } else if (b.acc) {
+        it.sets = Math.max(1, it.sets + b.acc);
+      }
+      if (info.deload) {
+        it.sets = half(it.sets);
+        it.note = `Deload: mesmas cargas −10%, metade das séries${it.main ? ` · ${b.main.min}–${b.main.max} reps` : ''}`;
+      } else if (b.taper || (b.test && !it.main)) {
+        if (!it.main) it.sets = half(it.sets);
+        if (b.taper) it.note = `${it.main ? `Polimento: ~${b.pct[0]}–${b.pct[1]}% · ` : ''}volume −50%, intensidade mantida`;
+      }
+      return it;
+    });
+  }
+
+  /** Faixa de carga em kg para um principal a partir do 1RM estimado. */
+  function loadRange(e1, pct, deload, step) {
+    if (!(e1 > 0)) return null;
+    const k = deload ? 0.9 : 1;
+    const r = (x) => Math.round((x * k) / (step || 2.5)) * (step || 2.5);
+    return [r(e1 * pct[0] / 100), r(e1 * pct[1] / 100)];
+  }
+
   // ------------------------------------------------------------ backup
 
   const MAX_SESSIONS = 5000;
@@ -376,6 +452,8 @@
 
   function validPlan(p) {
     return p && typeof p === 'object' && (p.id === undefined || isStr(p.id, 40)) && (p.name === undefined || isStr(p.name, 80)) &&
+      (p.periodization === undefined || Object.prototype.hasOwnProperty.call(PERIODS, p.periodization)) &&
+      (p.startedAt === undefined || p.startedAt === null || isNum(p.startedAt)) &&
       Array.isArray(p.days) && p.days.length >= 1 && p.days.length <= 7 &&
       p.days.every((d) => d && isStr(d.id, 32) && isStr(d.name, 60) && isStr(d.title, 80) &&
         (d.mode === 'normal' || d.mode === 'circuit') && (d.rounds === undefined || (isNum(d.rounds) && d.rounds >= 1 && d.rounds <= 8)) &&
@@ -447,6 +525,7 @@
   const api = {
     typeOf, itemType, fmtClock, fmtRest, fmtKg, fmtNum, prescription, roundUp, doneSets, lastEntry, suggest, e1rm,
     sessionStats, metric, series, prs, weekNumber, nextDayIndex, daysUntil, validateBackup, upgradeBackup, validPlan, weeklyVolume, newItem, DAY_MS,
+    PERIODS, planWeek, phaseInfo, applyPhase, loadRange,
     metricOptions, metricValue, exerciseSessions, metricSeries, personalRecords, weekBounds, muscleSets,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

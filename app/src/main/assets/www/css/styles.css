@@ -296,3 +296,5 @@ details.fold[open] > summary::after { content: "–"; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
 .ask { margin-top: 10px; }
 .ask .lbl { margin-bottom: 5px; }
+.tbl tr.cur td { color: var(--accent); font-weight: 600; }
+.phase-row .ttl { color: var(--accent); }

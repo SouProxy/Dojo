@@ -2,7 +2,7 @@
 
 App Android de treino, offline, para qualquer nível — do primeiro dia na academia ao avançado, em casa ou com halteres.
 
-### Programas prontos (50)
+### Programas prontos (52)
 | Programa | Dias | Nível | Foco |
 | --- | --- | --- | --- |
 | Minimalista 2x (40 min) | 2 | Iniciante | Massa muscular |
@@ -40,6 +40,7 @@ App Android de treino, offline, para qualquer nível — do primeiro dia na acad
 | Costas e ombros “V” (5 dias) | 5 | Intermediário | Massa muscular |
 | Especialização em braços (5 dias) | 5 | Intermediário | Massa muscular |
 | Especialização em ombros (5 dias) | 5 | Intermediário | Massa muscular |
+| Força + Hipertrofia periodizado 26 semanas (5 dias) | 5 | Avançado | Força |
 | Full Body 5x – Avançado (alta frequência) | 5 | Avançado | Massa muscular |
 | Halteres e banco – divisão 5 dias | 5 | Intermediário | Casa/halteres |
 | Hipertrofia academia completa (5 dias) | 5 | Intermediário | Massa muscular |
@@ -49,17 +50,19 @@ App Android de treino, offline, para qualquer nível — do primeiro dia na acad
 | Powerbuilding 5 dias | 5 | Avançado | Força |
 | Recomposição corporal (5 dias) | 5 | Intermediário | Condicionamento |
 | Toji Fushiguro – Anime Physique Files #005 | 5 | Intermediário | Força |
-| Upper/Lower + PPL (5 dias) | 5 | Intermediário | Massa muscular |
+| Upper/Lower + PPL (5 dias) | 5 | Intermediário | Força |
 | 6 dias: Peito, Perna A, Braço, Costas, Perna B, Ombros | 6 | Avançado | Massa muscular |
 | ABC 2x por semana (6 dias) | 6 | Avançado | Massa muscular |
 | Arnold split 6x – Avançado | 6 | Avançado | Massa muscular |
+| Força + Hipertrofia periodizado 26 semanas (6 dias) | 6 | Avançado | Força |
 | Push/Pull/Legs – Avançado (6 dias) | 6 | Avançado | Massa muscular |
-| Upper/Lower 6x – Avançado | 6 | Avançado | Massa muscular |
+| Upper/Lower 6x – Avançado | 6 | Avançado | Força |
 
 Programas intensos trazem técnicas nas últimas séries (drop-set, rest-pause, bi-set, série-topo), cargas por % do 1RM nos de força e séries “até a falha”. Os avançados têm 18+ séries por sessão, RIR 1 nos básicos e falha nos isoladores.
 Um único bloco de escolhas (dias por semana, experiência, local e objetivo) recomenda o programa e filtra a lista ao mesmo tempo; sem programa exato, mostra os mais próximos.
 
 ### Recursos
+- **Periodização de 26 semanas** (programas “Força + Hipertrofia periodizado”): Base → Força → Pico → polimento → teste de 1RM, deload a cada 4ª semana; o app ajusta séries, reps e RIR dos principais pela semana e mostra a carga em kg a partir do seu 1RM estimado
 - **Biblioteca com 86 exercícios** (incluindo máquinas: supino máquina, hack, Smith, adutora, remada máquina, cavalinho, desenvolvimento máquina…) e **82 animações** com o músculo-alvo destacado com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo muscular (13) e equipamento (13)
 - **Monte seu treino**: edite qualquer programa ou crie do zero — adicione, remova e reordene exercícios, dias e formato (séries ou circuito)
 - **Volume semanal por músculo**: o app soma as séries do seu plano e compara com a faixa de 10–20 séries/semana

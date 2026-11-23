@@ -69,7 +69,7 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   assert(meta6.length >= 2 && meta6.every((t) => t.startsWith('6 dias') && t.includes('Avançado')), `lista coerente com as escolhas (${meta6.join(' | ')})`);
   // Tocar de novo = qualquer; "Limpar" mostra todos
   await page.click('main .card button.clear');
-  assert((await progTitles()).length === 49, 'sem escolhas: os outros 49 programas na lista');
+  assert((await progTitles()).length === 51, 'sem escolhas: os outros 51 programas na lista');
   await page.fill('input[aria-label="Buscar programa"]', 'perna b');
   const pb = await progTitles();
   assert(pb.some((t) => t.includes('Peito, Perna A, Braço')) && pb.length < 10, `busca de programas por dia ("perna b" → ${pb.length})`);
@@ -303,6 +303,31 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   await page.waitForSelector('text=Força pesada');
   const back = await page.evaluate(() => JSON.parse(localStorage.getItem('dojo.v1')).plan.days[0].items.map((i) => i.ex));
   assert(back.includes('panturrilha_sentado'), 'edições do programa preservadas ao trocar e voltar');
+
+  // Periodizado 26 semanas: banner da fase, séries ajustadas e mudança de bloco
+  await page.click('main button:text-is("Trocar")');
+  await openProgram('Força + Hipertrofia periodizado 26 semanas (6 dias)');
+  await page.click('.modal button:text-is("Usar este")');
+  await page.click('.modal button:text-is("Usar")');
+  await page.waitForSelector('text=Semana 1/26 · Base · RIR 3');
+  assert(true, 'banner da periodização na tela inicial');
+  await page.click('text=▶ Começar treino');
+  await page.waitForSelector('#session');
+  const presc1 = await page.locator('#session .card').first().locator('.muted.small').first().textContent();
+  assert(presc1.startsWith('4×6–8'), `semana 1 (Base): supino ${presc1}`);
+  assert((await page.locator('#session .card').first().textContent()).includes('Base · RIR 3'), 'linha da fase no principal');
+  await page.click('#session >> text=Descartar');
+  await page.click('.modal button:text-is("Descartar")');
+  await page.click('.phase-row');
+  for (let k = 0; k < 8; k++) await page.click('.modal button:has-text("Próxima semana")');
+  await page.waitForSelector('.modal >> text=Semana 9/26 · Força');
+  await shot('14-periodizacao');
+  await page.evaluate(() => window.dojoBack());
+  await page.click('text=▶ Começar treino');
+  const presc9 = await page.locator('#session .card').first().locator('.muted.small').first().textContent();
+  assert(presc9.startsWith('5×4–5'), `semana 9 (Força): supino ${presc9}`);
+  await page.click('#session >> text=Descartar');
+  await page.click('.modal button:text-is("Descartar")');
 
   // Treino próprio do zero
   await page.click('main button:text-is("Trocar")');

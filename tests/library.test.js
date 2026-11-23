@@ -186,10 +186,10 @@ test('toda animação tem miniatura estática (listas não animam = menos bateri
   }
 });
 
-test('50 programas, nomes e ids únicos, todos os dias com exercícios', () => {
-  assert.equal(D.PROGRAMS.length, 50);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 50);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 50);
+test('52 programas, nomes e ids únicos, todos os dias com exercícios', () => {
+  assert.equal(D.PROGRAMS.length, 52);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 52);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 52);
   for (const p of D.PROGRAMS) {
     for (const d of p.days) {
       assert.ok(d.items.length >= 3, `${p.id}/${d.id}`);
@@ -244,5 +244,45 @@ test('encontrar programa: escolhas coerentes com a recomendação e a lista', ()
   }
   const print = D.findPrograms({ days: 6, level: 'avancado', place: 'academia', goal: 'forca' });
   assert.equal(print.best.daysPerWeek, 6, 'caso do print: 6 dias, avançado, força → programa de 6 dias');
-  assert.equal(D.findPrograms({ days: null, level: null, place: null, goal: null }).others.length, 49, 'sem escolhas: todos');
+  assert.equal(D.findPrograms({ days: null, level: null, place: null, goal: null }).others.length, D.PROGRAMS.length - 1, 'sem escolhas: todos');
+});
+
+test('periodizado 26 semanas: plano exato e fases', () => {
+  const p6 = D.PROGRAMS.find((x) => x.id === 'fh6');
+  const p5 = D.PROGRAMS.find((x) => x.id === 'fh5');
+  assert.equal(p6.days.length, 6);
+  assert.equal(p5.days.length, 5);
+  const mains = p6.days.flatMap((d) => d.items.filter((i) => i.main).map((i) => i.ex));
+  assert.deepEqual(mains, ['supino_reto', 'barra_carga', 'remada_curvada', 'agachamento', 'desenvolvimento', 'terra']);
+  assert.equal(L.prescription(p6.days[1].items[0], D.EXERCISES.barra_carga), '4×4–6', 'barra com carga em faixa de reps');
+  // 5 dias: dia 5 removido e exercícios remanejados
+  assert.ok(p5.days[0].items.some((i) => i.ex === 'triceps_corda'));
+  assert.ok(p5.days[1].items.some((i) => i.ex === 'rosca_inclinada'));
+  assert.ok(p5.days[3].items.some((i) => i.ex === 'puxada_alta'));
+  // volume semanal dentro de ~12–20 nos grupos treinados 2x
+  const v = L.weeklyVolume(p6, D.EXERCISES);
+  for (const g of ['peito', 'quadriceps', 'posterior']) assert.ok(v[g] >= 12, `${g}: ${v[g]}`);
+  // fases
+  const ph = (w) => L.phaseInfo('fh26', w);
+  assert.equal(ph(1).block.name, 'Base'); assert.equal(ph(1).rir, 3); assert.equal(ph(3).rir, 1);
+  assert.ok(ph(4).deload && ph(8).deload && ph(24).deload && !ph(25).deload && !ph(26).deload);
+  assert.equal(ph(9).block.name, 'Força'); assert.equal(ph(17).block.name, 'Pico');
+  assert.ok(ph(25).block.taper); assert.ok(ph(26).block.test);
+  const day1 = p6.days[0].items;
+  const at = (w) => L.applyPhase(day1, ph(w));
+  assert.deepEqual([at(1)[0].sets, at(1)[0].min, at(1)[0].max], [4, 6, 8]);
+  assert.deepEqual([at(9)[0].sets, at(9)[0].min, at(9)[0].max], [5, 4, 5]);
+  assert.deepEqual([at(17)[0].sets, at(17)[0].min, at(17)[0].max], [5, 2, 3]);
+  assert.equal(at(17)[1].sets, 2, 'pico: acessório com 1 série a menos');
+  assert.equal(at(4)[0].sets, 2, 'deload: metade das séries');
+  assert.equal(at(4)[1].sets, 2);
+  assert.deepEqual([at(26)[0].sets, at(26)[0].max], [1, 1], 'teste de 1RM');
+  const terra = L.applyPhase(p6.days[5].items, ph(9))[0];
+  assert.equal(terra.sets, 4, 'terra com uma série a menos que os outros principais');
+  assert.deepEqual(L.loadRange(100, [80, 85], false, 2.5), [80, 85]);
+  // semana pela data de início
+  const start = new Date(2026, 0, 5, 9).getTime();
+  assert.equal(L.planWeek({ periodization: 'fh26', startedAt: start }, start + 8 * 7 * L.DAY_MS).week, 9);
+  assert.equal(L.planWeek({ periodization: 'fh26', startedAt: start }, start + 40 * 7 * L.DAY_MS).done, true);
+  assert.equal(L.validPlan({ ...p6, periodization: 'inventado' }), false, 'backup com periodização desconhecida é rejeitado');
 });

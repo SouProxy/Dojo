@@ -5,7 +5,7 @@
   const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, findPrograms } = window.DojoData;
   const Lg = window.DojoLogic;
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.6.1';
+  const APP_VERSION = '1.7.0';
 
   // ================================================================ estado
 
@@ -240,7 +240,7 @@
   function topbar(sub) {
     return h('div', { class: 'topbar' },
       h('div', { class: 'brand' }, h('h1', null, 'DOJO', h('span', { text: '.' })), sub ? h('span', { class: 'muted small sub', text: sub }) : null),
-      h('span', { class: 'badge', text: `Semana ${Lg.weekNumber(state.settings.startDate, Date.now())}` }));
+      state.plan.periodization ? null : h('span', { class: 'badge', text: `Semana ${Lg.weekNumber(state.settings.startDate, Date.now())}` }));
   }
 
   // ================================================================ início
@@ -259,6 +259,13 @@
       h('div', { class: 'grow' }, h('div', { class: 'tiny muted', text: 'Programa' }), h('div', { class: 'ttl', text: plan.name || 'Meu treino' })),
       h('button', { class: 'btn sm ghost', onclick: () => openPage('programs') }, 'Trocar'),
       h('button', { class: 'icon-btn sm', 'aria-label': 'Editar', title: 'Editar treino', onclick: () => openPage('editor') }, '✎')));
+    const ph = currentPhase();
+    if (ph) {
+      wrap.appendChild(h('div', { class: 'list mt-s' }, h('div', { class: 'list-row phase-row', onclick: openPhaseModal },
+        h('span', { class: 'grow' }, h('div', { class: 'ttl', text: ph.done ? 'Ciclo de 26 semanas concluído' : ph.label }),
+          h('div', { class: 'tiny muted', text: ph.deload ? 'Semana leve: mesmas cargas −10%, metade das séries' : `Principais a ~${ph.pct[0]}–${ph.pct[1]}% do 1RM` })),
+        h('span', { class: 'chev', text: '›' }))));
+    }
 
     if (state.active) {
       wrap.appendChild(h('div', { class: 'card hero tap', onclick: () => { ui.sessionOpen = true; render(); } },
@@ -362,12 +369,20 @@
     startSession(day);
   }
 
+  /** Fase da periodização do plano ativo nesta semana (ou null). */
+  function currentPhase() {
+    const w = Lg.planWeek(state.plan, Date.now());
+    return w ? Object.assign(Lg.phaseInfo(state.plan.periodization, w.week), { done: w.done }) : null;
+  }
+
   function startSession(day) {
-    const items = clone(day.items);
+    const phase = state.plan.days.includes(day) ? currentPhase() : null;
+    const items = phase ? Lg.applyPhase(clone(day.items), phase) : clone(day.items);
     const rounds = day.mode === 'circuit' ? (day.rounds || 4) : null;
     state.active = {
       id: uid(), dayId: day.id, dayName: day.name, title: day.title, mode: day.mode, rounds, roundRest: day.roundRest || 120,
       items, startedAt: Date.now(), rest: null,
+      phase: phase ? { label: phase.label, pct: phase.pct, deload: phase.deload } : null,
       entries: items.map((it) => ({ uid: it.uid, ex: it.ex, sets: Array.from({ length: rounds || it.sets }, () => emptySet()) })),
     };
     if (!state.settings.startDate) state.settings.startDate = Date.now();
@@ -399,6 +414,16 @@
     return ov;
   }
 
+  /** Carga do bloco para um principal, calculada pelo 1RM estimado do histórico. */
+  function mainLoadLine(it, ex, ph) {
+    if (ex.load === 'bw') return h('div', { class: 'suggest up', text: `${ph.label} · carga extra para ~${ph.pct[0]}–${ph.pct[1]}% do seu máximo` });
+    const rec = Lg.personalRecords(state.history, it.ex, ex).find((r) => r.key === 'e1rm');
+    const range = rec ? Lg.loadRange(rec.value, ph.pct, ph.deload, state.settings.step >= 1 ? state.settings.step : 2.5) : null;
+    return h('div', { class: 'suggest up', text: range
+      ? `${ph.label} · carga: ${Lg.fmtKg(range[0])}–${Lg.fmtKg(range[1])} (1RM estimado ${Lg.fmtKg(rec.value)})`
+      : `${ph.label} · ~${ph.pct[0]}–${ph.pct[1]}% do 1RM. Registre um treino para o app calcular a carga em kg.` });
+  }
+
   function exerciseCard(a, it, i) {
     const ex = EXERCISES[it.ex];
     const last = Lg.lastEntry(state.history, it.uid, it.ex);
@@ -413,6 +438,7 @@
           h('div', { class: 'muted small', text: `${Lg.prescription(it, ex)} · descanso ${Lg.fmtRest(it.rest)}` }),
           it.note ? h('div', { class: 'tiny', text: it.note }) : null),
         h('button', { class: 'icon-btn', 'aria-label': `Como fazer ${ex.name}`, onclick: () => openExerciseModal(it.ex) }, 'ⓘ')),
+      it.main && a.phase ? mainLoadLine(it, ex, a.phase) : null,
       h('div', { class: `suggest ${sug.kind}`, text: sug.text }));
     const sets = h('div', { class: 'sets' });
     entry.sets.forEach((s, si) => sets.appendChild(setRow(a, it, ex, i, si, last, sug)));
@@ -633,6 +659,25 @@
     const [mm] = ui.modals.splice(i, 1);
     mm.el.remove();
     if (mm.opts.onClose) mm.opts.onClose();
+  }
+
+  function openPhaseModal() {
+    const per = Lg.PERIODS[state.plan.periodization];
+    const ph = currentPhase();
+    openModal((box, close) => {
+      box.append(h('h2', { text: 'Periodização' }), h('p', { class: 'small muted', text: `${ph.label}. Toda 4ª semana é deload.` }));
+      box.append(h('table', { class: 'tbl mt' }, h('tbody', null, per.blocks.map((b) => h('tr', { class: ph.block === b ? 'cur' : null },
+        h('td', { text: b.from === b.to ? `Sem. ${b.from}` : `Sem. ${b.from}–${b.to}` }),
+        h('td', { text: b.name }),
+        h('td', { class: 'muted', text: b.test ? 'teste de 1RM' : `${b.main.sets}×${b.main.min}–${b.main.max} · ${b.pct[0]}–${b.pct[1]}%` }))))));
+      const shift = (d) => { state.plan.startedAt = (state.plan.startedAt || Date.now()) - d * 7 * Lg.DAY_MS; save(); close(); render(); openPhaseModal(); };
+      box.append(h('p', { class: 'tiny muted mt', text: 'Começou o plano antes ou pulou semanas? Ajuste a semana atual:' }),
+        h('div', { class: 'row mt-s' },
+          h('button', { class: 'btn ghost grow', disabled: ph.week <= 1, onclick: () => shift(-1) }, '← Semana anterior'),
+          h('button', { class: 'btn ghost grow', disabled: ph.week >= per.weeks, onclick: () => shift(1) }, 'Próxima semana →')),
+        h('button', { class: 'btn ghost block mt-s', onclick: () => { close(); confirmModal('Recomeçar o ciclo?', 'Volta para a semana 1 (Base). O histórico é mantido.', 'Recomeçar', () => { state.plan.startedAt = Date.now(); save(); render(); }); } }, 'Recomeçar na semana 1'),
+        h('button', { class: 'btn block mt-s', onclick: close }, 'Fechar'));
+    });
   }
 
   function confirmModal(title, text, okLabel, onOk) {
@@ -1217,6 +1262,7 @@
     const saved = state.plans[id];
     const base = programById(id);
     state.plan = saved ? saved : clone(base);
+    if (state.plan.periodization && !isFinite(state.plan.startedAt)) state.plan.startedAt = Date.now();
     state.onboarded = true;
     save();
     resetNav('home');

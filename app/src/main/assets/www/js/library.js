@@ -847,6 +847,58 @@
       ],
     },
     TOJI,
+    {
+      id: 'fh6', focus: 'forca', exact: true, periodization: 'fh26', name: 'Força + Hipertrofia periodizado 26 semanas (6 dias)', short: 'Periodizado 6x', level: 'avancado', daysPerWeek: 6,
+      place: 'academia', goal: 'força + hipertrofia (periodizado)',
+      description: 'Cada músculo 2x por semana (12–20 séries semanais), principal pesado no início de cada dia e acessórios até 0–1 RIR. Periodização de 26 semanas: Base (1–8, ~70–77%), Força (9–16, ~80–85%), Pico (17–24, ~87–92%), polimento (25) e teste de 1RM (26), com deload a cada 4ª semana. O app ajusta séries, reps e RIR dos principais sozinho. Descanso: 3–5 min nos principais, 1,5–2,5 min nos acessórios. Proteína ~1,8–2,7 g/kg; para definir, déficit moderado.',
+      days: [
+        day('fh6', 'd1', 'Dia 1', 'Peito + Tríceps (força)', [
+          ['supino_reto', 4, 4, 6, 240, 'Principal'], ['supino_inclinado', 3, 8, 10, 120], ['crossover', 3, 12, 15, 90, 'De baixo para cima'],
+          ['paralelas', 3, 6, 8, 120, 'Com carga'], ['triceps_testa', 3, 8, 10, 90, 'Barra EZ'], ['triceps_frances', 2, 12, 15, 90, 'Extensão overhead no cabo (ou halter)']]),
+        day('fh6', 'd2', 'Dia 2', 'Costas + Bíceps (força)', [
+          ['barra_carga', 4, 4, 6, 240, 'Principal'], ['remada_curvada', 4, 5, 6, 240, 'Principal · Pendlay: barra volta ao chão a cada rep'],
+          ['serrote', 3, 8, 10, 120], ['pullover', 3, 12, 15, 90, 'No cabo, se tiver'], ['rosca_direta', 3, 6, 8, 90], ['rosca_martelo', 3, 10, 12, 90],
+          ['face_pull', 2, 15, 20, 90]]),
+        day('fh6', 'd3', 'Dia 3', 'Pernas – quadríceps (força)', [
+          ['agachamento', 4, 4, 6, 240, 'Principal'], ['stiff', 3, 6, 8, 150], ['bulgaro', 3, 8, 10, 120],
+          ['mesa_flexora', 3, 10, 12, 90], ['panturrilha_pe', 4, 8, 10, 90], ['roda_abdominal', 3, 8, 12, 90]]),
+        day('fh6', 'd4', 'Dia 4', 'Ombros + Peito (volume)', [
+          ['desenvolvimento', 4, 5, 6, 240, 'Principal · desenvolvimento militar em pé'], ['supino_inclinado_barra', 3, 8, 12, 150, 'Barra ou máquina'],
+          ['elevacao_lateral', 4, 12, 20, 90, 'Última série em myo-reps'], ['elevacao_lateral_cabo', 2, 15, 15, 90, 'Unilateral'],
+          ['voador', 3, 12, 15, 90], ['crucifixo_invertido', 3, 15, 20, 90]]),
+        day('fh6', 'd5', 'Dia 5', 'Costas + Braços (volume)', [
+          ['puxada_alta', 3, 8, 12, 120, 'Pegada neutra'], ['remada_maquina', 3, 8, 12, 120, 'Apoio no peito (T-bar ou máquina)'],
+          ['pulldown_reto', 2, 12, 15, 90], ['rosca_inclinada', 3, 10, 12, 90], ['rosca_cabo', 2, 12, 15, 90, 'Bayesian: de costas para a polia'],
+          ['triceps_corda', 3, 10, 15, 90], ['triceps_frances', 2, 12, 12, 90, 'Extensão overhead com halter']]),
+        day('fh6', 'd6', 'Dia 6', 'Pernas – posterior (força)', [
+          ['terra', 3, 3, 5, 300, 'Principal'], ['hack_squat', 3, 8, 12, 150, 'Ou leg press'], ['cadeira_extensora', 3, 12, 15, 90],
+          ['cadeira_flexora', 3, 10, 12, 90], ['elevacao_pelvica', 3, 8, 10, 120], ['panturrilha_sentado', 4, 12, 15, 90], ['elevacao_pernas', 3, 10, 15, 90]]),
+      ],
+    },
+    {
+      id: 'fh5', focus: 'forca', exact: true, periodization: 'fh26', name: 'Força + Hipertrofia periodizado 26 semanas (5 dias)', short: 'Periodizado 5x', level: 'avancado', daysPerWeek: 5,
+      place: 'academia', goal: 'força + hipertrofia (periodizado)',
+      description: 'Versão de 5 dias (sem o Dia 5 de volume: rosca inclinada e tríceps pulley vão para os Dias 2 e 1, puxada frente para o Dia 4). Cada músculo 2x por semana (12–20 séries semanais), principal pesado no início de cada dia e acessórios até 0–1 RIR. Periodização de 26 semanas: Base (1–8, ~70–77%), Força (9–16, ~80–85%), Pico (17–24, ~87–92%), polimento (25) e teste de 1RM (26), com deload a cada 4ª semana. O app ajusta séries, reps e RIR dos principais sozinho. Descanso: 3–5 min nos principais, 1,5–2,5 min nos acessórios. Proteína ~1,8–2,7 g/kg; para definir, déficit moderado.',
+      days: [
+        day('fh5', 'd1', 'Dia 1', 'Peito + Tríceps (força)', [
+          ['supino_reto', 4, 4, 6, 240, 'Principal'], ['supino_inclinado', 3, 8, 10, 120], ['crossover', 3, 12, 15, 90, 'De baixo para cima'],
+          ['paralelas', 3, 6, 8, 120, 'Com carga'], ['triceps_testa', 3, 8, 10, 90, 'Barra EZ'], ['triceps_frances', 2, 12, 15, 90, 'Extensão overhead no cabo (ou halter)'], ['triceps_corda', 3, 10, 15, 90, 'Tríceps pulley com corda']]),
+        day('fh5', 'd2', 'Dia 2', 'Costas + Bíceps (força)', [
+          ['barra_carga', 4, 4, 6, 240, 'Principal'], ['remada_curvada', 4, 5, 6, 240, 'Principal · Pendlay: barra volta ao chão a cada rep'],
+          ['serrote', 3, 8, 10, 120], ['pullover', 3, 12, 15, 90, 'No cabo, se tiver'], ['rosca_direta', 3, 6, 8, 90], ['rosca_martelo', 3, 10, 12, 90],
+          ['face_pull', 2, 15, 20, 90], ['rosca_inclinada', 3, 10, 12, 90]]),
+        day('fh5', 'd3', 'Dia 3', 'Pernas – quadríceps (força)', [
+          ['agachamento', 4, 4, 6, 240, 'Principal'], ['stiff', 3, 6, 8, 150], ['bulgaro', 3, 8, 10, 120],
+          ['mesa_flexora', 3, 10, 12, 90], ['panturrilha_pe', 4, 8, 10, 90], ['roda_abdominal', 3, 8, 12, 90]]),
+        day('fh5', 'd4', 'Dia 4', 'Ombros + Peito (volume)', [
+          ['desenvolvimento', 4, 5, 6, 240, 'Principal · desenvolvimento militar em pé'], ['supino_inclinado_barra', 3, 8, 12, 150, 'Barra ou máquina'],
+          ['elevacao_lateral', 4, 12, 20, 90, 'Última série em myo-reps'], ['elevacao_lateral_cabo', 2, 15, 15, 90, 'Unilateral'],
+          ['voador', 3, 12, 15, 90], ['crucifixo_invertido', 3, 15, 20, 90], ['puxada_alta', 3, 8, 12, 120, 'Pegada neutra']]),
+        day('fh5', 'd6', 'Dia 6', 'Pernas – posterior (força)', [
+          ['terra', 3, 3, 5, 300, 'Principal'], ['hack_squat', 3, 8, 12, 150, 'Ou leg press'], ['cadeira_extensora', 3, 12, 15, 90],
+          ['cadeira_flexora', 3, 10, 12, 90], ['elevacao_pelvica', 3, 8, 10, 120], ['panturrilha_sentado', 4, 12, 15, 90], ['elevacao_pernas', 3, 10, 15, 90]]),
+      ],
+    },
     // ============================== divisões clássicas e programas extras (26–50)
     {
       id: 'classico5', focus: 'massa', name: 'Clássico 5 dias: Peito, Costas, Pernas, Deltoides, Braços', short: 'Clássico 5x', level: 'intermediario',
@@ -1349,7 +1401,19 @@
     p.description += ' Avançado: séries perto da falha, exige técnica sólida e boa recuperação.';
     return p;
   }
-  for (const p of PROGRAMS) if (p.level === 'avancado') intensify(p);
+  for (const p of PROGRAMS) if (p.level === 'avancado' && !p.exact) intensify(p);
+  // Principais dos periodizados: marcados para o app ajustar séries/reps/RIR conforme o bloco.
+  for (const p of PROGRAMS) {
+    if (!p.periodization) continue;
+    for (const d of p.days) for (const i of d.items) {
+      if (i.note && i.note.startsWith('Principal')) {
+        i.main = true;
+        if (i.ex === 'terra') i.mainDelta = -1;
+        i.note = i.note.replace(/^Principal( · )?/, '') || undefined;
+        if (!i.note) delete i.note;
+      }
+    }
+  }
 
   // Itens de intervalo precisam da configuração
   for (const p of PROGRAMS) for (const d of p.days) for (const i of d.items) {
