@@ -10,3 +10,4 @@ captures/
 *.aab
 node_modules/
 __pycache__/
+*.apk.idsig

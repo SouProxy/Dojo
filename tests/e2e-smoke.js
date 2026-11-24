@@ -8,7 +8,8 @@ const { chromium, devices } = require('playwright');
 
 const ROOT = path.join(__dirname, '../app/src/main/assets/www');
 const OUT = process.argv[2];
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.gif': 'image/gif' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.gif': 'image/gif', '.png': 'image/png' };
+const D = require('../app/src/main/assets/www/js/library.js');
 
 function serve() {
   const srv = http.createServer((req, res) => {
@@ -69,7 +70,7 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   assert(meta6.length >= 2 && meta6.every((t) => t.startsWith('6 dias') && t.includes('Avançado')), `lista coerente com as escolhas (${meta6.join(' | ')})`);
   // Tocar de novo = qualquer; "Limpar" mostra todos
   await page.click('main .card button.clear');
-  assert((await progTitles()).length === 51, 'sem escolhas: os outros 51 programas na lista');
+  assert((await progTitles()).length === D.PROGRAMS.length - 1, `sem escolhas: os outros ${D.PROGRAMS.length - 1} programas na lista`);
   await page.fill('input[aria-label="Buscar programa"]', 'perna b');
   const pb = await progTitles();
   assert(pb.some((t) => t.includes('Peito, Perna A, Braço')) && pb.length < 10, `busca de programas por dia ("perna b" → ${pb.length})`);
@@ -326,6 +327,30 @@ function assert(cond, msg) { if (!cond) throw new Error(`FALHOU: ${msg}`); conso
   await page.click('text=▶ Começar treino');
   const presc9 = await page.locator('#session .card').first().locator('.muted.small').first().textContent();
   assert(presc9.startsWith('5×4–5'), `semana 9 (Força): supino ${presc9}`);
+  await page.click('#session >> text=Descartar');
+  await page.click('.modal button:text-is("Descartar")');
+
+  // Emagrecimento: objetivo no encontrador e cardio longo registrado em minutos
+  await page.click('main button:text-is("Trocar")');
+  if (await page.locator('main .card button.clear').count()) await page.click('main .card button.clear');
+  await page.click('.ask:has-text("Objetivo") button.chip:text-is("Emagrecer")');
+  await page.click('.ask:has-text("Dias") button.chip:text-is("2")');
+  const heroEm = await page.textContent('.card.hero');
+  assert(heroEm.includes('Emagrecimento') && heroEm.includes('2 dias'), `objetivo Emagrecer recomenda programa de emagrecimento (${heroEm.slice(0, 70)})`);
+  await page.click('.ask:has-text("Objetivo") button.chip:text-is("Mobilidade")');
+  assert((await page.textContent('.card.hero')).includes('Mobilidade'), 'objetivo Mobilidade recomenda programa de mobilidade');
+  await openProgram('Primeiros passos – emagrecer (2 dias)');
+  await page.click('.modal button:text-is("Usar este")');
+  await page.click('.modal button:text-is("Usar")');
+  await page.click('text=▶ Começar treino');
+  await page.waitForSelector('#session');
+  const bike = page.locator('#session .card', { hasText: 'Bicicleta ergométrica' });
+  assert((await bike.textContent()).includes('15–20 min'), 'bike prescrita em minutos');
+  await bike.locator('input[aria-label="Minutos"]').fill('18');
+  await bike.locator('button.check').click();
+  const sec = await page.evaluate(() => JSON.parse(localStorage.getItem('dojo.v1')).active.entries.find((e) => e.ex === 'bike_ergometrica').sets[0].sec);
+  assert(sec === 1080, `18 min gravados como 1080 s (${sec})`);
+  await shot('15-emagrecer');
   await page.click('#session >> text=Descartar');
   await page.click('.modal button:text-is("Descartar")');
 

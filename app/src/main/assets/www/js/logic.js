@@ -43,16 +43,30 @@
 
   function range(min, max) { return min === max ? `${min}` : `${min}–${max}`; }
 
+  /** Durações longas (cardio) ficam em minutos: 1200 s → "20 min"; 90 s → "90s". */
+  function inMinutes(min, max) { return min >= 120 && min % 60 === 0 && max % 60 === 0; }
+  function fmtDur(sec) {
+    const s = Math.max(0, Math.round(sec || 0));
+    if (s >= 120 && s % 60 === 0) return `${s / 60} min`;
+    if (s >= 120) return fmtClock(s);
+    return `${s}s`;
+  }
+  /** Mesma regra para exibir, registrar e editar: tempos longos em minutos inteiros. */
+  function timeInMinutes(item) { return !!item && inMinutes(item.min, item.max); }
+  function sideText(ex) { return ex && ex.perSide ? ` por ${ex.sideLabel || 'perna'}` : ''; }
+
   function prescription(item, ex) {
     const t = itemType(item, ex);
     let main;
     if (t === 'max') main = `${item.sets}×falha`;
-    else if (t === 'time') main = `${item.sets}×${range(item.min, item.max)}s`;
-    else if (t === 'distance') main = `${range(item.min, item.max)} m`;
+    else if (t === 'time') {
+      const dur = timeInMinutes(item) ? `${range(item.min / 60, item.max / 60)} min` : `${range(item.min, item.max)}s`;
+      main = `${item.sets > 1 ? `${item.sets}×` : ''}${dur}${sideText(ex)}`;
+    } else if (t === 'distance') main = `${item.sets > 1 ? `${item.sets}×` : ''}${range(item.min, item.max)} m${sideText(ex)}`;
     else if (t === 'interval') {
       const iv = item.interval || { work: 20, rest: 40, reps: 6 };
       main = `${iv.work}s forte / ${iv.rest}s leve ×${iv.reps}`;
-    } else main = `${item.sets}×${range(item.min, item.max)}${ex.perSide ? ' por perna' : ''}`;
+    } else main = `${item.sets}×${range(item.min, item.max)}${sideText(ex)}`;
     return main;
   }
 
@@ -108,9 +122,11 @@
     }
     if (t === 'time') {
       const ok = complete && sets.every((s) => (s.sec || 0) >= item.max);
+      // +5 s em isometrias; ~+10% (múltiplo de 1 min) em cardio longo
+      const step = item.max >= 300 ? Math.max(60, Math.round(item.max * 0.1 / 60) * 60) : 5;
       return ok
-        ? { kind: 'up', target: item.max + 5, text: `Fechou ${item.max}s em todas: tente ${item.max + 5}s.` }
-        : { kind: 'hold', text: `Busque ${item.max}s em todas as séries.` };
+        ? { kind: 'up', target: item.max + step, text: `Fechou ${fmtDur(item.max)} em todas: tente ${fmtDur(item.max + step)}.` }
+        : { kind: 'hold', text: `Busque ${fmtDur(item.max)} em todas as séries.` };
     }
     if (t === 'distance') {
       const ok = complete && sets.every((s) => (s.m || 0) >= item.max);
@@ -523,7 +539,7 @@
   }
 
   const api = {
-    typeOf, itemType, fmtClock, fmtRest, fmtKg, fmtNum, prescription, roundUp, doneSets, lastEntry, suggest, e1rm,
+    typeOf, itemType, fmtClock, fmtRest, fmtDur, timeInMinutes, fmtKg, fmtNum, prescription, roundUp, doneSets, lastEntry, suggest, e1rm,
     sessionStats, metric, series, prs, weekNumber, nextDayIndex, daysUntil, validateBackup, upgradeBackup, validPlan, weeklyVolume, newItem, DAY_MS,
     PERIODS, planWeek, phaseInfo, applyPhase, loadRange,
     metricOptions, metricValue, exerciseSessions, metricSeries, personalRecords, weekBounds, muscleSets,

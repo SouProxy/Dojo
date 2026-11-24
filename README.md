@@ -2,20 +2,26 @@
 
 App Android de treino, offline, para qualquer nível — do primeiro dia na academia ao avançado, em casa ou com halteres.
 
-### Programas prontos (52)
+### Programas prontos (62)
 | Programa | Dias | Nível | Foco |
 | --- | --- | --- | --- |
 | Minimalista 2x (40 min) | 2 | Iniciante | Massa muscular |
+| Mobilidade + core (2 dias) | 2 | Iniciante | Mobilidade |
+| Primeiros passos – emagrecer (2 dias) | 2 | Iniciante | Emagrecimento |
 | ABC – Iniciante/Intermediário | 3 | Iniciante | Massa muscular |
 | ABC em máquinas – Iniciante | 3 | Iniciante | Massa muscular |
 | Atleta: força e potência (3 dias) | 3 | Intermediário | Força |
 | Baixo impacto e saúde (3 dias) | 3 | Iniciante | Condicionamento |
 | Condicionamento em circuito (3 dias) | 3 | Iniciante | Condicionamento |
 | Em casa – peso corporal (3 dias) | 3 | Iniciante | Casa/halteres |
+| Emagrecer em casa – sem equipamento (3 dias) | 3 | Iniciante | Emagrecimento |
+| Emagrecimento – academia (3 dias) | 3 | Iniciante | Emagrecimento |
 | Especialização no agachamento (3 dias) | 3 | Avançado | Força |
 | Força 5×5 (3 dias) | 3 | Iniciante | Força |
 | Full Body 3x – Iniciante | 3 | Iniciante | Massa muscular |
 | Full Body ondulado 3x – Avançado | 3 | Avançado | Massa muscular |
+| Funcional com kettlebell (3 dias) | 3 | Intermediário | Condicionamento |
+| Mobilidade e postura (3 dias) | 3 | Iniciante | Mobilidade |
 | Primeiros passos – máquinas (3 dias) | 3 | Iniciante | Massa muscular |
 | Retorno após pausa (3 dias) | 3 | Iniciante | Massa muscular |
 | Só halteres (3 dias) | 3 | Iniciante | Casa/halteres |
@@ -33,11 +39,15 @@ App Android de treino, offline, para qualquer nível — do primeiro dia na acad
 | Força máxima: agachamento, supino e terra (4 dias) | 4 | Avançado | Força |
 | Full Body 4x – Intermediário | 4 | Intermediário | Massa muscular |
 | Halteres Upper/Lower 4 dias | 4 | Intermediário | Casa/halteres |
+| HIIT em casa (4 dias) | 4 | Intermediário | Emagrecimento |
+| Queima de gordura – força + HIIT (4 dias) | 4 | Intermediário | Emagrecimento |
 | Upper/Lower 4x – Intermediário | 4 | Intermediário | Força |
 | ABCDE avançado (5 dias) | 5 | Avançado | Massa muscular |
 | ABCDE pesos livres (5 dias) | 5 | Intermediário | Massa muscular |
 | Clássico 5 dias: Peito, Costas, Pernas, Deltoides, Braços | 5 | Intermediário | Massa muscular |
+| Condicionamento atlético avançado (5 dias) | 5 | Avançado | Condicionamento |
 | Costas e ombros “V” (5 dias) | 5 | Intermediário | Massa muscular |
+| Emagrecimento 5 dias – musculação + cardio | 5 | Intermediário | Emagrecimento |
 | Especialização em braços (5 dias) | 5 | Intermediário | Massa muscular |
 | Especialização em ombros (5 dias) | 5 | Intermediário | Massa muscular |
 | Força + Hipertrofia periodizado 26 semanas (5 dias) | 5 | Avançado | Força |
@@ -63,7 +73,8 @@ Um único bloco de escolhas (dias por semana, experiência, local e objetivo) re
 
 ### Recursos
 - **Periodização de 26 semanas** (programas “Força + Hipertrofia periodizado”): Base → Força → Pico → polimento → teste de 1RM, deload a cada 4ª semana; o app ajusta séries, reps e RIR dos principais pela semana e mostra a carga em kg a partir do seu 1RM estimado
-- **Biblioteca com 86 exercícios** (incluindo máquinas: supino máquina, hack, Smith, adutora, remada máquina, cavalinho, desenvolvimento máquina…) e **82 animações** com o músculo-alvo destacado com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo muscular (13) e equipamento (13)
+- **Biblioteca com 146 exercícios** — musculação (incluindo máquinas: supino máquina, hack, Smith, adutora, remada máquina, cavalinho…), **emagrecimento e cardio** (bike, elíptico, remo, escada, caminhada inclinada, HIIT, corda naval, trenó, wall ball), **core**, **mobilidade e alongamento**, **peso corporal** e **funcional com kettlebell** — com **143 animações** com o músculo-alvo destacado, dicas de execução e segurança; busca e filtros por grupo (14) e equipamento (22)
+- **Objetivos**: ganhar massa, ganhar força, **emagrecer**, condicionamento e **mobilidade** — programas em casa e na academia; cardio longo é prescrito e registrado em minutos
 - **Monte seu treino**: edite qualquer programa ou crie do zero — adicione, remova e reordene exercícios, dias e formato (séries ou circuito)
 - **Volume semanal por músculo**: o app soma as séries do seu plano e compara com a faixa de 10–20 séries/semana
 - **Guia de treino** baseado em evidências: volume, frequência, divisões, reps/descanso, progressão, deload, aquecimento e segurança, com fontes

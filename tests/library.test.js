@@ -17,7 +17,7 @@ test('todo exercício tem grupo, equipamento, nível, padrão, dicas e GIF exist
     assert.ok(ex.cues.length >= 2, `${id}: dicas`);
     for (const g of ex.gifs) assert.ok(fs.existsSync(path.join(GIFS, `${g}.gif`)), `${id}: gif ${g}`);
   }
-  assert.ok(Object.keys(D.EXERCISES).length >= 80);
+  assert.ok(Object.keys(D.EXERCISES).length >= 146);
 });
 
 test('todos os grupos musculares têm exercícios', () => {
@@ -68,7 +68,7 @@ test('recomendação de programa', () => {
   assert.equal(D.recommend({ days: 3, level: 'iniciante', place: 'casa', goal: 'hipertrofia' }), 'casa');
   assert.equal(D.recommend({ days: 3, level: 'iniciante', place: 'halteres', goal: 'hipertrofia' }), 'halteres');
   for (const days of [2, 3, 4, 5, 6]) for (const level of Object.keys(D.LEVELS)) for (const place of Object.keys(D.PLACES)) {
-    for (const goal of ['hipertrofia', 'forca', 'condicionamento']) {
+    for (const goal of ['hipertrofia', 'forca', 'emagrecer', 'condicionamento']) {
       assert.ok(D.PROGRAMS.some((p) => p.id === D.recommend({ days, level, place, goal })));
     }
   }
@@ -186,10 +186,10 @@ test('toda animação tem miniatura estática (listas não animam = menos bateri
   }
 });
 
-test('52 programas, nomes e ids únicos, todos os dias com exercícios', () => {
-  assert.equal(D.PROGRAMS.length, 52);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 52);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 52);
+test('62 programas, nomes e ids únicos, todos os dias com exercícios', () => {
+  assert.equal(D.PROGRAMS.length, 62);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 62);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 62);
   for (const p of D.PROGRAMS) {
     for (const d of p.days) {
       assert.ok(d.items.length >= 3, `${p.id}/${d.id}`);
@@ -230,7 +230,7 @@ test('avançados são pesados de verdade: volume alto e falha/RIR nas notas', ()
 
 test('encontrar programa: escolhas coerentes com a recomendação e a lista', () => {
   for (const days of [2, 3, 4, 5, 6]) for (const level of Object.keys(D.LEVELS)) for (const place of Object.keys(D.PLACES)) {
-    for (const goal of ['hipertrofia', 'forca', 'condicionamento']) {
+    for (const goal of ['hipertrofia', 'forca', 'emagrecer', 'condicionamento']) {
       const a = { days, level, place, goal };
       const r = D.findPrograms(a);
       assert.ok(r.best, `${days}/${level}/${place}/${goal}`);
@@ -285,4 +285,63 @@ test('periodizado 26 semanas: plano exato e fases', () => {
   assert.equal(L.planWeek({ periodization: 'fh26', startedAt: start }, start + 8 * 7 * L.DAY_MS).week, 9);
   assert.equal(L.planWeek({ periodization: 'fh26', startedAt: start }, start + 40 * 7 * L.DAY_MS).done, true);
   assert.equal(L.validPlan({ ...p6, periodization: 'inventado' }), false, 'backup com periodização desconhecida é rejeitado');
+});
+
+test('emagrecimento, mobilidade e funcional: exercícios e programas coerentes', () => {
+  const byGroup = (g) => Object.values(D.EXERCISES).filter((e) => e.group === g).length;
+  assert.ok(byGroup('mobilidade') >= 10, 'mobilidade/alongamento');
+  assert.ok(byGroup('cardio') >= 18, 'cardio');
+  assert.ok(byGroup('core') >= 18, 'core');
+  assert.ok(!D.MUSCLES.includes('mobilidade') && !D.MUSCLES.includes('cardio'), 'mobilidade e cardio fora do volume muscular');
+  // alongamentos e isometrias são por tempo; cardio de máquina em minutos
+  for (const id of ['crianca', 'alongamento_posterior', 'hollow_hold', 'cadeira_isometrica']) assert.equal(L.typeOf(D.EXERCISES[id]), 'time', id);
+  assert.equal(L.prescription(D.EXERCISES.eliptico.def, D.EXERCISES.eliptico), '20–30 min');
+  // programas por objetivo, em qualquer local
+  const focus = (f) => D.PROGRAMS.filter((p) => p.focus === f);
+  assert.ok(focus('emagrecimento').length >= 6 && focus('mobilidade').length >= 2);
+  assert.ok(focus('emagrecimento').some((p) => p.place === 'casa') && focus('emagrecimento').some((p) => p.place === 'academia'));
+  for (const p of focus('emagrecimento')) {
+    assert.ok(p.days.some((d) => d.items.some((i) => D.EXERCISES[i.ex].group === 'cardio') || d.mode === 'circuit'), `${p.id}: tem cardio ou circuito`);
+    assert.ok(p.days.some((d) => d.items.some((i) => D.MUSCLES.includes(D.EXERCISES[i.ex].group) && D.EXERCISES[i.ex].group !== 'core')), `${p.id}: mantém musculação`);
+  }
+  for (const p of focus('mobilidade')) {
+    const ids = p.days.flatMap((d) => d.items.map((i) => i.ex));
+    assert.ok(ids.filter((id) => D.EXERCISES[id].group === 'mobilidade').length >= ids.length / 2, `${p.id}: maioria mobilidade`);
+  }
+  // encontrador: objetivo emagrecer/mobilidade sempre cai num programa do foco certo
+  for (const place of ['academia', 'casa', 'halteres']) for (const days of [2, 3, 4, 5, 6]) for (const level of ['iniciante', 'intermediario', 'avancado']) {
+    assert.equal(D.findPrograms({ days, level, place, goal: 'emagrecer' }).best.focus, 'emagrecimento', `emagrecer ${place} ${days} ${level}`);
+    assert.equal(D.findPrograms({ days, level, place, goal: 'mobilidade' }).best.focus, 'mobilidade', `mobilidade ${place} ${days} ${level}`);
+  }
+  // ganhar massa em casa não recebe programa de mobilidade/emagrecimento como "exato"
+  for (const p of D.PROGRAMS.filter((x) => D.matches(x, { goal: 'hipertrofia', place: 'casa' }))) assert.ok(!['emagrecimento', 'mobilidade'].includes(p.focus), p.id);
+});
+
+test('revisão: circuitos curtos, programas sem equipamento sem carga obrigatória, recomendação respeita nível e local', () => {
+  const LV = { iniciante: 0, intermediario: 1, avancado: 2 };
+  for (const p of D.PROGRAMS) for (const d of p.days) {
+    if (d.mode === 'circuit') for (const i of d.items) {
+      if (L.typeOf(D.EXERCISES[i.ex]) === 'time') assert.ok(i.max <= 180, `${d.id}/${i.ex}: estação de circuito longa (${i.max}s) se repete a cada volta`);
+    }
+    if (p.place === 'casa') for (const i of d.items) {
+      assert.notEqual(D.EXERCISES[i.ex].load, 'load', `${p.id}/${i.ex}: “casa sem equipamento” não pode exigir carga`);
+    }
+  }
+  for (const goal of ['hipertrofia', 'forca', 'emagrecer', 'condicionamento', 'mobilidade'])
+    for (const place of Object.keys(D.PLACES)) for (const days of [2, 3, 4, 5, 6]) for (const level of Object.keys(D.LEVELS)) {
+      const id = D.recommend({ days, level, place, goal });
+      const p = D.PROGRAMS.find((x) => x.id === id);
+      assert.ok(p, `recomendação inexistente: ${id}`);
+      assert.ok(LV[p.level] <= LV[level] || level !== 'iniciante', `${goal}/${place}/${days}/${level} → ${id} (${p.level})`);
+      if (place === 'casa' && goal !== 'mobilidade') assert.equal(p.place, 'casa', `${goal}/casa/${days}/${level} → ${id} precisa de equipamento`);
+    }
+});
+
+test('tempo: mesma regra para exibir e registrar em minutos', () => {
+  const box = { sets: 3, min: 120, max: 180, rest: 30 };
+  assert.equal(L.prescription(box, D.EXERCISES.boxe_sombra), '3×2–3 min');
+  assert.ok(L.timeInMinutes(box));
+  const odd = { sets: 2, min: 45, max: 300, rest: 30 };
+  assert.equal(L.prescription(odd, D.EXERCISES.prancha), '2×45–300s');
+  assert.ok(!L.timeInMinutes(odd));
 });

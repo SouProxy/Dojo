@@ -2,10 +2,10 @@
 (function () {
   'use strict';
 
-  const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, findPrograms } = window.DojoData;
+  const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, MUSCLES, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, findPrograms } = window.DojoData;
   const Lg = window.DojoLogic;
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.8.0';
+  const APP_VERSION = '1.9.0';
 
   // ================================================================ estado
 
@@ -267,7 +267,9 @@
   // ================================================================ início
 
   function estMinutes(day) {
-    const sec = day.items.reduce((a, it) => a + (day.mode === 'circuit' ? (day.rounds || 3) : it.sets) * (40 + (it.rest || 60)), 0);
+    // Série ~40 s; em exercícios por tempo, conta a duração prescrita (cardio de 20–40 min pesa de verdade).
+    const work = (it) => (Lg.typeOf(EXERCISES[it.ex]) === 'time' ? Math.max(40, it.max || 0) : 40);
+    const sec = day.items.reduce((a, it) => a + (day.mode === 'circuit' ? (day.rounds || 4) : it.sets) * (work(it) + (Number.isFinite(it.rest) ? it.rest : 60)), 0);
     return Math.max(10, Math.round(sec / 300) * 5);
   }
 
@@ -557,8 +559,15 @@
       cells.push(h('button', { class: 'btn sm', onclick: () => runInterval(iv, () => markDone(i, si, true)) }, `▶ Intervalos ${iv.work}/${iv.rest} ×${iv.reps}`));
     } else if (t === 'time') {
       cls += ' timeish';
-      cells.push(field(s.sec, pf.sec, 's', 'Segundos', upd('sec')));
-      cells.push(h('button', { class: 'icon-btn', 'aria-label': 'Iniciar cronômetro', onclick: () => runCountdown(pf.sec || it.max, ex.name, () => { s.sec = pf.sec || it.max; markDone(i, si, true); }) }, '▶'));
+      if (Lg.timeInMinutes(it)) {
+        const toMin = (v) => (v === null || v === undefined ? v : Math.round((v / 60) * 10) / 10);
+        cells.push(field(toMin(s.sec), toMin(pf.sec), 'min', 'Minutos', (v) => { s.sec = v === null ? null : Math.round(v * 60); save(); }));
+      } else cells.push(field(s.sec, pf.sec, 's', 'Segundos', upd('sec')));
+      cells.push(h('button', { class: 'icon-btn', 'aria-label': 'Iniciar cronômetro', onclick: () => {
+        // Usa o tempo que a pessoa digitou; senão, o sugerido.
+        const dur = s.sec > 0 ? s.sec : (pf.sec || it.max);
+        runCountdown(dur, ex.name, () => { s.sec = dur; markDone(i, si, true); });
+      } }, '▶'));
     } else if (t === 'distance') {
       cells.push(field(s.w, pf.w, 'kg', 'Carga', upd('w')));
       cells.push(field(s.m, pf.m, 'm', 'Distância', upd('m')));
@@ -741,7 +750,7 @@
     const ex = EXERCISES[e.ex];
     const t = Lg.typeOf(ex);
     return e.sets.map((s) => {
-      if (t === 'time') return `${s.sec || 0}s`;
+      if (t === 'time') return Lg.fmtDur(s.sec);
       if (t === 'distance') return `${numStr(s.w)}kg×${s.m || 0}m`;
       if (t === 'interval') return '✓';
       if (s.w !== null && s.w !== undefined && (ex.load !== 'bw' || s.w !== 0)) return `${numStr(s.w)}×${s.r}`;
@@ -1101,7 +1110,7 @@
 
   function setLine(s, ex) {
     const t = Lg.typeOf(ex);
-    if (t === 'time') return `${s.sec || 0} s`;
+    if (t === 'time') return Lg.fmtDur(s.sec);
     if (t === 'distance') return `${numStr(s.w)} kg × ${s.m || 0} m`;
     if (t === 'interval') return 'Concluído';
     const w = s.w !== null && s.w !== undefined && (ex.load !== 'bw' || s.w !== 0) ? `${numStr(s.w)} kg × ` : '';
@@ -1227,7 +1236,7 @@
       h('div', { class: 'body-col' }, bodySvg(BODY_FRONT, data.groups, 'Corpo de frente'), h('span', { class: 'tiny muted', text: 'Frente' })),
       h('div', { class: 'body-col' }, bodySvg(BODY_BACK, data.groups, 'Corpo de costas'), h('span', { class: 'tiny muted', text: 'Costas' }))));
     wrap.appendChild(h('div', { class: 'legend tiny muted mt' }, h('span', { text: '0' }), h('i', { class: 'legend-bar' }), h('span', { text: '16+ séries' })));
-    const order = Object.keys(GROUPS).filter((g) => g !== 'cardio' && g !== 'potencia');
+    const order = MUSCLES;
     const rows = order.map((g) => {
       const v = data.groups[g] || 0;
       const cls = v === 0 ? 'zero' : v < 10 ? 'mid' : v <= 20 ? 'ok' : 'high';
@@ -1388,7 +1397,7 @@
       ask('Dias por semana', 'days', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']]),
       ask('Experiência', 'level', [['iniciante', 'Iniciante'], ['intermediario', 'Intermediário'], ['avancado', 'Avançado']]),
       ask('Onde', 'place', [['academia', 'Academia'], ['halteres', 'Casa com halteres'], ['casa', 'Casa sem equipamento']]),
-      ask('Objetivo', 'goal', [['hipertrofia', 'Ganhar massa'], ['forca', 'Ganhar força'], ['condicionamento', 'Condicionamento']])));
+      ask('Objetivo', 'goal', [['hipertrofia', 'Ganhar massa'], ['forca', 'Ganhar força'], ['emagrecer', 'Emagrecer'], ['condicionamento', 'Condicionamento'], ['mobilidade', 'Mobilidade']])));
 
     const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const { best, others, approx } = findPrograms(q);
@@ -1571,7 +1580,7 @@
   }
 
   function volumeBars(vol, mult) {
-    const order = Object.keys(GROUPS).filter((g) => g !== 'cardio' && g !== 'potencia');
+    const order = MUSCLES;
     const box = h('div', { class: 'vol' });
     order.forEach((g) => {
       const v = Math.round((vol[g] || 0) * mult * 10) / 10;
@@ -1680,8 +1689,10 @@
   function openEditItem(day, it) {
     const ex = EXERCISES[it.ex];
     const t = Lg.typeOf(ex);
-    const f = { sets: it.sets, min: it.min, max: it.max, rest: it.rest };
-    const unit = t === 'time' ? 's' : t === 'distance' ? 'm' : 'reps';
+    const mins = t === 'time' && Lg.timeInMinutes(it);
+    const k = mins ? 60 : 1;
+    const f = { sets: it.sets, min: it.min / k, max: it.max / k, rest: it.rest };
+    const unit = t === 'time' ? (mins ? 'min' : 's') : t === 'distance' ? 'm' : 'reps';
     openModal((box, close) => {
       const num = (k, label, u) => h('div', null, h('label', { class: 'lbl', text: label }), field(f[k], null, u, label, (v) => { f[k] = v; }));
       box.append(h('h2', { text: ex.name }), h('p', { class: 'muted small', text: `${day.name} – ${day.title}` }),
@@ -1693,7 +1704,8 @@
         h('div', { class: 'row mt' },
           h('button', { class: 'btn ghost grow', onclick: close }, 'Cancelar'),
           h('button', { class: 'btn primary grow', onclick: () => {
-            const n = { sets: Math.round(f.sets), min: f.min, max: f.max, rest: Math.round(f.rest) };
+            const sec = (v) => (k === 60 ? Math.round(v * 60) : v);
+            const n = { sets: Math.round(f.sets), min: sec(f.min), max: sec(f.max), rest: Math.round(f.rest) };
             if (!(n.sets >= 1 && n.sets <= 20) || !(n.min >= 0) || !(n.max >= n.min) || n.max > 10000 || !(n.rest >= 0 && n.rest <= 3600)) {
               toast('Valores inválidos (máximo ≥ mínimo, séries 1–20).'); return;
             }

@@ -26,8 +26,28 @@ test('prescrição formatada', () => {
   assert.equal(L.prescription(DEFAULT_PLAN.days[0].items[3], EXERCISES.afundo), '3×10 por perna');
   assert.equal(L.prescription(DEFAULT_PLAN.days[1].items[0], EXERCISES.barra_fixa), '4×falha');
   assert.equal(L.prescription(DEFAULT_PLAN.days[3].items[3], EXERCISES.prancha), '3×45s');
-  assert.equal(L.prescription(DEFAULT_PLAN.days[4].items[0], EXERCISES.farmer), '30–40 m');
+  assert.equal(L.prescription(DEFAULT_PLAN.days[4].items[0], EXERCISES.farmer), '4×30–40 m');
   assert.equal(L.prescription(DEFAULT_PLAN.days[4].items[1], EXERCISES.esteira), '20s forte / 40s leve ×6');
+});
+
+test('cardio longo em minutos, exercícios por lado e progressão de tempo proporcional', () => {
+  require('../app/src/main/assets/www/js/library.js'); // adiciona a biblioteca completa ao EXERCISES
+  const bike = { sets: 1, min: 1200, max: 1800, rest: 60 };
+  assert.equal(L.prescription(bike, EXERCISES.bike_ergometrica), '20–30 min');
+  assert.equal(L.prescription({ sets: 3, min: 8, max: 12, rest: 45 }, EXERCISES.dead_bug), '3×8–12 por lado');
+  assert.equal(L.prescription({ sets: 2, min: 30, max: 45, rest: 15 }, EXERCISES.alongamento_quadriceps), '2×30–45s por perna');
+  assert.equal(L.fmtDur(1500), '25 min');
+  assert.equal(L.fmtDur(45), '45s');
+  assert.equal(L.fmtDur(150), '2:30');
+  assert.ok(L.timeInMinutes(bike));
+  assert.ok(!L.timeInMinutes({ sets: 3, min: 30, max: 45 }));
+  // fechou 30 min → próxima meta +3 min (não +5 s)
+  const s = L.suggest(bike, EXERCISES.bike_ergometrica, { sets: [{ done: true, sec: 1800 }] }, {});
+  assert.equal(s.kind, 'up');
+  assert.equal(s.target, 1980);
+  // isometria continua +5 s
+  const p = L.suggest({ sets: 3, min: 30, max: 45, rest: 45 }, EXERCISES.prancha, { sets: [1, 2, 3].map(() => ({ done: true, sec: 45 })) }, {});
+  assert.equal(p.target, 50);
 });
 
 test('sobe 2,5–5% quando fecha todas as séries no topo da faixa', () => {

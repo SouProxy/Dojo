@@ -13,13 +13,18 @@
   const GROUPS = {
     peito: 'Peito', costas: 'Costas', ombros: 'Ombros', biceps: 'Bíceps', triceps: 'Tríceps', antebraco: 'Antebraço/pegada',
     quadriceps: 'Quadríceps', posterior: 'Posterior de coxa', gluteos: 'Glúteos', panturrilha: 'Panturrilha',
-    core: 'Abdômen/core', cardio: 'Cardio/condicionamento', potencia: 'Potência/pliometria',
+    core: 'Abdômen/core', cardio: 'Cardio/condicionamento', potencia: 'Potência/pliometria', mobilidade: 'Mobilidade/alongamento',
   };
+
+  /** Grupos que são músculos (entram no volume semanal e no mapa do corpo). */
+  const MUSCLES = Object.keys(GROUPS).filter((g) => !['cardio', 'potencia', 'mobilidade'].includes(g));
 
   const EQUIP = {
     barra: 'Barra', halteres: 'Halteres', maquina: 'Máquina', cabo: 'Cabo/polia', peso_corporal: 'Peso corporal',
     banco: 'Banco', kettlebell: 'Kettlebell', barra_fixa: 'Barra fixa', caixote: 'Caixote/degrau', esteira: 'Esteira',
     corda: 'Corda', roda: 'Roda abdominal', paralelas: 'Paralelas',
+    bicicleta: 'Bicicleta', eliptico: 'Elíptico', remo: 'Remo ergômetro', simulador_escada: 'Simulador de escada',
+    step: 'Step', corda_naval: 'Corda naval', medicine_ball: 'Medicine/slam ball', treno: 'Trenó', elastico: 'Elástico/mini band',
   };
 
   // [grupo principal, grupos secundários, equipamentos, nível, padrão {sets,min,max,rest}]
@@ -391,6 +396,318 @@
     ]),
   });
 
+  // ------------------------------------------------------------- EMAGRECIMENTO, CORE, MOBILIDADE, PESO CORPORAL E FUNCIONAL
+  // Gasto calórico: o que mais pesa é o volume semanal de atividade + déficit calórico; musculação mantém a massa magra
+  // enquanto se perde gordura (ACSM 2009; Willis et al., 2012). Cardio contínuo moderado e intervalado (HIIT) somam.
+  const T = { type: 'time' };
+  const SIDE = { perSide: true, sideLabel: 'lado' };
+  const LEG = { perSide: true };
+  Object.assign(EXTRA, {
+    // ---- cardio em máquina (tempo em minutos)
+    bike_ergometrica: E('Bicicleta ergométrica', ['bike_ergometrica'], 'none', 'Quadríceps, glúteos, condicionamento', [
+      'Selim na altura do quadril: com o pedal embaixo, o joelho fica levemente flexionado.',
+      'Ritmo em que dá para falar frases curtas (zona 2) no contínuo; nos tiros, forte de verdade.',
+      'Baixo impacto: ótima para quem tem sobrepeso ou dor no joelho ao correr.',
+    ], T),
+    eliptico: E('Elíptico (transport)', ['eliptico'], 'none', 'Corpo todo, condicionamento', [
+      'Postura ereta, pés inteiros nos pedais, empurre e puxe as alças junto com as pernas.',
+      'Ajuste a carga para manter um ritmo constante sem “quicar”.',
+      'Baixo impacto nas articulações; bom para volume de cardio diário.',
+    ], T),
+    remo_ergometro: E('Remo ergômetro', ['remo_ergometro'], 'none', 'Costas, pernas, glúteos, condicionamento', [
+      'Ordem na puxada: pernas → tronco → braços. Na volta: braços → tronco → pernas.',
+      'Cerca de 60% da força vem das pernas; não puxe só com os braços.',
+      'Coluna neutra; termine com o cabo na altura da parte baixa do peito.',
+    ], T),
+    escada: E('Simulador de escada', ['escada'], 'none', 'Glúteos, quadríceps, panturrilhas, condicionamento', [
+      'Tronco quase ereto, mãos apenas apoiadas no corrimão (não pendure o peso do corpo).',
+      'Apoie o pé inteiro em cada degrau e empurre pelo calcanhar.',
+      'Gasta muita energia em pouco tempo: comece com 10 min.',
+    ], T),
+    caminhada_inclinada: E('Caminhada inclinada na esteira', ['caminhada_inclinada'], 'none', 'Glúteos, panturrilhas, posterior, condicionamento', [
+      'Inclinação de 8–15% e velocidade de caminhada firme (5–6 km/h).',
+      'Não segure no painel: braços balançam naturalmente.',
+      'Cardio de baixo impacto que não atrapalha a recuperação da musculação.',
+    ], T),
+    step_aerobico: E('Step aeróbico (sobe e desce)', ['step_aerobico'], 'none', 'Quadríceps, glúteos, condicionamento', [
+      'Suba com um pé, depois o outro; desça na mesma ordem.',
+      'Pé inteiro no step, joelho na direção da ponta do pé.',
+      'Troque a perna que inicia a cada minuto.',
+    ], T),
+    marcha_estacionaria: E('Marcha estacionária', ['marcha_estacionaria'], 'none', 'Condicionamento, flexores do quadril', [
+      'Marche no lugar elevando os joelhos até a altura do quadril.',
+      'Braços acompanham o movimento, ritmo constante.',
+      'Opção sem impacto para começar ou para dias leves.',
+    ], T),
+    // ---- cardio com o peso do corpo / HIIT
+    skipping: E('Skipping (corrida estacionária joelho alto)', ['skipping'], 'none', 'Condicionamento, quadríceps, panturrilhas', [
+      'Corra no lugar levando os joelhos à altura do quadril.',
+      'Pise na ponta dos pés, tronco ereto, braços rápidos.',
+    ], T),
+    afundo_salto: E('Afundo com salto (troca no ar)', ['afundo_salto'], 'none', 'Quadríceps, glúteos, potência', [
+      'Comece em posição de afundo, salte e troque as pernas no ar.',
+      'Aterrisse suave, joelho da frente alinhado com o pé.',
+      'Muito intenso: use em circuitos curtos.',
+    ], LEG),
+    agachamento_salto: E('Agachamento com salto', ['agachamento_salto'], 'none', 'Quadríceps, glúteos, panturrilhas', [
+      'Agache até perto da paralela e salte o mais alto possível.',
+      'Aterrisse com os joelhos flexionados e já emende a próxima repetição.',
+    ]),
+    sprawl: E('Sprawl (burpee sem flexão)', ['sprawl'], 'none', 'Corpo todo, condicionamento', [
+      'Apoie as mãos, jogue as pernas para trás e encoste o quadril perto do chão.',
+      'Volte os pés para perto das mãos e levante. Ritmo rápido.',
+    ]),
+    corda_naval: E('Corda naval (battle rope)', ['corda_naval'], 'none', 'Ombros, core, condicionamento', [
+      'Meio agachamento, abdômen firme, cordas uma em cada mão.',
+      'Ondas alternadas rápidas usando ombros e braços; as ondas devem chegar à ancoragem.',
+    ], T),
+    bear_crawl: E('Bear crawl (caminhada do urso)', ['bear_crawl'], 'none', 'Core, ombros, quadríceps', [
+      'Em quatro apoios com os joelhos a 2–3 cm do chão.',
+      'Ande movendo mão e pé opostos ao mesmo tempo, costas retas e quadril baixo.',
+    ], T),
+    boxe_sombra: E('Boxe de sombra', ['boxe_sombra'], 'none', 'Ombros, core, condicionamento', [
+      'Base de luta, guarda alta, queixo baixo.',
+      'Socos rápidos alternados (jab, direto), girando o quadril, e volte à guarda.',
+      'Em rounds de 1–3 min com 30 s de descanso.',
+    ], T),
+    treno: E('Empurrar trenó (sled push)', ['treno'], 'load', 'Quadríceps, glúteos, panturrilhas, condicionamento', [
+      'Tronco inclinado a ~45°, braços estendidos nas alças.',
+      'Passadas curtas e fortes empurrando o chão.',
+      'Sem fase excêntrica: dá pouca dor muscular e combina com qualquer treino.',
+    ], { type: 'distance' }),
+    wall_ball: E('Wall ball', ['wall_ball'], 'load', 'Quadríceps, glúteos, ombros, condicionamento', [
+      'Bola na altura do peito, agache até a paralela.',
+      'Suba explosivo e lance a bola no alvo da parede (2,7–3 m).',
+      'Receba a bola já descendo para o próximo agachamento.',
+    ]),
+    slam_ball: E('Slam ball (arremesso no chão)', ['slam_ball'], 'load', 'Core, dorsais, ombros, condicionamento', [
+      'Eleve a bola acima da cabeça subindo na ponta dos pés.',
+      'Arremesse com força no chão dobrando quadril e joelhos.',
+      'Use bola própria (que não quica) e pegue-a com a coluna neutra.',
+    ]),
+    thruster: E('Thruster (agachamento + desenvolvimento)', ['thruster'], 'load', 'Quadríceps, glúteos, ombros, tríceps', [
+      'Halteres ou barra apoiados nos ombros, agache fundo.',
+      'Suba explosivo e use o impulso para empurrar a carga acima da cabeça.',
+      'Desça a carga aos ombros já entrando no próximo agachamento.',
+    ]),
+    // ---- funcional com kettlebell
+    kettlebell_clean: E('Kettlebell clean', ['kettlebell_clean'], 'load', 'Glúteos, posterior, ombros, pegada', [
+      'Comece como no swing: dobradiça do quadril, kettlebell entre as pernas.',
+      'Estenda o quadril e puxe o kettlebell rente ao corpo até a posição de rack (no ombro).',
+      'Gire a mão por dentro para o kettlebell não bater no antebraço.',
+    ], SIDE),
+    kettlebell_press: E('Desenvolvimento com kettlebell (unilateral)', ['kettlebell_press'], 'load', 'Deltoides, tríceps, core', [
+      'Kettlebell em rack no ombro, glúteos e abdômen contraídos.',
+      'Empurre até estender o braço, bíceps perto da orelha.',
+      'Desça controlando até o rack. Não arqueie a lombar.',
+    ], SIDE),
+    suitcase_carry: E('Suitcase carry (carregamento unilateral)', ['suitcase_carry'], 'load', 'Oblíquos, core, trapézio, pegada', [
+      'Peso em uma só mão, como uma mala.',
+      'Ande mantendo o tronco reto, sem inclinar para o lado do peso.',
+      'Faça a mesma distância com cada mão.',
+    ], { type: 'distance', perSide: true, sideLabel: 'lado' }),
+
+    // ---- core
+    dead_bug: E('Dead bug', ['dead_bug'], 'none', 'Core (transverso, reto abdominal)', [
+      'Deitado, braços para o teto, quadris e joelhos a 90°.',
+      'Estenda braço e perna opostos sem tirar a lombar do chão.',
+      'Volte e troque o lado. Expire devagar ao estender.',
+    ], SIDE),
+    bird_dog: E('Perdigueiro (bird dog)', ['bird_dog'], 'none', 'Core, lombar, glúteos', [
+      'Quatro apoios: mãos sob os ombros, joelhos sob o quadril.',
+      'Estenda braço e perna opostos até a linha do tronco, sem girar o quadril.',
+      'Segure 2 s e troque. Excelente para a lombar.',
+    ], SIDE),
+    hollow_hold: E('Hollow hold (canoa)', ['hollow_hold'], 'none', 'Core, reto abdominal', [
+      'Deitado, lombar colada no chão.',
+      'Tire ombros e pernas do chão, braços estendidos para trás.',
+      'Difícil? Dobre os joelhos ou traga os braços para frente.',
+    ], T),
+    russian_twist: E('Rotação russa (russian twist)', ['russian_twist'], 'bw', 'Oblíquos, core', [
+      'Sentado, tronco inclinado para trás, pés no chão (ou suspensos para dificultar).',
+      'Gire o tronco levando as mãos (ou a anilha) de um lado ao outro.',
+      'O movimento vem do tronco, não só dos braços. Conte cada lado como 1 repetição.',
+    ]),
+    abdominal_bicicleta: E('Abdominal bicicleta', ['abdominal_bicicleta'], 'none', 'Oblíquos, reto abdominal', [
+      'Deitado, mãos atrás da cabeça sem puxar o pescoço.',
+      'Leve o cotovelo em direção ao joelho oposto enquanto estende a outra perna.',
+      'Alterne devagar e controlado; cada lado conta 1.',
+    ]),
+    v_up: E('Abdominal canivete (V-up)', ['v_up'], 'none', 'Reto abdominal, flexores do quadril', [
+      'Deitado com braços acima da cabeça e pernas estendidas.',
+      'Suba tronco e pernas ao mesmo tempo e toque os pés.',
+      'Desça controlando. Mais fácil: dobre os joelhos.',
+    ]),
+    shoulder_taps: E('Prancha com toque no ombro', ['shoulder_taps'], 'none', 'Core (anti-rotação), ombros', [
+      'Prancha alta com os pés um pouco afastados.',
+      'Toque o ombro oposto com uma mão sem balançar o quadril.',
+      'Alterne os lados; cada toque conta 1.',
+    ]),
+    pallof_press: E('Pallof press', ['pallof_press'], 'bw', 'Core (anti-rotação), oblíquos', [
+      'De lado para a polia (ou elástico) na altura do peito.',
+      'Empurre as mãos à frente e segure 2 s sem deixar o tronco girar.',
+      'Volte as mãos ao peito. Faça os dois lados.',
+    ], SIDE),
+    elevacao_joelhos_paralela: E('Elevação de joelhos na paralela (cadeira do capitão)', ['elevacao_joelhos_paralela'], 'none', 'Abdômen inferior, flexores do quadril', [
+      'Antebraços nos apoios, costas no encosto.',
+      'Eleve os joelhos até acima do quadril, enrolando levemente a pelve.',
+      'Desça devagar sem balançar.',
+    ]),
+    flutter_kicks: E('Flutter kicks (tesoura alternada)', ['flutter_kicks'], 'none', 'Abdômen inferior, flexores do quadril', [
+      'Deitado, mãos sob o quadril, lombar no chão.',
+      'Pernas estendidas a um palmo do chão, alterne pequenas batidas para cima e para baixo.',
+    ], T),
+
+    // ---- mobilidade e alongamento
+    gato_vaca: E('Gato-vaca', ['gato_vaca'], 'none', 'Mobilidade da coluna', [
+      'Quatro apoios. Expire arredondando as costas (gato), queixo ao peito.',
+      'Inspire afundando a coluna e olhando à frente (vaca).',
+      'Movimento lento, sem forçar.',
+    ]),
+    crianca: E('Postura da criança', ['crianca'], 'none', 'Lombar, dorsais, quadril (alongamento)', [
+      'Ajoelhado, sente sobre os calcanhares e leve o tronco à frente.',
+      'Braços estendidos no chão, testa apoiada. Respire fundo.',
+    ], T),
+    cobra: E('Cobra (extensão da coluna)', ['cobra'], 'none', 'Abdômen e flexores do quadril (alongamento), coluna', [
+      'Deitado de barriga para baixo, mãos sob os ombros.',
+      'Empurre o chão erguendo o peito, quadril apoiado.',
+      'Suba só até onde for confortável para a lombar.',
+    ], T),
+    alongamento_posterior: E('Alongamento de posterior (em pé)', ['alongamento_posterior'], 'none', 'Posterior de coxa, panturrilhas', [
+      'Pés na largura do quadril, joelhos levemente flexionados.',
+      'Dobre o quadril levando as mãos em direção aos pés, coluna relaxada.',
+      'Respire e solte um pouco mais a cada expiração. Sem balançar.',
+    ], T),
+    alongamento_quadriceps: E('Alongamento de quadríceps (em pé)', ['alongamento_quadriceps'], 'none', 'Quadríceps, flexores do quadril', [
+      'Segure o tornozelo atrás do corpo, joelhos juntos.',
+      'Leve o quadril levemente à frente e contraia o glúteo.',
+      'Apoie a outra mão na parede para o equilíbrio.',
+    ], Object.assign({}, T, LEG)),
+    alongamento_flexor: E('Alongamento do flexor do quadril (meio ajoelhado)', ['alongamento_flexor'], 'none', 'Flexores do quadril, quadríceps', [
+      'Um joelho no chão, o outro pé à frente.',
+      'Contraia o glúteo de trás e leve o quadril à frente; braços para cima intensificam.',
+      'Ótimo para quem passa o dia sentado.',
+    ], Object.assign({}, T, LEG)),
+    alongamento_peitoral: E('Alongamento de peitoral (na parede/batente)', ['alongamento_peitoral'], 'none', 'Peitoral, deltoide anterior', [
+      'Braço estendido para trás apoiado numa coluna ou batente, na altura do ombro.',
+      'Gire o tronco para o lado oposto até sentir o peito alongar.',
+    ], Object.assign({}, T, SIDE)),
+    agachamento_profundo: E('Agachamento profundo (sustentado)', ['agachamento_profundo'], 'none', 'Mobilidade de quadril e tornozelo', [
+      'Desça ao agachamento mais fundo possível com os calcanhares no chão.',
+      'Cotovelos por dentro dos joelhos empurrando-os para fora, peito alto.',
+      'Segure respirando. Calcanhar sobe? Use um apoio leve sob ele.',
+    ], T),
+    rotacao_toracica: E('Rotação torácica em quatro apoios', ['rotacao_toracica'], 'none', 'Mobilidade da coluna torácica, ombros', [
+      'Quatro apoios, uma mão atrás da cabeça.',
+      'Leve o cotovelo ao braço de apoio e depois gire abrindo o cotovelo para o teto.',
+      'Siga o cotovelo com o olhar. Quadril parado.',
+    ], SIDE),
+    mobilidade_tornozelo: E('Mobilidade de tornozelo (joelho à parede)', ['mobilidade_tornozelo'], 'none', 'Mobilidade de tornozelo, panturrilha', [
+      'Meio ajoelhado de frente para a parede, pé da frente a ~10 cm dela.',
+      'Leve o joelho à frente até tocar a parede sem tirar o calcanhar do chão.',
+      'Ficou fácil? Afaste um pouco o pé da parede.',
+    ], LEG),
+
+    // ---- peso corporal
+    flexao_diamante: E('Flexão diamante', ['flexao_diamante'], 'bw', 'Tríceps, peitoral', [
+      'Mãos juntas sob o peito formando um diamante com indicadores e polegares.',
+      'Cotovelos rentes ao corpo durante a descida.',
+      'Difícil? Faça com os joelhos apoiados.',
+    ]),
+    flexao_inclinada: E('Flexão inclinada (mãos no banco)', ['flexao_inclinada'], 'bw', 'Peitoral, tríceps', [
+      'Mãos no banco ou degrau, corpo em linha reta.',
+      'Quanto mais alto o apoio, mais fácil: ótima progressão para a flexão no chão.',
+    ]),
+    flexao_joelhos: E('Flexão com joelhos apoiados', ['flexao_joelhos'], 'none', 'Peitoral, tríceps', [
+      'Joelhos no chão, corpo em linha reta dos joelhos à cabeça.',
+      'Desça o peito até perto do chão e empurre.',
+      'Quando fizer 3×15, passe para a flexão normal.',
+    ]),
+    pike_pushup: E('Flexão pike (ombros)', ['pike_pushup'], 'bw', 'Deltoides, tríceps', [
+      'Quadril alto formando um “V” invertido, mãos um pouco à frente dos ombros.',
+      'Dobre os cotovelos levando a cabeça à frente das mãos.',
+      'Pés num banco deixam mais difícil (próximo passo: parada de mão).',
+    ]),
+    remada_invertida: E('Remada invertida (barra baixa)', ['remada_invertida'], 'bw', 'Dorsais, romboides, bíceps', [
+      'Deitado sob uma barra baixa (Smith ou mesa firme), corpo reto, calcanhares no chão.',
+      'Puxe o peito até a barra juntando as escápulas.',
+      'Mais fácil: joelhos dobrados. Mais difícil: pés elevados.',
+    ]),
+    barra_supinada: E('Barra fixa supinada (chin-up)', ['barra_fixa'], 'bw', 'Dorsais, bíceps', [
+      'Palmas voltadas para você, mãos na largura dos ombros.',
+      'Puxe até o queixo passar a barra, levando o peito em direção a ela.',
+      'Desça até estender os braços. Recruta mais bíceps que a pronada.',
+    ], { type: 'max' }),
+    cadeira_isometrica: E('Cadeira isométrica (wall sit)', ['cadeira_isometrica'], 'none', 'Quadríceps, glúteos', [
+      'Costas na parede, desça até as coxas ficarem paralelas ao chão.',
+      'Joelhos sobre os tornozelos. Segure respirando.',
+    ], T),
+    good_morning: E('Good morning (bom dia)', ['good_morning'], 'load', 'Posterior de coxa, glúteos, lombar', [
+      'Barra no trapézio como no agachamento, joelhos levemente flexionados.',
+      'Empurre o quadril para trás inclinando o tronco com a coluna neutra.',
+      'Desça até sentir o posterior alongar e volte contraindo os glúteos.',
+    ], { safety: 'Carga bem menor que a do agachamento. Pare antes da lombar arredondar.' }),
+    flexao_nordica: E('Flexão nórdica', ['flexao_nordica'], 'bw', 'Posterior de coxa (excêntrico)', [
+      'Ajoelhado com os tornozelos presos (parceiro ou apoio).',
+      'Desça o corpo à frente o mais devagar possível, em linha reta do joelho à cabeça.',
+      'Amorteça com as mãos e volte. Reduz o risco de lesão do posterior.',
+    ], { safety: 'Comece com poucas repetições: causa muita dor muscular tardia.' }),
+    ponte_unilateral: E('Ponte de glúteo unilateral', ['ponte_unilateral'], 'bw', 'Glúteos, posterior de coxa', [
+      'Deitado, um pé no chão e a outra perna estendida.',
+      'Empurre pelo calcanhar e suba o quadril até alinhar ombros, quadril e joelho.',
+      'Segure 1 s sem deixar o quadril cair de lado.',
+    ], LEG),
+    agachamento_sumo: E('Agachamento sumô', ['agachamento_sumo'], 'bw', 'Glúteos, adutores, quadríceps', [
+      'Pés bem afastados e pontas para fora, halter ou kettlebell entre as pernas.',
+      'Desça com o tronco ereto empurrando os joelhos para fora.',
+      'Suba contraindo glúteos e parte interna das coxas.',
+    ]),
+
+    // ---- pernas e glúteos
+    afundo_reverso: E('Afundo reverso', ['afundo_reverso'], 'bw', 'Quadríceps, glúteos', [
+      'Dê um passo para trás e desça até o joelho de trás quase tocar o chão.',
+      'Empurre com a perna da frente para voltar.',
+      'Mais fácil para o joelho do que o afundo à frente.',
+    ], LEG),
+    afundo_lateral: E('Afundo lateral', ['afundo_lateral'], 'bw', 'Quadríceps, glúteos, adutores', [
+      'Pés bem afastados. Desça para um lado dobrando o joelho e empurrando o quadril para trás.',
+      'A outra perna fica estendida, pés apontando à frente.',
+      'Volte empurrando o chão e alterne.',
+    ], LEG),
+    passada_lateral: E('Passada lateral com elástico', ['passada_lateral'], 'none', 'Glúteo médio, quadril', [
+      'Mini band acima dos joelhos ou nos tornozelos, meio agachamento.',
+      'Passos laterais mantendo tensão no elástico, joelhos para fora.',
+      'Ótimo aquecimento para pernas e para a estabilidade do joelho.',
+    ], SIDE),
+    coice_quatro_apoios: E('Coice de glúteo em quatro apoios', ['coice_quatro_apoios'], 'bw', 'Glúteos', [
+      'Quatro apoios, joelho a 90°.',
+      'Eleve a perna empurrando a sola do pé para o teto, sem arquear a lombar.',
+      'Use caneleira ou elástico para progredir.',
+    ], LEG),
+    agachamento_cadeira: E('Agachamento na cadeira (sentar e levantar)', ['agachamento_cadeira'], 'bw', 'Quadríceps, glúteos', [
+      'Cadeira firme atrás de você, pés na largura do quadril.',
+      'Desça até encostar levemente o glúteo e suba sem usar as mãos.',
+      'Primeiro passo para o agachamento livre; ideal para iniciantes e idosos.',
+    ]),
+
+    // ---- membros superiores
+    remada_alta: E('Remada alta', ['remada_alta'], 'load', 'Deltoide lateral, trapézio', [
+      'Barra ou halteres à frente das coxas, pegada um pouco mais aberta que os ombros.',
+      'Puxe até a altura do peito levando os cotovelos para cima e para fora.',
+      'Não passe muito da altura dos ombros se sentir desconforto.',
+    ]),
+    elevacao_y: E('Elevação em Y (banco inclinado)', ['elevacao_y'], 'bw', 'Trapézio inferior, deltoides, manguito', [
+      'Peito apoiado num banco inclinado, halteres leves.',
+      'Eleve os braços estendidos formando um “Y”, polegares para cima.',
+      'Ótimo para postura e saúde do ombro. Carga bem leve.',
+    ]),
+    rosca_inversa: E('Rosca inversa (pegada pronada)', ['rosca_direta'], 'load', 'Braquiorradial, antebraço, bíceps', [
+      'Pegada por cima (palmas para baixo) na barra.',
+      'Suba sem mover os cotovelos e desça devagar.',
+      'Fortalece antebraço e pegada.',
+    ]),
+  });
+
   Object.assign(EXTRA.flexao, { load: 'bw' });
   EXERCISES.afundo.load = 'bw';
   Object.assign(EXERCISES, EXTRA);
@@ -464,6 +781,69 @@
     rosca_cabo: ['biceps', [], ['cabo'], 'iniciante', [3, 12, 15, 45]],
     triceps_coice: ['triceps', [], ['halteres', 'banco'], 'iniciante', [3, 12, 15, 45]],
     abdominal_polia: ['core', [], ['cabo'], 'iniciante', [3, 10, 15, 45]],
+  });
+
+  Object.assign(META, {
+    bike_ergometrica: ['cardio', ['quadriceps'], ['bicicleta'], 'iniciante', [1, 1200, 1800, 60]],
+    eliptico: ['cardio', [], ['eliptico'], 'iniciante', [1, 1200, 1800, 60]],
+    remo_ergometro: ['cardio', ['costas'], ['remo'], 'iniciante', [1, 600, 1200, 60]],
+    escada: ['cardio', ['gluteos'], ['simulador_escada'], 'intermediario', [1, 600, 1200, 60]],
+    caminhada_inclinada: ['cardio', ['gluteos'], ['esteira'], 'iniciante', [1, 1200, 2400, 60]],
+    step_aerobico: ['cardio', ['quadriceps'], ['step'], 'iniciante', [3, 180, 300, 60]],
+    marcha_estacionaria: ['cardio', [], ['peso_corporal'], 'iniciante', [3, 60, 120, 30]],
+    skipping: ['cardio', ['quadriceps'], ['peso_corporal'], 'iniciante', [4, 30, 40, 30]],
+    afundo_salto: ['potencia', ['quadriceps', 'gluteos'], ['peso_corporal'], 'intermediario', [3, 6, 10, 60]],
+    agachamento_salto: ['potencia', ['quadriceps', 'gluteos'], ['peso_corporal'], 'iniciante', [4, 8, 12, 60]],
+    sprawl: ['cardio', ['core'], ['peso_corporal'], 'iniciante', [4, 8, 12, 45]],
+    corda_naval: ['cardio', ['ombros', 'core'], ['corda_naval'], 'intermediario', [5, 20, 30, 40]],
+    bear_crawl: ['core', ['ombros', 'quadriceps'], ['peso_corporal'], 'iniciante', [4, 20, 30, 40]],
+    boxe_sombra: ['cardio', ['ombros'], ['peso_corporal'], 'iniciante', [3, 120, 180, 30]],
+    treno: ['cardio', ['quadriceps', 'gluteos'], ['treno'], 'intermediario', [4, 20, 30, 90]],
+    wall_ball: ['cardio', ['quadriceps', 'ombros'], ['medicine_ball'], 'intermediario', [4, 12, 20, 60]],
+    slam_ball: ['cardio', ['core', 'costas'], ['medicine_ball'], 'iniciante', [4, 10, 15, 45]],
+    thruster: ['quadriceps', ['ombros', 'gluteos'], ['halteres', 'barra'], 'intermediario', [4, 8, 12, 90]],
+    kettlebell_clean: ['gluteos', ['posterior', 'ombros'], ['kettlebell'], 'intermediario', [4, 6, 10, 75]],
+    kettlebell_press: ['ombros', ['triceps', 'core'], ['kettlebell'], 'intermediario', [3, 6, 10, 75]],
+    suitcase_carry: ['core', ['antebraco'], ['halteres', 'kettlebell'], 'iniciante', [3, 20, 30, 60]],
+    dead_bug: ['core', [], ['peso_corporal'], 'iniciante', [3, 8, 12, 45]],
+    bird_dog: ['core', ['gluteos'], ['peso_corporal'], 'iniciante', [3, 8, 12, 45]],
+    hollow_hold: ['core', [], ['peso_corporal'], 'intermediario', [3, 20, 40, 45]],
+    russian_twist: ['core', [], ['peso_corporal'], 'iniciante', [3, 16, 24, 45]],
+    abdominal_bicicleta: ['core', [], ['peso_corporal'], 'iniciante', [3, 20, 30, 45]],
+    v_up: ['core', [], ['peso_corporal'], 'intermediario', [3, 10, 15, 45]],
+    shoulder_taps: ['core', ['ombros'], ['peso_corporal'], 'iniciante', [3, 16, 24, 45]],
+    pallof_press: ['core', [], ['cabo', 'elastico'], 'iniciante', [3, 10, 12, 45]],
+    elevacao_joelhos_paralela: ['core', [], ['maquina', 'paralelas'], 'iniciante', [3, 10, 15, 45]],
+    flutter_kicks: ['core', [], ['peso_corporal'], 'iniciante', [3, 20, 40, 30]],
+    gato_vaca: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 8, 10, 15]],
+    crianca: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 30, 60, 15]],
+    cobra: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 20, 30, 15]],
+    alongamento_posterior: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 30, 45, 15]],
+    alongamento_quadriceps: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 30, 45, 15]],
+    alongamento_flexor: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 30, 45, 15]],
+    alongamento_peitoral: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 30, 45, 15]],
+    agachamento_profundo: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 30, 60, 20]],
+    rotacao_toracica: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 8, 10, 15]],
+    mobilidade_tornozelo: ['mobilidade', [], ['peso_corporal'], 'iniciante', [2, 10, 12, 15]],
+    flexao_diamante: ['triceps', ['peito'], ['peso_corporal'], 'intermediario', [3, 8, 15, 60]],
+    flexao_inclinada: ['peito', ['triceps'], ['peso_corporal', 'banco'], 'iniciante', [3, 10, 15, 60]],
+    flexao_joelhos: ['peito', ['triceps'], ['peso_corporal'], 'iniciante', [3, 8, 15, 60]],
+    pike_pushup: ['ombros', ['triceps'], ['peso_corporal'], 'intermediario', [3, 6, 12, 90]],
+    remada_invertida: ['costas', ['biceps'], ['peso_corporal', 'barra'], 'iniciante', [3, 8, 12, 60]],
+    barra_supinada: ['costas', ['biceps'], ['barra_fixa'], 'intermediario', [4, 0, 0, 120]],
+    cadeira_isometrica: ['quadriceps', ['gluteos'], ['peso_corporal'], 'iniciante', [3, 30, 60, 45]],
+    good_morning: ['posterior', ['gluteos', 'costas'], ['barra'], 'intermediario', [3, 8, 12, 90]],
+    flexao_nordica: ['posterior', [], ['peso_corporal'], 'avancado', [3, 4, 8, 120]],
+    ponte_unilateral: ['gluteos', ['posterior'], ['peso_corporal'], 'iniciante', [3, 10, 15, 45]],
+    agachamento_sumo: ['gluteos', ['quadriceps'], ['halteres', 'kettlebell'], 'iniciante', [3, 10, 15, 75]],
+    afundo_reverso: ['quadriceps', ['gluteos'], ['peso_corporal', 'halteres'], 'iniciante', [3, 8, 12, 75]],
+    afundo_lateral: ['quadriceps', ['gluteos'], ['peso_corporal', 'halteres'], 'iniciante', [3, 8, 12, 60]],
+    passada_lateral: ['gluteos', [], ['elastico'], 'iniciante', [3, 12, 15, 45]],
+    coice_quatro_apoios: ['gluteos', ['posterior'], ['peso_corporal', 'elastico'], 'iniciante', [3, 12, 20, 45]],
+    agachamento_cadeira: ['quadriceps', ['gluteos'], ['peso_corporal'], 'iniciante', [3, 10, 15, 60]],
+    remada_alta: ['ombros', ['costas'], ['barra', 'halteres'], 'iniciante', [3, 10, 12, 60]],
+    elevacao_y: ['ombros', ['costas'], ['halteres', 'banco'], 'iniciante', [3, 10, 15, 45]],
+    rosca_inversa: ['antebraco', ['biceps'], ['barra'], 'iniciante', [3, 10, 15, 60]],
   });
 
   for (const [id, m] of Object.entries(META)) {
@@ -814,7 +1194,7 @@
         day('cal', 'b', 'Empurrar A', 'Paralelas', [
           ['paralelas', 5, 8, 12, 120], ['flexao', 4, 10, 20, 60], ['mergulho_banco', 3, 12, 15, 60], ['prancha_lateral', 3, 30, 45, 30]]),
         day('cal', 'c', 'Pernas', 'Unilateral', [
-          ['bulgaro', 4, 8, 12, 90, 'Sem barra ou com mochila'], ['step_up', 3, 10, 12, 60], ['ponte_gluteo', 3, 15, 20, 45], ['panturrilha_pe', 4, 15, 20, 45], ['agachamento_livre', 2, 20, 25, 60]]),
+          ['afundo_reverso', 4, 8, 12, 90, 'Com mochila para progredir'], ['step_up', 3, 10, 12, 60], ['ponte_gluteo', 3, 15, 20, 45], ['panturrilha_pe', 4, 15, 20, 45], ['agachamento_livre', 2, 20, 25, 60]]),
         day('cal', 'd', 'Corpo todo', 'Volume', [
           ['barra_fixa', 3, 0, 0, 90], ['paralelas', 3, 8, 12, 90], ['burpee', 3, 10, 12, 60], ['mountain_climber', 3, 30, 40, 30], ['abdominal_infra', 3, 12, 15, 45]]),
       ],
@@ -844,6 +1224,178 @@
           ['cadeira_extensora', 2, 12, 15, 60], ['cadeira_flexora', 2, 12, 15, 60], ['puxada_alta', 3, 10, 15, 90], ['desenvolvimento_maquina', 2, 10, 15, 90], ['face_pull', 2, 15, 15, 45]]),
         day('bi', 'c', 'Treino C', 'Corpo todo + cardio', [
           ['step_up', 2, 10, 12, 60, 'Degrau baixo'], ['remada_maquina', 3, 10, 15, 90], ['voador', 2, 12, 15, 60], ['cadeira_adutora', 2, 12, 15, 45], ['esteira', 1, 0, 0, 60, 'Caminhada inclinada em vez de tiros, se preferir']]),
+      ],
+    },
+    // ------------------------------------------------------------- EMAGRECIMENTO, HIIT, FUNCIONAL E MOBILIDADE
+    {
+      id: 'emag2', focus: 'emagrecimento', name: 'Primeiros passos – emagrecer (2 dias)', short: 'Emagrecer 2x', level: 'iniciante', daysPerWeek: 2,
+      place: 'academia', goal: 'perder gordura, criar o hábito',
+      description: 'Para quem está saindo do sedentarismo: máquinas fáceis de aprender + cardio de baixo impacto. Nos outros dias, caminhe 30–40 min. O que mais emagrece é o déficit calórico; o treino preserva a massa muscular.',
+      days: [
+        day('em2', 'a', 'Treino A', 'Corpo todo + bike', [
+          ['agachamento_cadeira', 3, 10, 15, 60], ['supino_maquina', 3, 10, 15, 60], ['puxada_alta', 3, 10, 15, 60], ['ponte_gluteo', 2, 12, 15, 45],
+          ['dead_bug', 2, 8, 10, 30], ['bike_ergometrica', 1, 900, 1200, 0, 'Ritmo em que dá para conversar']]),
+        day('em2', 'b', 'Treino B', 'Corpo todo + caminhada', [
+          ['leg_press', 3, 10, 15, 60], ['remada_maquina', 3, 10, 15, 60], ['desenvolvimento_maquina', 2, 10, 15, 60], ['cadeira_flexora', 2, 12, 15, 45],
+          ['prancha', 2, 20, 30, 30], ['caminhada_inclinada', 1, 900, 1200, 0, 'Inclinação 6–10%']]),
+      ],
+    },
+    {
+      id: 'emag3', focus: 'emagrecimento', name: 'Emagrecimento – academia (3 dias)', short: 'Emagrecer 3x', level: 'iniciante', daysPerWeek: 3,
+      place: 'academia', goal: 'perder gordura mantendo músculo',
+      description: 'Musculação de corpo todo com descanso curto + 20–30 min de cardio moderado no fim. Some 7–10 mil passos por dia, déficit moderado (~300–500 kcal) e proteína ~1,6–2,2 g/kg.',
+      days: [
+        day('em3', 'a', 'Treino A', 'Corpo todo + elíptico', [
+          ['leg_press', 3, 10, 15, 60], ['supino_halteres', 3, 10, 12, 60], ['remada_cabo', 3, 10, 12, 60], ['afundo_reverso', 2, 10, 12, 60],
+          ['abdominal_bicicleta', 3, 20, 20, 30], ['eliptico', 1, 1200, 1500, 0]]),
+        day('em3', 'b', 'Treino B', 'Corpo todo + bike', [
+          ['agachamento_goblet', 3, 10, 12, 60], ['puxada_alta', 3, 10, 12, 60], ['flexao_inclinada', 3, 10, 15, 45], ['stiff', 3, 10, 12, 60],
+          ['pallof_press', 2, 10, 12, 30], ['bike_ergometrica', 1, 1200, 1500, 0]]),
+        day('em3', 'c', 'Treino C', 'Corpo todo + caminhada inclinada', [
+          ['hack_squat', 3, 10, 12, 60], ['remada_maquina', 3, 10, 12, 60], ['desenvolvimento_halteres', 3, 10, 12, 60], ['elevacao_pelvica', 3, 10, 12, 60],
+          ['bird_dog', 2, 8, 10, 30], ['caminhada_inclinada', 1, 1200, 1800, 0]]),
+      ],
+    },
+    {
+      id: 'emag_casa3', focus: 'emagrecimento', name: 'Emagrecer em casa – sem equipamento (3 dias)', short: 'Emagrecer em casa', level: 'iniciante', daysPerWeek: 3,
+      place: 'casa', goal: 'perder gordura em casa',
+      description: 'Circuitos com o peso do corpo, sem impacto alto no começo. Faça 3–4 voltas; quando ficar fácil, passe para o HIIT em casa. Caminhar nos dias livres ajuda muito.',
+      days: [
+        day('ec3', 'a', 'Circuito A', 'Pernas + core', [
+          ['agachamento_cadeira', 3, 12, 15, 15], ['marcha_estacionaria', 3, 60, 60, 15], ['ponte_gluteo', 3, 15, 15, 15], ['flexao_inclinada', 3, 10, 12, 15],
+          ['dead_bug', 3, 8, 8, 15], ['polichinelo', 3, 30, 30, 15]], { mode: 'circuit', rounds: 3, roundRest: 90 }),
+        day('ec3', 'b', 'Circuito B', 'Corpo todo', [
+          ['afundo_reverso', 3, 8, 10, 15], ['flexao_joelhos', 3, 8, 12, 15], ['skipping', 3, 30, 30, 15], ['coice_quatro_apoios', 3, 12, 15, 15],
+          ['shoulder_taps', 3, 16, 16, 15], ['boxe_sombra', 3, 60, 60, 15]], { mode: 'circuit', rounds: 3, roundRest: 90 }),
+        day('ec3', 'c', 'Circuito C', 'Cardio + mobilidade', [
+          ['step_aerobico', 3, 120, 180, 15, 'Um degrau da escada serve'], ['agachamento_sumo', 3, 12, 15, 15, 'Sem peso ou com uma mochila'],
+          ['bird_dog', 3, 8, 8, 15], ['mountain_climber', 3, 20, 30, 15], ['crianca', 3, 30, 30, 15]], { mode: 'circuit', rounds: 3, roundRest: 90 }),
+      ],
+    },
+    {
+      id: 'emag4', focus: 'emagrecimento', name: 'Queima de gordura – força + HIIT (4 dias)', short: 'Queima 4x', level: 'intermediario', daysPerWeek: 4,
+      place: 'academia', goal: 'secar mantendo força',
+      description: 'Dois dias de força (mantém a massa magra no déficit) e dois dias metabólicos com máquinas de cardio e circuito. Faça o HIIT longe do treino de pernas pesado.',
+      days: [
+        day('eq4', 'f1', 'Força 1', 'Inferior + empurrar', [
+          ['agachamento', 4, 6, 8, 120], ['supino_reto', 4, 6, 8, 120], ['afundo_reverso', 3, 10, 10, 60], ['desenvolvimento_halteres', 3, 8, 10, 75],
+          ['hollow_hold', 3, 20, 30, 30]]),
+        day('eq4', 'h1', 'HIIT 1', 'Remo + circuito', [
+          ['remo_ergometro', 4, 60, 60, 20, '1 min forte (~250 m). Aqueça 5–10 min antes'], ['thruster', 4, 12, 12, 20], ['slam_ball', 4, 12, 12, 20],
+          ['agachamento_salto', 4, 10, 10, 20], ['corda_naval', 4, 30, 30, 20], ['sprawl', 4, 10, 10, 20]], { mode: 'circuit', rounds: 4, roundRest: 120 }),
+        day('eq4', 'f2', 'Força 2', 'Posterior + puxar', [
+          ['terra', 4, 4, 6, 150], ['barra_fixa', 4, 0, 0, 120], ['remada_curvada', 3, 8, 10, 90], ['elevacao_pelvica', 3, 10, 12, 75],
+          ['pallof_press', 3, 10, 12, 30]]),
+        day('eq4', 'h2', 'HIIT 2', 'Bike intervalada + core', [
+          ['bike_ergometrica', 1, 1200, 1200, 0, '10 × (30 s forte / 90 s leve)'], ['kettlebell_swing', 4, 15, 20, 45], ['v_up', 3, 10, 15, 30],
+          ['russian_twist', 3, 20, 24, 30]]),
+      ],
+    },
+    {
+      id: 'emag5', focus: 'emagrecimento', name: 'Emagrecimento 5 dias – musculação + cardio', short: 'Emagrecer 5x', level: 'intermediario', daysPerWeek: 5,
+      place: 'academia', goal: 'perder gordura com alto gasto semanal',
+      description: 'Superior/inferior 3x com descanso curto + 2 dias de cardio (um contínuo longo, um intervalado). Alto gasto de energia sem perder massa muscular. Durma bem e mantenha proteína alta.',
+      days: [
+        day('e5', 'u1', 'Superior', 'Descanso curto', [
+          ['supino_inclinado', 3, 8, 12, 60], ['puxada_alta', 3, 10, 12, 60], ['supino_maquina', 3, 10, 12, 60], ['remada_cabo', 3, 10, 12, 60],
+          ['elevacao_lateral', 3, 12, 15, 45], ['triceps_corda', 2, 12, 15, 45], ['rosca_martelo', 2, 12, 15, 45]]),
+        day('e5', 'z2', 'Cardio contínuo', 'Zona 2', [
+          ['caminhada_inclinada', 1, 2400, 2700, 0, '40–45 min, ritmo de conversa'], ['dead_bug', 3, 10, 10, 30], ['alongamento_flexor', 2, 30, 30, 15]]),
+        day('e5', 'l1', 'Inferior', 'Descanso curto', [
+          ['agachamento_smith', 4, 8, 12, 75], ['stiff', 3, 10, 12, 75], ['afundo_lateral', 3, 10, 10, 60], ['cadeira_flexora', 3, 12, 15, 45],
+          ['abdutora', 3, 15, 20, 30], ['panturrilha_pe', 3, 15, 20, 30]]),
+        day('e5', 'hi', 'Intervalado', 'Escada + metabólico', [
+          ['escada', 4, 120, 120, 20, '2 min forte. Aqueça 5 min antes'], ['wall_ball', 4, 15, 15, 20], ['treno', 4, 20, 20, 20], ['bear_crawl', 4, 20, 20, 20],
+          ['skipping', 4, 30, 30, 20]], { mode: 'circuit', rounds: 4, roundRest: 120 }),
+        day('e5', 'fb', 'Corpo todo', 'Força moderada', [
+          ['terra_trap', 3, 6, 8, 120], ['supino_halteres', 3, 8, 10, 75], ['remada_maquina', 3, 8, 10, 75], ['kettlebell_press', 3, 8, 10, 60],
+          ['suitcase_carry', 3, 20, 30, 45], ['elevacao_joelhos_paralela', 3, 12, 15, 30]]),
+      ],
+    },
+    {
+      id: 'hiit_casa4', focus: 'emagrecimento', name: 'HIIT em casa (4 dias)', short: 'HIIT em casa', level: 'intermediario', daysPerWeek: 4,
+      place: 'casa', goal: 'emagrecer e ganhar fôlego sem academia',
+      description: 'Circuitos intensos de 20–30 min só com o peso do corpo. Trabalhe forte nos exercícios e respeite os descansos entre as voltas. Alterne com caminhadas leves.',
+      days: [
+        day('hc4', 'a', 'HIIT A', 'Pernas explosivas', [
+          ['agachamento_salto', 4, 12, 12, 15], ['afundo_salto', 4, 8, 8, 15], ['mountain_climber', 4, 30, 30, 15], ['cadeira_isometrica', 4, 40, 40, 15],
+          ['skipping', 4, 30, 30, 15]], { mode: 'circuit', rounds: 4, roundRest: 90 }),
+        day('hc4', 'b', 'HIIT B', 'Superior + core', [
+          ['flexao', 4, 10, 15, 15], ['remada_invertida', 4, 8, 12, 15, 'Mesa firme ou barra baixa'], ['pike_pushup', 4, 8, 10, 15], ['shoulder_taps', 4, 20, 20, 15],
+          ['hollow_hold', 4, 20, 30, 15]], { mode: 'circuit', rounds: 4, roundRest: 90 }),
+        day('hc4', 'c', 'HIIT C', 'Corpo todo', [
+          ['burpee', 4, 10, 10, 15], ['sprawl', 4, 10, 10, 15], ['bear_crawl', 4, 20, 20, 15], ['polichinelo', 4, 40, 40, 15],
+          ['abdominal_bicicleta', 4, 20, 20, 15]], { mode: 'circuit', rounds: 4, roundRest: 90 }),
+        day('hc4', 'd', 'Força + mobilidade', 'Ritmo controlado', [
+          ['afundo_reverso', 3, 12, 12, 45], ['ponte_unilateral', 3, 12, 15, 30], ['flexao_diamante', 3, 8, 12, 45], ['v_up', 3, 10, 15, 30],
+          ['agachamento_profundo', 2, 45, 60, 15], ['alongamento_posterior', 2, 30, 45, 15]]),
+      ],
+    },
+    {
+      id: 'funcional3', focus: 'condicionamento', name: 'Funcional com kettlebell (3 dias)', short: 'Funcional KB', level: 'intermediario', daysPerWeek: 3,
+      place: 'halteres', goal: 'força funcional + fôlego',
+      description: 'Um ou dois kettlebells (ou halteres) para força, potência de quadril e condicionamento. Bom para treinar em casa ou em espaços pequenos.',
+      days: [
+        day('fk', 'a', 'Treino A', 'Swing + empurrar', [
+          ['kettlebell_swing', 5, 15, 20, 60], ['kettlebell_press', 4, 6, 10, 60], ['agachamento_goblet', 4, 8, 12, 75], ['flexao', 3, 10, 15, 60],
+          ['suitcase_carry', 3, 20, 30, 45]]),
+        day('fk', 'b', 'Treino B', 'Clean + puxar', [
+          ['kettlebell_clean', 4, 6, 8, 60], ['serrote', 4, 8, 12, 60], ['afundo_reverso', 3, 10, 12, 60], ['stiff', 3, 10, 12, 60, 'Com kettlebell'],
+          ['dead_bug', 3, 10, 10, 30]]),
+        day('fk', 'c', 'Treino C', 'Circuito metabólico', [
+          ['kettlebell_swing', 4, 15, 15, 15], ['thruster', 4, 10, 10, 15, 'Com kettlebells ou halteres'], ['remada_invertida', 4, 10, 10, 15],
+          ['agachamento_sumo', 4, 15, 15, 15], ['mountain_climber', 4, 30, 30, 15]], { mode: 'circuit', rounds: 4, roundRest: 90 }),
+      ],
+    },
+    {
+      id: 'metcon5', focus: 'condicionamento', exact: true, name: 'Condicionamento atlético avançado (5 dias)', short: 'Atlético 5x', level: 'avancado', daysPerWeek: 5,
+      place: 'academia', goal: 'força, potência e fôlego de atleta',
+      description: 'Força pesada no começo do treino e um bloco metabólico curto e muito intenso no fim, com trenó, remo, wall ball e corda naval. Exige boa técnica e recuperação; 1 dia de mobilidade fecha a semana.',
+      days: [
+        day('mc', 'd1', 'Dia 1', 'Agachamento + metcon', [
+          ['agachamento', 5, 3, 5, 180], ['agachamento_frontal', 3, 5, 6, 150], ['thruster', 5, 10, 10, 15], ['remo_ergometro', 5, 60, 60, 15, '250 m forte'],
+          ['agachamento_salto', 5, 10, 10, 15]]),
+        day('mc', 'd2', 'Dia 2', 'Empurrar + puxar', [
+          ['supino_reto', 5, 3, 5, 180], ['barra_carga', 5, 3, 5, 150], ['desenvolvimento', 4, 5, 6, 120], ['remada_curvada', 4, 6, 8, 90],
+          ['corda_naval', 6, 30, 30, 30], ['hollow_hold', 3, 30, 45, 30]]),
+        day('mc', 'd3', 'Dia 3', 'Posterior + trenó', [
+          ['terra', 5, 3, 5, 210], ['good_morning', 3, 8, 10, 90], ['flexao_nordica', 3, 4, 6, 90], ['treno', 6, 20, 20, 60],
+          ['kettlebell_swing', 4, 20, 20, 45]]),
+        day('mc', 'd4', 'Dia 4', 'Potência + metcon', [
+          ['salto_caixote', 5, 3, 5, 90], ['kettlebell_clean', 4, 5, 5, 60], ['wall_ball', 5, 20, 20, 15], ['slam_ball', 5, 15, 15, 15],
+          ['burpee', 5, 12, 12, 15], ['escada', 1, 600, 600, 0]]),
+        day('mc', 'd5', 'Dia 5', 'Mobilidade + cardio zona 2', [
+          ['bike_ergometrica', 1, 1800, 2400, 60, 'Leve: ajuda a recuperar'], ['gato_vaca', 2, 10, 10, 15], ['rotacao_toracica', 2, 8, 8, 15],
+          ['alongamento_flexor', 2, 45, 45, 15], ['mobilidade_tornozelo', 2, 12, 12, 15], ['agachamento_profundo', 2, 60, 60, 15]]),
+      ],
+    },
+    {
+      id: 'mobilidade3', focus: 'mobilidade', name: 'Mobilidade e postura (3 dias)', short: 'Mobilidade 3x', level: 'iniciante', daysPerWeek: 3,
+      place: 'casa', goal: 'flexibilidade, postura, menos dor',
+      description: 'Sessões de 20–25 min para quem passa o dia sentado: quadril, coluna torácica, tornozelo e ombros, com core e glúteos. Pode ser feito nos dias sem musculação ou depois dela.',
+      days: [
+        day('mb', 'a', 'Sessão A', 'Coluna + quadril', [
+          ['gato_vaca', 2, 10, 10, 15], ['rotacao_toracica', 2, 8, 8, 15], ['alongamento_flexor', 2, 30, 45, 15], ['ponte_gluteo', 3, 12, 15, 30],
+          ['bird_dog', 2, 8, 10, 15], ['crianca', 2, 45, 60, 15]]),
+        day('mb', 'b', 'Sessão B', 'Pernas + tornozelo', [
+          ['mobilidade_tornozelo', 2, 10, 12, 15], ['agachamento_profundo', 3, 30, 45, 15], ['alongamento_posterior', 2, 30, 45, 15],
+          ['alongamento_quadriceps', 2, 30, 45, 15], ['passada_lateral', 2, 12, 15, 30], ['dead_bug', 2, 8, 10, 15]]),
+        day('mb', 'c', 'Sessão C', 'Ombros + postura', [
+          ['alongamento_peitoral', 2, 30, 45, 15], ['elevacao_y', 3, 10, 12, 30, 'Sem peso ou com garrafinhas'], ['cobra', 2, 20, 30, 15],
+          ['rotacao_toracica', 2, 8, 8, 15], ['hollow_hold', 2, 15, 25, 30], ['crianca', 2, 45, 60, 15]]),
+      ],
+    },
+    {
+      id: 'mob_core2', focus: 'mobilidade', name: 'Mobilidade + core (2 dias)', short: 'Mobilidade + core', level: 'iniciante', daysPerWeek: 2,
+      place: 'casa', goal: 'complemento: lombar, core e flexibilidade',
+      description: 'Complemento curto (15–20 min) para somar a qualquer programa: core anti-rotação e anti-extensão, que protege a lombar, e mobilidade de quadril e coluna.',
+      days: [
+        day('mc2', 'a', 'Sessão A', 'Core + quadril', [
+          ['dead_bug', 3, 8, 10, 30], ['bird_dog', 3, 8, 10, 30], ['prancha_lateral', 2, 20, 30, 30], ['alongamento_flexor', 2, 30, 45, 15],
+          ['agachamento_profundo', 2, 30, 45, 15]]),
+        day('mc2', 'b', 'Sessão B', 'Core + coluna', [
+          ['hollow_hold', 3, 20, 30, 30], ['shoulder_taps', 3, 16, 20, 30], ['gato_vaca', 2, 10, 10, 15], ['rotacao_toracica', 2, 8, 8, 15],
+          ['cobra', 2, 20, 30, 15], ['crianca', 2, 45, 60, 15]]),
       ],
     },
     TOJI,
@@ -1270,7 +1822,7 @@
         day('ca', 'pl', 'Puxar', 'Costas e bíceps', [
           ['barra_fixa', 5, 0, 0, 120], ['elevacao_pernas', 4, 10, 15, 60], ['hiperextensao', 3, 15, 20, 45], ['prancha_lateral', 3, 45, 45, 30]]),
         day('ca', 'lg', 'Pernas', 'Unilateral', [
-          ['bulgaro', 4, 12, 15, 60], ['step_up', 4, 12, 15, 60], ['ponte_gluteo', 4, 20, 25, 45], ['panturrilha_pe', 4, 20, 25, 45]]),
+          ['afundo_reverso', 4, 12, 15, 60, 'Com mochila pesada'], ['step_up', 4, 12, 15, 60], ['ponte_gluteo', 4, 20, 25, 45], ['panturrilha_pe', 4, 20, 25, 45]]),
         day('ca', 'mc', 'Metcon', 'Circuito', [
           ['burpee', 5, 12, 12, 15], ['agachamento_livre', 5, 25, 25, 15], ['flexao', 5, 15, 15, 15], ['mountain_climber', 5, 40, 40, 15]],
           { mode: 'circuit', rounds: 5, roundRest: 90 }),
@@ -1356,10 +1908,10 @@
     {
       id: 'condicionamento', focus: 'condicionamento', name: 'Condicionamento em circuito (3 dias)', short: 'Circuito', level: 'iniciante', daysPerWeek: 3,
       place: 'casa', goal: 'condicionamento / gasto calórico',
-      description: 'Circuitos curtos e intensos. Combine com alimentação adequada se o objetivo for emagrecer. Kettlebell opcional (troque por agachamento).',
+      description: 'Circuitos curtos e intensos. Combine com alimentação adequada se o objetivo for emagrecer. Sem equipamento.',
       days: [
         day('cond', 'a', 'Circuito A', 'Corpo todo', [
-          ['kettlebell_swing', 4, 15, 15, 15], ['flexao', 4, 10, 10, 15], ['agachamento_livre', 4, 20, 20, 15],
+          ['agachamento_salto', 4, 12, 12, 15], ['flexao', 4, 10, 10, 15], ['agachamento_livre', 4, 20, 20, 15],
           ['mountain_climber', 4, 30, 30, 15], ['prancha', 4, 30, 30, 15]], { mode: 'circuit', rounds: 4, roundRest: 90 }),
         day('cond', 'b', 'Circuito B', 'Cardio + core', [
           ['burpee', 4, 10, 10, 15], ['polichinelo', 4, 40, 40, 15], ['afundo', 4, 12, 12, 15],
@@ -1423,6 +1975,24 @@
   // ------------------------------------------------------------- guia
 
   const GUIDE = [
+    {
+      title: 'Emagrecer (perder gordura)',
+      body: [
+        'Quem decide a perda de gordura é o déficit calórico: coma ~300–500 kcal abaixo do que gasta (perda de ~0,5–1% do peso por semana).',
+        'Mantenha a musculação 2–4x por semana: no déficit, ela é o que segura a massa muscular (e o metabolismo).',
+        'Proteína alta (~1,6–2,2 g/kg) e sono de 7–9 h ajudam a perder gordura e não músculo.',
+        'Cardio soma gasto: 150–300 min/semana moderado (ou 75–150 min intenso). Caminhada inclinada, bike e elíptico quase não atrapalham a recuperação.',
+        'HIIT economiza tempo, mas cansa muito: 1–2 sessões por semana bastam. Passos no dia a dia (7–10 mil) fazem muita diferença.',
+      ],
+    },
+    {
+      title: 'Mobilidade e alongamento',
+      body: [
+        'Antes do treino: mobilidade dinâmica (gato-vaca, rotação torácica, agachamento profundo), 5–10 min.',
+        'Alongamento estático longo (30–60 s) fica melhor depois do treino ou em outro horário.',
+        'Ganhar amplitude leva semanas: faça 2–3x por semana, sem forçar até a dor.',
+      ],
+    },
     {
       title: 'Quantas séries por semana?',
       body: [
@@ -1511,6 +2081,8 @@
   ];
 
   const SOURCES = [
+    'Willis et al. (2012). Effects of aerobic and/or resistance training on body mass and fat mass in overweight or obese adults. J Appl Physiol.',
+    'Donnelly et al. – ACSM (2009). Appropriate physical activity intervention strategies for weight loss and prevention of weight regain. Med Sci Sports Exerc.',
     'Schoenfeld, Ogborn & Krieger (2017). Dose-response relationship between weekly resistance training volume and increases in muscle mass. J Sports Sci.',
     'American College of Sports Medicine (2009). Progression models in resistance training for healthy adults. Med Sci Sports Exerc. pubmed.ncbi.nlm.nih.gov/19204579',
     'Garber et al. – ACSM (2011). Quantity and quality of exercise for developing and maintaining fitness.',
@@ -1524,13 +2096,34 @@
   /** Sugere um programa a partir das respostas do questionário. */
   function recommend(answers) {
     const { days, level, place, goal } = answers;
+    if (goal === 'mobilidade') return days <= 2 ? 'mob_core2' : 'mobilidade3';
+    if (goal === 'emagrecer') {
+      if (place !== 'academia') return days >= 4 && level !== 'iniciante' ? 'hiit_casa4' : 'emag_casa3';
+      if (days <= 2) return 'emag2';
+      if (days === 3) return 'emag3';
+      if (days === 4) return level === 'iniciante' ? 'emag3' : 'emag4';
+      return level === 'iniciante' ? 'emag3' : 'emag5';
+    }
+    // Iniciante: sempre um programa de iniciante (3 dias rendem mais que 5–6 no começo).
+    if (level === 'iniciante') {
+      if (place !== 'academia') return goal === 'condicionamento' ? 'condicionamento' : (place === 'casa' ? 'casa' : 'halteres');
+      if (days <= 2) return 'minimal2';
+      if (goal === 'condicionamento') return 'baixoimpacto';
+      return goal === 'forca' ? 'forca5x5' : 'fullbody3';
+    }
     if (place === 'casa') {
       if (goal === 'condicionamento') return 'condicionamento';
       return days >= 4 && level !== 'iniciante' ? 'calistenia' : 'casa';
     }
-    if (place === 'halteres') return days >= 4 ? 'halteres4' : 'halteres';
+    if (place === 'halteres') {
+      if (goal === 'condicionamento' && days === 3 && level !== 'iniciante') return 'funcional3';
+      return days >= 4 ? 'halteres4' : 'halteres';
+    }
     if (days <= 2) return 'minimal2';
-    if (goal === 'condicionamento') return 'condicionamento';
+    if (goal === 'condicionamento') {
+      if (level === 'iniciante') return 'baixoimpacto';
+      return days >= 5 && level === 'avancado' ? 'metcon5' : (days === 4 ? 'hib_cond' : 'condicionamento');
+    }
     if (goal === 'forca') {
       if (days <= 3) return level === 'avancado' ? 'esp_agacho' : 'forca5x5';
       if (days === 4) return level === 'iniciante' ? 'upperlower' : (level === 'avancado' ? 'powerlifting' : 'phul');
@@ -1544,16 +2137,21 @@
     return level === 'avancado' ? 'split6' : (level === 'intermediario' ? 'ppl' : 'upperlower');
   }
 
-  const GOAL_FOCUS = { hipertrofia: 'massa', forca: 'forca', condicionamento: 'condicionamento' };
+  const GOAL_FOCUS = { hipertrofia: 'massa', forca: 'forca', emagrecer: 'emagrecimento', condicionamento: 'condicionamento', mobilidade: 'mobilidade' };
+  /** Objetivos que não são só musculação: o foco do programa precisa bater em qualquer local. */
+  const STRICT_GOALS = ['emagrecer', 'condicionamento', 'mobilidade'];
 
-  /** Um programa atende às respostas? (null = qualquer). Em casa, o objetivo só filtra condicionamento. */
+  /** Um programa atende às respostas? (null = qualquer). Emagrecer, condicionamento e mobilidade sempre exigem o foco certo;
+   * em casa, massa/força aceitam programas de casa, mas nunca de emagrecimento ou mobilidade. */
   function matches(p, a) {
     if (a.days && p.daysPerWeek !== a.days) return false;
     if (a.level && p.level !== a.level) return false;
-    if (a.place && p.place !== a.place) return false;
+    // mobilidade se faz em qualquer lugar: o local não exclui programas de mobilidade
+    if (a.place && p.place !== a.place && !(a.goal === 'mobilidade' && p.focus === 'mobilidade')) return false;
     if (a.goal) {
       const f = GOAL_FOCUS[a.goal];
-      if (p.place === 'academia' || a.goal === 'condicionamento') { if (p.focus !== f) return false; }
+      if (p.place === 'academia' || STRICT_GOALS.includes(a.goal)) { if (p.focus !== f) return false; }
+      else if (p.focus === 'emagrecimento' || p.focus === 'mobilidade') return false;
     }
     return true;
   }
@@ -1563,13 +2161,15 @@
   /** Proximidade quando nada atende tudo: local > dias > experiência > objetivo. */
   function closeness(p, a) {
     let sc = 0;
-    if (a.place) sc += p.place === a.place ? 20 : (a.place === 'halteres' && p.place === 'casa' ? 8 : 0);
+    const anyPlace = a.goal === 'mobilidade' && p.focus === 'mobilidade';
+    if (a.place) sc += p.place === a.place || anyPlace ? 20 : (a.place === 'halteres' && p.place === 'casa' ? 8 : 0);
     if (a.days) sc += 10 - 4 * Math.abs(p.daysPerWeek - a.days);
-    if (a.level) {
+    if (a.level && anyPlace) sc += 6; // mobilidade serve para qualquer nível
+    else if (a.level) {
       const d = LEVEL_N[p.level] - LEVEL_N[a.level];
       sc += d === 0 ? 6 : d === -1 ? 3 : d === 1 ? -2 : -12; // nunca empurra avançado para iniciante
     }
-    if (a.goal) sc += p.focus === GOAL_FOCUS[a.goal] || (p.place !== 'academia' && a.goal !== 'condicionamento') ? 5 : 0;
+    if (a.goal) sc += p.focus === GOAL_FOCUS[a.goal] ? (a.goal === 'emagrecer' || a.goal === 'mobilidade' ? 20 : 8) : (p.place !== 'academia' && !STRICT_GOALS.includes(a.goal) && p.focus === 'casa') ? 5 : 0;
     return sc;
   }
 
@@ -1586,9 +2186,9 @@
     return { best: near[0], approx: true, others: near.slice(1) };
   }
 
-  const FOCUS = { massa: 'Massa muscular', forca: 'Força', casa: 'Casa/halteres', condicionamento: 'Condicionamento' };
+  const FOCUS = { massa: 'Massa muscular', forca: 'Força', casa: 'Casa/halteres', emagrecimento: 'Emagrecimento', condicionamento: 'Condicionamento', mobilidade: 'Mobilidade' };
 
-  const api = { GROUPS, EQUIP, PROGRAMS, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, recommend, findPrograms, matches };
+  const api = { GROUPS, MUSCLES, EQUIP, PROGRAMS, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, recommend, findPrograms, matches };
   Object.assign(D, api);
   if (typeof module !== 'undefined' && module.exports) module.exports = D;
 })(typeof self !== 'undefined' ? self : this);
