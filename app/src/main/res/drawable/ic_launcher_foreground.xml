@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Barra com anilhas + corte diagonal (cicatriz). Área segura: círculo de 66dp no centro. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#C9A227" android:pathData="M30,52h48v4h-48z" />
+    <path android:fillColor="#C9A227" android:pathData="M33,40h6a2,2 0,0 1,2 2v24a2,2 0,0 1,-2 2h-6a2,2 0,0 1,-2 -2v-24a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#C9A227" android:pathData="M69,40h6a2,2 0,0 1,2 2v24a2,2 0,0 1,-2 2h-6a2,2 0,0 1,-2 -2v-24a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#E2454F" android:pathData="M64,30l4,3l-24,45l-4,-3z" />
+</vector>
