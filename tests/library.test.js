@@ -186,10 +186,10 @@ test('toda animação tem miniatura estática (listas não animam = menos bateri
   }
 });
 
-test('62 programas, nomes e ids únicos, todos os dias com exercícios', () => {
-  assert.equal(D.PROGRAMS.length, 62);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 62);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 62);
+test('64 programas, nomes e ids únicos, todos os dias com exercícios', () => {
+  assert.equal(D.PROGRAMS.length, 64);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 64);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 64);
   for (const p of D.PROGRAMS) {
     for (const d of p.days) {
       assert.ok(d.items.length >= 3, `${p.id}/${d.id}`);

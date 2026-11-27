@@ -2,7 +2,7 @@
 
 App Android de treino, offline, para qualquer nível — do primeiro dia na academia ao avançado, em casa ou com halteres.
 
-### Programas prontos (62)
+### Programas prontos (64)
 | Programa | Dias | Nível | Foco |
 | --- | --- | --- | --- |
 | Minimalista 2x (40 min) | 2 | Iniciante | Massa muscular |
@@ -53,6 +53,7 @@ App Android de treino, offline, para qualquer nível — do primeiro dia na acad
 | Força + Hipertrofia periodizado 26 semanas (5 dias) | 5 | Avançado | Força |
 | Full Body 5x – Avançado (alta frequência) | 5 | Avançado | Massa muscular |
 | Halteres e banco – divisão 5 dias | 5 | Intermediário | Casa/halteres |
+| Híbrido avançado: Upper/Lower pesado + ABC (5 dias) | 5 | Avançado | Massa muscular |
 | Hipertrofia academia completa (5 dias) | 5 | Intermediário | Massa muscular |
 | Inferior 3x + superior 2x (5 dias) | 5 | Intermediário | Massa muscular |
 | Pernas pesadas: 2 dias de perna (5 dias) | 5 | Intermediário | Massa muscular |
@@ -65,6 +66,7 @@ App Android de treino, offline, para qualquer nível — do primeiro dia na acad
 | ABC 2x por semana (6 dias) | 6 | Avançado | Massa muscular |
 | Arnold split 6x – Avançado | 6 | Avançado | Massa muscular |
 | Força + Hipertrofia periodizado 26 semanas (6 dias) | 6 | Avançado | Força |
+| Híbrido avançado: Upper/Lower pesado + ABCD (6 dias) | 6 | Avançado | Massa muscular |
 | Push/Pull/Legs – Avançado (6 dias) | 6 | Avançado | Massa muscular |
 | Upper/Lower 6x – Avançado | 6 | Avançado | Força |
 

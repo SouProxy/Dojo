@@ -1555,6 +1555,56 @@
       ],
     },
     {
+      id: 'hibrido_av5', focus: 'massa', exact: true, name: 'Híbrido avançado: Upper/Lower pesado + ABC (5 dias)', short: 'Híbrido UL+ABC 5x', level: 'avancado',
+      daysPerWeek: 5, place: 'academia', goal: 'força + massa (cada músculo 2x)',
+      description: 'Mistura do Upper/Lower 6x com o ABCDE: 2 dias pesados de força (superior e inferior, 3–5 reps) + 3 dias de volume por grupo (costas+bíceps, peito+ombros+tríceps, pernas). Cada músculo é treinado 2x por semana: uma vez pesado, uma vez com volume e técnicas. Sugestão: seg sup. pesado, ter inf. pesado, qui costas, sex peito/ombros, sáb pernas.',
+      days: [
+        day('hy5', 'up', 'Dia 1', 'Superior pesado', [
+          ['supino_reto', 5, 3, 5, 180, 'Série-topo pesada; demais −10% · RIR 1'], ['remada_curvada', 5, 4, 6, 150, 'RIR 1'],
+          ['desenvolvimento', 4, 4, 6, 150], ['barra_carga', 4, 4, 6, 150, 'Com carga; sem cinto, faça até a falha'], ['supino_fechado', 3, 5, 8, 120]]),
+        day('hy5', 'lp', 'Dia 2', 'Inferior pesado', [
+          ['agachamento', 5, 3, 5, 240, 'Série-topo pesada; demais −10% · RIR 1'], ['stiff', 4, 5, 8, 150], ['leg_press', 4, 6, 10, 120],
+          ['mesa_flexora', 3, 6, 10, 90], ['panturrilha_pe', 4, 6, 10, 60], ['abdominal_polia', 3, 8, 12, 60]]),
+        day('hy5', 'co', 'Dia 3', 'Costas + bíceps (volume)', [
+          ['terra', 3, 4, 6, 210, 'Moderado: o pesado de posterior foi no dia 2'], ['barra_fixa', 4, 0, 0, 120, 'Até a falha'], ['remada_cavalinho', 4, 8, 10, 120],
+          ['puxada_alta', 3, 10, 12, 90], ['remada_maquina', 3, 10, 12, 90, 'Última série: drop-set até a falha'], ['rosca_direta', 3, 8, 12, 60],
+          ['rosca_inclinada', 3, 10, 12, 60, 'Última série até a falha']]),
+        day('hy5', 'pe', 'Dia 4', 'Peito + ombros + tríceps (volume)', [
+          ['supino_inclinado_barra', 4, 6, 10, 150, 'RIR 1'], ['supino_halteres', 3, 8, 12, 90], ['voador', 3, 12, 15, 60, 'Última série: drop-set até a falha'],
+          ['desenvolvimento_arnold', 3, 8, 12, 90], ['elevacao_lateral', 4, 12, 15, 45, 'Última série: rest-pause'], ['crucifixo_invertido', 3, 12, 15, 45],
+          ['triceps_corda', 3, 12, 15, 45, 'Última série até a falha']]),
+        day('hy5', 'pn', 'Dia 5', 'Pernas (volume)', [
+          ['hack_squat', 4, 8, 12, 120, 'RIR 1'], ['bulgaro', 3, 8, 12, 90], ['cadeira_extensora', 3, 12, 15, 60, 'Última série: drop-set até a falha'],
+          ['cadeira_flexora', 4, 10, 12, 60], ['elevacao_pelvica', 3, 8, 12, 90], ['panturrilha_sentado', 4, 12, 15, 45]]),
+      ],
+    },
+    {
+      id: 'hibrido_av6', focus: 'massa', exact: true, name: 'Híbrido avançado: Upper/Lower pesado + ABCD (6 dias)', short: 'Híbrido UL+ABCD 6x', level: 'avancado',
+      daysPerWeek: 6, place: 'academia', goal: 'força + massa (cada músculo 2x)',
+      description: 'Mistura do Upper/Lower 6x com o ABCDE: superior e inferior pesados (força) + peito, costas, ombros+braços e pernas em dias de volume. Cada músculo 2x por semana com dia pesado e dia de volume. Sugestão: seg sup. pesado, ter inf. pesado, qua peito, qui costas, sex ombros+braços, sáb pernas, dom descanso.',
+      days: [
+        day('hy6', 'up', 'Dia 1', 'Superior pesado', [
+          ['supino_reto', 5, 3, 5, 180, 'Série-topo pesada; demais −10% · RIR 1'], ['remada_curvada', 5, 4, 6, 150, 'RIR 1'],
+          ['desenvolvimento', 4, 4, 6, 150], ['barra_carga', 4, 4, 6, 150, 'Com carga; sem cinto, faça até a falha'], ['triceps_testa', 3, 6, 10, 90]]),
+        day('hy6', 'lp', 'Dia 2', 'Inferior pesado', [
+          ['agachamento', 5, 3, 5, 240, 'Série-topo pesada; demais −10% · RIR 1'], ['terra', 3, 3, 5, 240], ['leg_press', 3, 6, 10, 120],
+          ['mesa_flexora', 3, 6, 10, 90], ['panturrilha_pe', 4, 6, 10, 60]]),
+        day('hy6', 'pe', 'Dia 3', 'Peito (volume)', [
+          ['supino_inclinado_barra', 4, 6, 10, 150, 'RIR 1'], ['supino_halteres', 4, 8, 12, 90], ['supino_maquina', 3, 10, 12, 90, 'Última série: drop-set até a falha'],
+          ['voador', 3, 12, 15, 60], ['crossover', 3, 12, 15, 60, 'Última série até a falha'], ['paralelas', 2, 0, 0, 90]]),
+        day('hy6', 'co', 'Dia 4', 'Costas (volume)', [
+          ['barra_fixa', 4, 0, 0, 120, 'Até a falha'], ['remada_cavalinho', 4, 8, 10, 120, 'RIR 1'], ['puxada_alta', 3, 10, 12, 90],
+          ['remada_maquina', 3, 10, 12, 90, 'Última série: drop-set até a falha'], ['face_pull', 3, 15, 20, 45], ['rosca_martelo', 3, 10, 12, 60]]),
+        day('hy6', 'ob', 'Dia 5', 'Ombros + braços (volume)', [
+          ['desenvolvimento_arnold', 4, 8, 12, 90, 'RIR 1'], ['elevacao_lateral', 4, 12, 15, 45, 'Última série: rest-pause'], ['crucifixo_invertido', 3, 12, 15, 45],
+          ['encolhimento_barra', 3, 8, 12, 60], ['rosca_direta', 3, 8, 12, 60], ['triceps_corda', 3, 12, 15, 45, 'Última série até a falha'],
+          ['rosca_inclinada', 3, 10, 12, 60], ['triceps_frances', 3, 10, 12, 60]]),
+        day('hy6', 'pn', 'Dia 6', 'Pernas (volume)', [
+          ['hack_squat', 4, 8, 12, 120, 'RIR 1'], ['stiff', 4, 8, 10, 120], ['bulgaro', 3, 8, 12, 90],
+          ['cadeira_extensora', 3, 12, 15, 60, 'Última série: drop-set até a falha'], ['cadeira_flexora', 3, 10, 12, 60], ['panturrilha_sentado', 4, 12, 15, 45]]),
+      ],
+    },
+    {
       id: 'hibrido5', focus: 'forca', name: 'Upper/Lower + PPL (5 dias)', short: 'Híbrido 5x', level: 'intermediario', daysPerWeek: 5, place: 'academia',
       goal: 'força + massa', description: 'Superior e inferior pesados no começo da semana, depois empurrar, puxar e pernas com mais volume. Cada músculo ~2x por semana.',
       days: [

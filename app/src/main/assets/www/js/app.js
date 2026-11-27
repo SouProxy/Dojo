@@ -5,7 +5,7 @@
   const { EXERCISES, DEFAULT_PLAN, CHALLENGE, PROGRAMS, GROUPS, MUSCLES, EQUIP, GUIDE, SOURCES, LEVELS, PLACES, FOCUS, findPrograms } = window.DojoData;
   const Lg = window.DojoLogic;
   const STORE_KEY = 'dojo.v1';
-  const APP_VERSION = '1.9.0';
+  const APP_VERSION = '1.9.1';
 
   // ================================================================ estado
 
