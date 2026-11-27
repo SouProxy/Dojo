@@ -2004,6 +2004,38 @@
     return p;
   }
   for (const p of PROGRAMS) if (p.level === 'avancado' && !p.exact) intensify(p);
+
+  // ABCDE com o treino de costas e a divisão de pernas do Upper/Lower 6x. Peito, ombros e braços são
+  // copiados do ABCDE avançado já intensificado (exatamente como aparece no app).
+  {
+    const src = PROGRAMS.find((p) => p.id === 'abcde_av');
+    const copy = (from, key, name) => {
+      const d = src.days.find((x) => x.id === `a5x-${from}`);
+      const id = `a6p-${key}`;
+      return Object.assign({}, d, { id, name, items: d.items.map((i, k) => Object.assign({}, i, { uid: `${id}-${k + 1}-${i.ex}` })) });
+    };
+    const RIR = 'Séries de trabalho com RIR 1 (sobra só 1 rep)';
+    const DROP = 'Última série até a falha + drop-set';
+    PROGRAMS.push({
+      id: 'abcde_pernas2', focus: 'massa', exact: true, name: 'ABCDE + costas e pernas do Upper/Lower (6 dias)', short: 'ABCDE + 2 pernas',
+      level: 'avancado', daysPerWeek: 6, place: 'academia', goal: 'massa muscular (alto volume)',
+      description: 'Divisão do ABCDE avançado (um grupo por dia) com o treino de costas do Upper/Lower 6x (remadas pesadas + puxadas) e as pernas em dois dias: um pesado (agachamento) e um moderado (terra). As duas pernas ficam espaçadas na semana para recuperar. Se treinar só 5 dias por semana, tudo bem: o app segue a ordem A→F, e o ciclo continua na semana seguinte.',
+      days: [
+        copy('a', 'a', 'Treino A'),
+        day('a6p', 'b', 'Treino B', 'Costas', [
+          ['remada_curvada', 5, 5, 6, 150, RIR], ['remada_cavalinho', 5, 8, 10, 120], ['barra_fixa', 4, 0, 0, 120],
+          ['puxada_alta', 3, 10, 12, 90], ['remada_maquina', 4, 10, 12, 90, DROP]]),
+        day('a6p', 'c', 'Treino C', 'Pernas 1 – Pesado', [
+          ['agachamento', 6, 3, 5, 240, RIR], ['stiff', 5, 6, 8, 150], ['leg_press', 3, 8, 10, 120, DROP],
+          ['cadeira_extensora', 3, 12, 15, 60], ['panturrilha_pe', 4, 8, 12, 60, DROP]]),
+        copy('c', 'd', 'Treino D'),
+        copy('d', 'e', 'Treino E'),
+        day('a6p', 'f', 'Treino F', 'Pernas 2 – Moderado', [
+          ['terra', 5, 3, 5, 240, RIR], ['hack_squat', 5, 8, 12, 120], ['cadeira_flexora', 3, 10, 12, 60, DROP],
+          ['elevacao_pelvica', 3, 8, 12, 90], ['panturrilha_sentado', 4, 12, 15, 45, DROP]]),
+      ],
+    });
+  }
   // Principais dos periodizados: marcados para o app ajustar séries/reps/RIR conforme o bloco.
   for (const p of PROGRAMS) {
     if (!p.periodization) continue;

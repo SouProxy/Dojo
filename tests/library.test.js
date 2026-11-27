@@ -186,10 +186,10 @@ test('toda animação tem miniatura estática (listas não animam = menos bateri
   }
 });
 
-test('64 programas, nomes e ids únicos, todos os dias com exercícios', () => {
-  assert.equal(D.PROGRAMS.length, 64);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 64);
-  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 64);
+test('65 programas, nomes e ids únicos, todos os dias com exercícios', () => {
+  assert.equal(D.PROGRAMS.length, 65);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.id)).size, 65);
+  assert.equal(new Set(D.PROGRAMS.map((p) => p.name)).size, 65);
   for (const p of D.PROGRAMS) {
     for (const d of p.days) {
       assert.ok(d.items.length >= 3, `${p.id}/${d.id}`);
@@ -344,4 +344,16 @@ test('tempo: mesma regra para exibir e registrar em minutos', () => {
   const odd = { sets: 2, min: 45, max: 300, rest: 30 };
   assert.equal(L.prescription(odd, D.EXERCISES.prancha), '2×45–300s');
   assert.ok(!L.timeInMinutes(odd));
+});
+
+test('ABCDE com costas e pernas do Upper/Lower: divisão pedida e ids únicos', () => {
+  const p = D.PROGRAMS.find((x) => x.id === 'abcde_pernas2');
+  assert.deepEqual(p.days.map((d) => d.title), ['Peito', 'Costas', 'Pernas 1 – Pesado', 'Ombros e trapézio', 'Braços', 'Pernas 2 – Moderado']);
+  assert.equal(new Set(p.days.map((d) => d.id)).size, 6);
+  const ex = (t) => p.days.find((d) => d.title === t).items.map((i) => i.ex);
+  const ul = D.PROGRAMS.find((x) => x.id === 'ul6');
+  for (const e of ex('Costas')) assert.ok(ul.days.some((d) => d.items.some((i) => i.ex === e)), `costas vem do Upper/Lower: ${e}`);
+  assert.ok(ex('Pernas 1 – Pesado').includes('agachamento') && ex('Pernas 2 – Moderado').includes('terra'));
+  const abc = D.PROGRAMS.find((x) => x.id === 'abcde_av');
+  assert.deepEqual(ex('Peito'), abc.days[0].items.map((i) => i.ex), 'peito igual ao ABCDE');
 });
